@@ -6,6 +6,18 @@ and caller-owned capture storage. HTML rendering and real language backends arri
 The API remains experimental until the first stable package release. See the
 [development plan](plans/development-plan.md) for sequencing and compatibility gates.
 
+## Render Escaped Plain Text
+
+Code without classifications can be rendered safely without a backend or allocation:
+
+```zig
+try syntax.html.renderPlain(source, writer);
+```
+
+The function escapes ampersands, angle brackets, and both quote characters. It preserves ordinary
+bytes, whitespace, newlines, and invalid UTF-8. It writes only HTML text and does not add a `code` or
+`pre` element.
+
 ## Classify Source
 
 A backend receives borrowed source and reports captures through a sink:

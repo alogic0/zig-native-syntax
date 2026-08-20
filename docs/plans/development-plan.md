@@ -154,6 +154,8 @@ boundaries.
 
 ### Slice 2.1: Escaped plain-text renderer
 
+Status: complete.
+
 - Implement HTML text escaping for `&`, `<`, `>`, and any additional characters required by the
   selected output context.
 - Write directly to `std.Io.Writer` without copying unchanged source unnecessarily.

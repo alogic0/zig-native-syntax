@@ -5,6 +5,7 @@ const std = @import("std");
 const capture = @import("capture.zig");
 const backend = @import("backend.zig");
 
+pub const html = @import("html.zig");
 pub const Scope = @import("scope.zig").Scope;
 pub const Span = capture.Span;
 pub const Capture = capture.Capture;

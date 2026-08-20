@@ -49,6 +49,17 @@ test "public API transfers capture allocation explicitly" {
     try std.testing.expectEqual(@as(usize, 0), sink.captures().len);
 }
 
+test "public API renders escaped plain text" {
+    var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+
+    try syntax.html.renderPlain("<unsafe>&", &output.writer);
+    try std.testing.expectEqualStrings(
+        "&lt;unsafe&gt;&amp;",
+        output.written(),
+    );
+}
+
 test "all public declarations are referenced" {
     std.testing.refAllDecls(syntax);
 }

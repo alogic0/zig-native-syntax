@@ -10,8 +10,8 @@ other Zig projects.
 
 ## Status
 
-The project currently contains only the initial library and span model. No language backend or
-HTML renderer has been implemented yet.
+The project contains the initial classification API and escaped plain-text HTML renderer. No real
+language backend or classified-span renderer has been implemented yet.
 
 ## Design constraints
 
