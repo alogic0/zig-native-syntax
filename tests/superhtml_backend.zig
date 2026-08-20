@@ -2,6 +2,7 @@ const std = @import("std");
 const syntax = @import("native_syntax");
 const superhtml_backend = @import("native_syntax_superhtml");
 const conformance = @import("support/backend_conformance.zig");
+const html_recovery = @import("support/html_recovery.zig");
 
 test "SuperHTML backend metadata is stable" {
     try std.testing.expectEqualStrings("superhtml", superhtml_backend.backend.info.canonical_name);
@@ -75,6 +76,61 @@ test "SuperHTML expression contents do not retain parent string scope" {
     try expectNoScopeAt(sink.captures(), expression_start, .string);
     try expectScopeAt(sink.captures(), expression_start - 1, .string);
     try expectScopeAt(sink.captures(), expression_end, .string);
+}
+
+test "SuperHTML composition corpus preserves source and nested recovery" {
+    const complete = @embedFile("corpus/superhtml/complete.shtml");
+    const composition = @embedFile("corpus/superhtml/composition.shtml");
+    const malformed = @embedFile("corpus/superhtml/malformed.shtml");
+
+    try expectSourceRecovered(complete);
+    try expectSourceRecovered(composition);
+    try expectSourceRecovered(malformed);
+
+    var composition_sink: syntax.CaptureSink = .init(std.testing.allocator, composition.len);
+    defer composition_sink.deinit();
+    try superhtml_backend.backend.highlight(composition, &composition_sink);
+    try std.testing.expect(countScope(composition_sink.captures(), .embedded) >= 4);
+    try expectCaptureText(composition, composition_sink.captures(), "\"short\"", .string);
+    try expectCaptureText(composition, composition_sink.captures(), "'a > b & c'", .string);
+
+    var malformed_sink: syntax.CaptureSink = .init(std.testing.allocator, malformed.len);
+    defer malformed_sink.deinit();
+    try superhtml_backend.backend.highlight(malformed, &malformed_sink);
+    try expectCaptureText(malformed, malformed_sink.captures(), "@", .invalid);
+    try expectCaptureText(malformed, malformed_sink.captures(), "title", .property);
+}
+
+fn expectSourceRecovered(source: []const u8) !void {
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try superhtml_backend.backend.highlight(source, &sink);
+
+    var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+    try syntax.html.render(source, sink.captures(), std.testing.allocator, &output.writer);
+    const recovered = try html_recovery.recoverSource(std.testing.allocator, output.written());
+    defer std.testing.allocator.free(recovered);
+    try std.testing.expectEqualSlices(u8, source, recovered);
+}
+
+fn countScope(captures: []const syntax.Capture, scope: syntax.Scope) usize {
+    var count: usize = 0;
+    for (captures) |capture| count += @intFromBool(capture.scope == scope);
+    return count;
+}
+
+fn expectCaptureText(
+    source: []const u8,
+    captures: []const syntax.Capture,
+    text: []const u8,
+    scope: syntax.Scope,
+) !void {
+    for (captures) |capture| {
+        if (capture.scope == scope and
+            std.mem.eql(u8, try capture.span.slice(source), text)) return;
+    }
+    return error.TestExpectedEqual;
 }
 
 fn expectCaptureAt(

@@ -369,6 +369,8 @@ Status: complete.
 
 ### Slice 8.3: Composition corpus
 
+Status: complete.
+
 - Cover nested templates, quoted expressions, malformed attributes, multiline expressions, escaped
   delimiters, and adjacent embedded regions.
 - Add randomized offset-translation tests.
@@ -377,6 +379,8 @@ Phase gate:
 
 - SuperHTML output preserves the entire original source.
 - Nested failures cannot create invalid ranges or unsafe HTML.
+
+Phase 8 status: complete.
 
 ## Phase 9: Perform The First Zine Integration Spike
 

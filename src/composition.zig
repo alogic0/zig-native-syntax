@@ -49,11 +49,23 @@ fn highlightNested(source: []const u8, sink: *CaptureSink) HighlightError!void {
     }
 }
 
+fn highlightNestedBoundaries(source: []const u8, sink: *CaptureSink) HighlightError!void {
+    if (source.len == 0) return;
+    try sink.add(0, source.len, .special);
+    if (source.len > 2) try sink.add(1, source.len - 1, .string);
+}
+
 const test_nested_backend: Backend = .init(.{
     .canonical_name = "nested-test",
     .display_name = "Nested Test",
     .kind = .lexical,
 }, highlightNested);
+
+const boundary_nested_backend: Backend = .init(.{
+    .canonical_name = "boundary-test",
+    .display_name = "Boundary Test",
+    .kind = .lexical,
+}, highlightNestedBoundaries);
 
 test "embedded captures translate into parent offsets" {
     const source = "before abc after";
@@ -108,6 +120,41 @@ test "embedded scopes combine with parent captures during rendering" {
             "<span class=\"syntax-embedded syntax-string\">bc</span>x",
         output.written(),
     );
+}
+
+test "random embedded offsets remain inside their parent region" {
+    var source: [256]u8 = @splat('x');
+    var random_state: u64 = 0x7f4a7c159e3779b9;
+
+    for (0..512) |_| {
+        random_state = random_state *% 6364136223846793005 +% 1442695040888963407;
+        const source_len: usize = @intCast(random_state % source.len + 1);
+        random_state = random_state *% 6364136223846793005 +% 1442695040888963407;
+        const start: usize = @intCast(random_state % (source_len + 1));
+        random_state = random_state *% 6364136223846793005 +% 1442695040888963407;
+        const end = start + @as(usize, @intCast(random_state % (source_len - start + 1)));
+
+        var sink: CaptureSink = .init(std.testing.allocator, source_len);
+        defer sink.deinit();
+        try highlightEmbedded(
+            source[0..source_len],
+            .{ .start = start, .end = end },
+            boundary_nested_backend,
+            &sink,
+        );
+
+        for (sink.captures()) |capture| {
+            try capture.validate(source_len);
+            try std.testing.expect(capture.span.start >= start);
+            try std.testing.expect(capture.span.end <= end);
+        }
+        if (start == end) {
+            try std.testing.expectEqual(@as(usize, 0), sink.captures().len);
+        } else {
+            try expectCapture(sink.captures(), start, end, .embedded);
+            try expectCapture(sink.captures(), start, end, .special);
+        }
+    }
 }
 
 fn expectCapture(

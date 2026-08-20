@@ -1,0 +1,8 @@
+<main
+  :if="$page.visible(
+    true
+  )"
+  data-label='$page.pick("short", "long")'>
+  <p :if="$page.has('a > b & c')" :text="$page.title"></p>
+  <div :else></div>
+</main>

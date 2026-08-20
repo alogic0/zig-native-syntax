@@ -1,0 +1,4 @@
+<main :if="$page.bad(@" :text="$page.title">
+  <a href="$page.link()" :html="$page.content("></a>
+  <p :text="$page.unclosed()
+</main>

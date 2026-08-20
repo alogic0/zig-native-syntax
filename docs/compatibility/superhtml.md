@@ -76,3 +76,8 @@ Directive names retain `attribute` and add `special`. Quotation marks retain `st
 value contents drop the parent string classification and receive `embedded` plus scopes from the
 independently selectable Scripty backend. Markup and expression errors recover locally; a missing
 attribute range remains escaped markup rather than being guessed by a second parser.
+
+The composition corpus covers adjacent directives, single- and double-quoted attributes, multiline
+expressions, delimiter-shaped bytes inside Scripty strings, malformed expressions followed by valid
+ones, and truncated markup. Core composition tests additionally randomize parent and embedded range
+boundaries to verify every translated capture remains inside its delegated region.
