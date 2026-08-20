@@ -23,6 +23,8 @@ HTML renderer has been implemented yet.
 
 ## Architecture
 
+- [Classification model](docs/architecture/classification-model.md) defines the language-neutral
+  scopes and their stable CSS class names.
 - [Parser and tokenizer ownership](docs/architecture/parser-ownership.md) defines the boundary
   between language implementations, highlighting adapters, the shared renderer, and consumers.
 - [Development plan](docs/plans/development-plan.md) defines the phased implementation and

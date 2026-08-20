@@ -92,6 +92,8 @@ Goal: define the smallest public model that all native and lexical backends can 
 
 ### Slice 1.1: Classification taxonomy
 
+Status: complete.
+
 - Audit the classifications required by Zig, Ziggy, HTML, CSS, Scripty, Rust, and shell samples.
 - Decide whether `Scope` is a flat enum, a primary category plus modifiers, or a hierarchical value.
 - Define stable CSS class names independently of Tree-sitter capture names.

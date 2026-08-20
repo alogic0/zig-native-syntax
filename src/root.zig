@@ -2,20 +2,7 @@
 
 const std = @import("std");
 
-pub const Scope = enum {
-    keyword,
-    type,
-    builtin,
-    function,
-    variable,
-    property,
-    string,
-    number,
-    comment,
-    tag,
-    attribute,
-    punctuation,
-};
+pub const Scope = @import("scope.zig").Scope;
 
 pub const Span = struct {
     start: usize,
