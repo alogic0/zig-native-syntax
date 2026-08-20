@@ -120,6 +120,8 @@ Acceptance criteria:
 
 ### Slice 1.3: Backend interface
 
+Status: complete.
+
 - Define the backend contract for borrowed source, allocator use, output captures, and errors.
 - Separate unsupported-language and resource failures from malformed source.
 - Decide whether backends stream captures or return an owned normalized result.

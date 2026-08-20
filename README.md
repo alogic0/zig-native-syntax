@@ -23,6 +23,8 @@ HTML renderer has been implemented yet.
 
 ## Architecture
 
+- [Language backend contract](docs/architecture/backend-contract.md) defines backend metadata,
+  capture reporting, errors, and optional registration.
 - [Capture and range model](docs/architecture/capture-model.md) defines source offsets, validation,
   overlap, and memory ownership.
 - [Classification model](docs/architecture/classification-model.md) defines the language-neutral
