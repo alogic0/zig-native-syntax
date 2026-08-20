@@ -247,6 +247,8 @@ Status: complete.
 
 ### Slice 4.2: Backend conformance suite
 
+Status: complete.
+
 - Create shared tests that every backend runs for empty, valid, malformed, multiline, escapable, and
   invalid-UTF-8 input where the language permits it.
 - Require deterministic captures and source recovery for all backends.
@@ -256,6 +258,8 @@ Phase gate:
 
 - A dummy optional backend proves selection behavior.
 - The core-only build remains dependency-free beyond Zig's standard library.
+
+Phase 4 status: complete.
 
 ## Phase 5: Add Ziggy And Ziggy Schema
 

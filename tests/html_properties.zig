@@ -1,53 +1,6 @@
 const std = @import("std");
 const syntax = @import("native_syntax");
-
-fn recoverSource(
-    allocator: std.mem.Allocator,
-    rendered: []const u8,
-) ![]u8 {
-    var recovered: std.ArrayList(u8) = .empty;
-    errdefer recovered.deinit(allocator);
-
-    var index: usize = 0;
-    while (index < rendered.len) {
-        const remaining = rendered[index..];
-
-        if (std.mem.startsWith(u8, remaining, "<span class=\"syntax-")) {
-            const tag_end = std.mem.indexOfScalar(u8, remaining, '>') orelse {
-                return error.UnterminatedGeneratedSpan;
-            };
-            index += tag_end + 1;
-            continue;
-        }
-        if (std.mem.startsWith(u8, remaining, "</span>")) {
-            index += "</span>".len;
-            continue;
-        }
-
-        const entities = [_]struct { []const u8, u8 }{
-            .{ "&amp;", '&' },
-            .{ "&lt;", '<' },
-            .{ "&gt;", '>' },
-            .{ "&quot;", '"' },
-            .{ "&#39;", '\'' },
-        };
-        for (entities) |entity| {
-            if (std.mem.startsWith(u8, remaining, entity[0])) {
-                try recovered.append(allocator, entity[1]);
-                index += entity[0].len;
-                break;
-            }
-        } else {
-            if (rendered[index] == '<' or rendered[index] == '&') {
-                return error.UnexpectedGeneratedMarkup;
-            }
-            try recovered.append(allocator, rendered[index]);
-            index += 1;
-        }
-    }
-
-    return recovered.toOwnedSlice(allocator);
-}
+const html_recovery = @import("support/html_recovery.zig");
 
 fn nextRandom(state: *u64) u64 {
     state.* = state.* *% 6364136223846793005 +% 1442695040888963407;
@@ -69,7 +22,7 @@ test "plain and classified rendering recover every input byte" {
     defer output.deinit();
     try syntax.html.render(&source, &captures, std.testing.allocator, &output.writer);
 
-    const recovered = try recoverSource(std.testing.allocator, output.written());
+    const recovered = try html_recovery.recoverSource(std.testing.allocator, output.written());
     defer std.testing.allocator.free(recovered);
     try std.testing.expectEqualSlices(u8, &source, recovered);
 }
@@ -106,7 +59,7 @@ test "random valid captures always preserve the original bytes" {
             &output.writer,
         );
 
-        const recovered = try recoverSource(std.testing.allocator, output.written());
+        const recovered = try html_recovery.recoverSource(std.testing.allocator, output.written());
         defer std.testing.allocator.free(recovered);
         try std.testing.expectEqualSlices(u8, source[0..source_len], recovered);
     }
@@ -131,7 +84,7 @@ test "source cannot escape generated spans or create HTML" {
     try std.testing.expect(std.mem.indexOf(u8, output.written(), "\"captured\"") == null);
     try std.testing.expect(std.mem.indexOf(u8, output.written(), "'uncaptured'") == null);
 
-    const recovered = try recoverSource(std.testing.allocator, output.written());
+    const recovered = try html_recovery.recoverSource(std.testing.allocator, output.written());
     defer std.testing.allocator.free(recovered);
     try std.testing.expectEqualStrings(source, recovered);
 }
@@ -148,7 +101,7 @@ test "newline forms remain byte-exact across capture boundaries" {
     defer output.deinit();
     try syntax.html.render(source, &captures, std.testing.allocator, &output.writer);
 
-    const recovered = try recoverSource(std.testing.allocator, output.written());
+    const recovered = try html_recovery.recoverSource(std.testing.allocator, output.written());
     defer std.testing.allocator.free(recovered);
     try std.testing.expectEqualStrings(source, recovered);
 }

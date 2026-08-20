@@ -69,3 +69,11 @@ script rejects configuration unless the parent passes an explicit opt-in value. 
 
 The dummy backend is build-system test infrastructure, not a supported language and not part of the
 package's compatibility surface.
+
+## Backend Conformance Tests
+
+Every backend supplies language-specific samples to `tests/support/backend_conformance.zig`. The
+shared suite verifies empty input, representative valid and malformed input, multiline offsets,
+HTML-sensitive bytes, optional invalid UTF-8 input, deterministic captures, range validity, and
+source recovery from rendered HTML. Backends can add corpus cases and required scopes without moving
+grammar-specific expectations into the core library.

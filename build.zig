@@ -76,6 +76,18 @@ pub fn build(b: *std.Build) void {
     });
     const run_zig_corpus_tests = b.addRunArtifact(zig_corpus_tests);
 
+    const zig_conformance_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/zig_conformance.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+            },
+        }),
+    });
+    const run_zig_conformance_tests = b.addRunArtifact(zig_conformance_tests);
+
     const render_zig_tests = b.addTest(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("tools/render_zig.zig"),
@@ -135,6 +147,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_public_api_tests.step);
     test_step.dependOn(&run_html_property_tests.step);
     test_step.dependOn(&run_zig_corpus_tests.step);
+    test_step.dependOn(&run_zig_conformance_tests.step);
     test_step.dependOn(&run_render_zig_tests.step);
     test_step.dependOn(&run_core_only_tests.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);
