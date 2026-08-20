@@ -106,6 +106,8 @@ Acceptance criteria:
 
 ### Slice 1.2: Capture and range invariants
 
+Status: complete.
+
 - Define byte-offset types and maximum source-size behavior.
 - Decide how identical, nested, adjacent, and crossing captures are represented.
 - Specify deterministic precedence when multiple classifications cover the same bytes.

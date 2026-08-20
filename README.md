@@ -23,6 +23,8 @@ HTML renderer has been implemented yet.
 
 ## Architecture
 
+- [Capture and range model](docs/architecture/capture-model.md) defines source offsets, validation,
+  overlap, and memory ownership.
 - [Classification model](docs/architecture/classification-model.md) defines the language-neutral
   scopes and their stable CSS class names.
 - [Parser and tokenizer ownership](docs/architecture/parser-ownership.md) defines the boundary

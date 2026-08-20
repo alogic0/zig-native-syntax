@@ -2,30 +2,16 @@
 
 const std = @import("std");
 
+const capture = @import("capture.zig");
+
 pub const Scope = @import("scope.zig").Scope;
-
-pub const Span = struct {
-    start: usize,
-    end: usize,
-    scope: Scope,
-
-    pub fn init(start: usize, end: usize, scope: Scope) Span {
-        std.debug.assert(start <= end);
-        return .{
-            .start = start,
-            .end = end,
-            .scope = scope,
-        };
-    }
-
-    pub fn slice(span: Span, source: []const u8) []const u8 {
-        return source[span.start..span.end];
-    }
-};
+pub const Span = capture.Span;
+pub const Capture = capture.Capture;
+pub const ValidationError = capture.ValidationError;
 
 test "span preserves source offsets" {
     const source = "const answer = 42;";
-    const span: Span = .init(0, 5, .keyword);
+    const span: Span = try .init(0, 5);
 
-    try std.testing.expectEqualStrings("const", span.slice(source));
+    try std.testing.expectEqualStrings("const", try span.slice(source));
 }
