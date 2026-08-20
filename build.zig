@@ -10,6 +10,26 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const render_zig = b.addExecutable(.{
+        .name = "render-zig",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/render_zig.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+            },
+        }),
+    });
+    const run_render_zig = b.addRunArtifact(render_zig);
+    run_render_zig.addPassthruArgs();
+
+    const render_zig_step = b.step(
+        "render-zig",
+        "Render a Zig source file as highlighted HTML",
+    );
+    render_zig_step.dependOn(&run_render_zig.step);
+
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
     });
@@ -51,9 +71,22 @@ pub fn build(b: *std.Build) void {
     });
     const run_zig_corpus_tests = b.addRunArtifact(zig_corpus_tests);
 
+    const render_zig_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/render_zig.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+            },
+        }),
+    });
+    const run_render_zig_tests = b.addRunArtifact(render_zig_tests);
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
     test_step.dependOn(&run_html_property_tests.step);
     test_step.dependOn(&run_zig_corpus_tests.step);
+    test_step.dependOn(&run_render_zig_tests.step);
 }

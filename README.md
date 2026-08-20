@@ -45,4 +45,19 @@ The project currently tracks the Zig version used by Zine:
 ./build.sh test
 ```
 
+Render a Zig source file as an HTML fragment for manual inspection:
+
+```sh
+./build.sh render-zig tests/corpus/zig/complete.zig > /tmp/complete.html
+```
+
+Add `--page` to emit a complete HTML document with a built-in development theme:
+
+```sh
+./build.sh render-zig --page tests/corpus/zig/complete.zig > /tmp/complete.html
+```
+
+The command writes only to standard output. Fragment mode emits escaped source and `syntax-*` spans;
+page mode wraps the same rendering in a preview document suitable for opening in a browser.
+
 The [experimental API guide](docs/api.md) shows the current public classification interface.

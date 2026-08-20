@@ -9,4 +9,9 @@ if [ ! -x "${zig_exe}" ]; then
     exit 1
 fi
 
+if [ "${1:-}" = "render-zig" ]; then
+    shift
+    exec "${zig_exe}" build render-zig -- "$@"
+fi
+
 exec "${zig_exe}" build "$@"
