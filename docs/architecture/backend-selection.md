@@ -57,8 +57,10 @@ consumer.root_module.addImport(
 Requesting an optional module without enabling its matching option is a build-configuration error.
 This fails at build time rather than silently selecting a fallback parser.
 
-The Ziggy document backend is the first supported external adapter using this mechanism. Its pinned
-package remains lazy, while `-Dbackend-ziggy=true` exposes `native_syntax_ziggy`.
+The Ziggy document and schema backends are the first supported external adapters using this
+mechanism. Their shared pinned package remains lazy. `-Dbackend-ziggy=true` exposes
+`native_syntax_ziggy`, while `-Dbackend-ziggy-schema=true` independently exposes
+`native_syntax_ziggy_schema`. Enabling both options configures the same Ziggy package once.
 
 ## Phase 4 Proof
 

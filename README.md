@@ -11,8 +11,8 @@ other Zig projects.
 ## Status
 
 The project contains the initial classification API, source-preserving HTML renderer, a Zig backend
-with lexical classification plus recovering AST context, and an optional Ziggy document backend.
-Additional language adapters and Zine integration remain experimental work.
+with lexical classification plus recovering AST context, and optional Ziggy document and Ziggy
+Schema backends. Additional language adapters and Zine integration remain experimental work.
 
 ## Design constraints
 
@@ -40,6 +40,8 @@ Additional language adapters and Zine integration remain experimental work.
   differences from Zig's documentation renderer and Zine's Tree-sitter path.
 - [Ziggy highlighting compatibility](docs/compatibility/ziggy.md) records the optional tokenizer
   adapter's classifications and recovery boundary.
+- [Ziggy Schema highlighting compatibility](docs/compatibility/ziggy-schema.md) records the optional
+  tokenizer and AST adapter's classifications and recovery boundary.
 
 ## Development
 

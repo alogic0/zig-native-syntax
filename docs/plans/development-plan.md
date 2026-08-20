@@ -267,11 +267,15 @@ Goal: implement the small data languages already used by Zine.
 
 ### Slice 5.1: Ziggy adapter
 
+Status: complete.
+
 - Pin a compatible Ziggy package.
 - Consume its tokenizer or AST locations while retaining the original source.
 - Cover comments, strings, numbers, booleans, nulls, enum cases, punctuation, and malformed data.
 
 ### Slice 5.2: Ziggy Schema adapter
+
+Status: complete.
 
 - Use the schema tokenizer and AST as the syntax authority.
 - Classify schema declarations, identifiers, types, literals, comments, and punctuation.
@@ -281,6 +285,8 @@ Phase gate:
 
 - Ziggy and Ziggy Schema can be enabled independently.
 - Parser errors leave safely escaped, readable output rather than failing rendering.
+
+Phase 5 status: complete.
 
 ## Phase 6: Add Scripty
 

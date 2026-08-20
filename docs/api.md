@@ -143,3 +143,31 @@ and member properties. Lexical captures remain available when parsing reports sy
 The backend copies the borrowed source into temporary sentinel-terminated storage required by the
 Zig syntax APIs; captures still contain offsets into the caller's original source. Contextual scopes
 overlap lexical scopes intentionally and are normalized by the shared HTML renderer.
+
+## Optional Ziggy Backends
+
+The Ziggy document and Ziggy Schema adapters are separate modules backed by the same lazy, pinned
+Ziggy package. Consumers enable and import only the modules they use:
+
+```zig
+const syntax_dependency = b.dependency("zig_native_syntax", .{
+    .target = target,
+    .optimize = optimize,
+    .@"backend-ziggy" = true,
+    .@"backend-ziggy-schema" = true,
+});
+
+consumer.root_module.addImport(
+    "native_syntax_ziggy",
+    syntax_dependency.module("native_syntax_ziggy"),
+);
+consumer.root_module.addImport(
+    "native_syntax_ziggy_schema",
+    syntax_dependency.module("native_syntax_ziggy_schema"),
+);
+```
+
+Each imported module exposes `backend`. The document adapter uses tokenizer locations for resilient
+lexical classification. The schema adapter combines those resilient token captures with recovering
+AST context for declared types and fields. See the [Ziggy](compatibility/ziggy.md) and
+[Ziggy Schema](compatibility/ziggy-schema.md) compatibility notes for their exact boundaries.
