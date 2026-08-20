@@ -38,6 +38,11 @@ pub fn build(b: *std.Build) void {
         "backend-css",
         "Enable the optional CSS backend",
     ) orelse false;
+    const enable_superhtml_backend = b.option(
+        bool,
+        "backend-superhtml",
+        "Enable the optional composed SuperHTML backend",
+    ) orelse false;
     const ziggy_dependency = if (enable_ziggy_backend or enable_ziggy_schema_backend)
         b.lazyDependency("ziggy", .{
             .target = target,
@@ -45,7 +50,7 @@ pub fn build(b: *std.Build) void {
         }) orelse return
     else
         null;
-    const scripty_dependency = if (enable_scripty_backend)
+    const scripty_dependency = if (enable_scripty_backend or enable_superhtml_backend)
         b.lazyDependency("scripty", .{
             .target = target,
             .optimize = optimize,
@@ -53,7 +58,10 @@ pub fn build(b: *std.Build) void {
         }) orelse return
     else
         null;
-    const superhtml_dependency = if (enable_html_backend or enable_xml_backend or enable_css_backend)
+    const superhtml_dependency = if (enable_html_backend or
+        enable_xml_backend or
+        enable_css_backend or
+        enable_superhtml_backend)
         b.lazyDependency("superhtml", .{
             .target = target,
             .optimize = optimize,
@@ -67,6 +75,18 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const scripty_backend_module = if (scripty_dependency) |dependency|
+        b.addModule("native_syntax_scripty", .{
+            .root_source_file = b.path("src/optional/scripty.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "scripty", .module = dependency.module("scripty") },
+            },
+        })
+    else
+        null;
 
     const zig_preview_backend = b.addModule("zig_preview_backend", .{
         .root_source_file = b.path("tools/zig_preview_backend.zig"),
@@ -275,17 +295,7 @@ pub fn build(b: *std.Build) void {
     } else null;
 
     const scripty_backend_runs: ?OptionalBackendRuns = if (enable_scripty_backend) enabled: {
-        const dependency = scripty_dependency.?;
-
-        const scripty_backend = b.addModule("native_syntax_scripty", .{
-            .root_source_file = b.path("src/optional/scripty.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{
-                .{ .name = "native_syntax", .module = native_syntax },
-                .{ .name = "scripty", .module = dependency.module("scripty") },
-            },
-        });
+        const scripty_backend = scripty_backend_module.?;
         const scripty_backend_tests = b.addTest(.{
             .root_module = b.createModule(.{
                 .root_source_file = b.path("tests/scripty_backend.zig"),
@@ -427,6 +437,45 @@ pub fn build(b: *std.Build) void {
         };
     } else null;
 
+    const superhtml_backend_runs: ?OptionalBackendRuns = if (enable_superhtml_backend) enabled: {
+        const dependency = superhtml_dependency.?;
+        const superhtml_backend = b.addModule("native_syntax_superhtml", .{
+            .root_source_file = b.path("src/optional/superhtml.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "native_syntax_scripty", .module = scripty_backend_module.? },
+                .{ .name = "superhtml", .module = dependency.module("superhtml") },
+            },
+        });
+        const superhtml_backend_tests = b.addTest(.{
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("tests/superhtml_backend.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "native_syntax", .module = native_syntax },
+                    .{ .name = "native_syntax_superhtml", .module = superhtml_backend },
+                },
+            }),
+        });
+        const preview = addPreviewTool(b, .{
+            .command_name = "render-superhtml",
+            .display_name = "SuperHTML",
+            .language_class = "language-superhtml",
+            .sample_path = "source.shtml",
+            .backend = superhtml_backend,
+            .native_syntax = native_syntax,
+            .target = target,
+            .optimize = optimize,
+        });
+        break :enabled .{
+            .backend_test_run = b.addRunArtifact(superhtml_backend_tests),
+            .preview_test_run = preview.test_run,
+        };
+    } else null;
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
@@ -458,6 +507,10 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.preview_test_run.step);
     }
     if (css_backend_runs) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (superhtml_backend_runs) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }

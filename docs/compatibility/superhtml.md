@@ -18,7 +18,7 @@ syntax APIs as:
 There are no smaller independently selectable HTML-only or CSS-only modules in the upstream build.
 The adapters therefore import the root module but use only these public tokenizer declarations.
 The dependency remains lazy and is configured only when at least one of `backend-html`,
-`backend-xml`, or `backend-css` is enabled.
+`backend-xml`, `backend-css`, or `backend-superhtml` is enabled.
 
 ## Upgrade Contract
 
@@ -64,3 +64,15 @@ The upstream CSS AST is intentionally not used because its current parser contai
 paths for valid but unsupported constructs, including attribute selectors. Malformed snippets must
 remain data rather than terminate highlighting. Invalid tokenizer spans are therefore ignored while
 the shared renderer preserves their original bytes.
+
+## Composed SuperHTML Adapter
+
+The SuperHTML backend runs the markup adapter in `.superhtml` mode and uses tokenizer-reported
+attribute ranges to locate Scripty expressions. Values of `:if`, `:loop`, `:text`, and `:html` are
+embedded expressions. Ordinary attribute values beginning with `$` are expressions as well.
+`:else` is classified as a directive but has no embedded value.
+
+Directive names retain `attribute` and add `special`. Quotation marks retain `string`, while the
+value contents drop the parent string classification and receive `embedded` plus scopes from the
+independently selectable Scripty backend. Markup and expression errors recover locally; a missing
+attribute range remains escaped markup rather than being guessed by a second parser.

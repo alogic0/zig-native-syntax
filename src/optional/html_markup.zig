@@ -24,7 +24,7 @@ pub fn highlight(
 
                 if (inside_raw_element) {
                     inside_raw_element = false;
-                } else if (language == .html and isStartTag(source, span)) {
+                } else if (language != .xml and isStartTag(source, span)) {
                     if (rawElement(span.slice(source))) |raw_element| {
                         switch (nextTagByte(source, span.end)) {
                             '>' => {

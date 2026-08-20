@@ -12,8 +12,8 @@ other Zig projects.
 
 The project contains the initial classification API, source-preserving HTML renderer, a Zig backend
 with lexical classification plus recovering AST context, and optional Ziggy document, Ziggy Schema,
-Scripty, HTML, XML, and CSS backends. Additional language adapters and Zine integration remain
-experimental work.
+Scripty, HTML, XML, CSS, and composed SuperHTML backends. Additional language adapters and Zine
+integration remain experimental work.
 
 ## Design constraints
 
@@ -68,6 +68,7 @@ Render source files as HTML fragments for manual inspection:
 ./build.sh render-html tests/corpus/html/complete.html > /tmp/html.html
 ./build.sh render-xml tests/corpus/xml/complete.xml > /tmp/xml.html
 ./build.sh render-css tests/corpus/css/complete.css > /tmp/css.html
+./build.sh render-superhtml tests/corpus/superhtml/complete.shtml > /tmp/superhtml.html
 ```
 
 Add `--page` to any preview command to emit a complete HTML document with a built-in development

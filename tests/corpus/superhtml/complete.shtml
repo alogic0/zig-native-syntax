@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+  <head><title :text="$site.title"></title></head>
+  <body>
+    <main :if="$page.visible()">
+      <h1 :text="$page.title"></h1>
+      <div :loop="$page.items()">
+        <a href="$loop.it.link()" :text="$loop.it.title"></a>
+      </div>
+    </main>
+  </body>
+</html>

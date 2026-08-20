@@ -361,6 +361,8 @@ Status: complete.
 
 ### Slice 8.2: SuperHTML adapter
 
+Status: complete.
+
 - Use SuperHTML syntax information to locate directives and embedded Scripty expressions.
 - Merge HTML and Scripty classifications through the shared normalization path.
 - Recover locally when either the markup or expression parser reports an error.
