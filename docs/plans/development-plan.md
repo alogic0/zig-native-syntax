@@ -233,46 +233,17 @@ Phase gate:
 
 Phase 3 status: complete.
 
-## Phase 4: Perform The First Zine Integration Spike
-
-Goal: validate the public API in its first real consumer before adding external parser dependencies.
-
-### Slice 4.1: Local dependency wiring
-
-- Add `zig-native-syntax` as a local path dependency on Zine's experiment branch.
-- Route canonical `zig` code blocks through the native backend.
-- Keep Tree-sitter as the fallback for every other currently supported language.
-
-### Slice 4.2: CSS and snapshot adaptation
-
-- Map stable library classes into Zine's starter highlight stylesheet.
-- Update only Zig snapshots whose markup changes intentionally.
-- Verify source escaping for fenced blocks, code directives, and string highlighting helpers.
-
-### Slice 4.3: Integration evidence
-
-- Compare build time, executable size, peak allocations, and representative output with the current
-  Tree-sitter path.
-- Record API friction in this plan or the relevant architecture document before expanding backends.
-- Revise Phase 1 APIs while compatibility is still experimental if the integration exposes a poor
-  ownership or lifetime boundary.
-
-Phase gate:
-
-- Zine renders Zig natively and all other languages through the unchanged fallback.
-- Zine's focused rendering and workflow tests pass on the local architecture.
-
-## Phase 5: Make External Backends Selectable
+## Phase 4: Make External Backends Selectable
 
 Goal: add parser-backed languages without forcing unused parser packages into every consumer graph.
 
-### Slice 5.1: Dependency and module layout
+### Slice 4.1: Dependency and module layout
 
 - Prototype lazy Zig package dependencies and backend build options.
 - Decide whether optional languages are exposed as separate modules or one configured root module.
 - Verify a core-only consumer does not fetch, compile, or link optional parser dependencies.
 
-### Slice 5.2: Backend conformance suite
+### Slice 4.2: Backend conformance suite
 
 - Create shared tests that every backend runs for empty, valid, malformed, multiline, escapable, and
   invalid-UTF-8 input where the language permits it.
@@ -284,23 +255,32 @@ Phase gate:
 - A dummy optional backend proves selection behavior.
 - The core-only build remains dependency-free beyond Zig's standard library.
 
-## Phase 6: Add Ziggy And Scripty Families
+## Phase 5: Add Ziggy And Ziggy Schema
 
-Goal: implement the small data and expression languages already used by Zine and SuperHTML.
+Goal: implement the small data languages already used by Zine.
 
-### Slice 6.1: Ziggy adapter
+### Slice 5.1: Ziggy adapter
 
 - Pin a compatible Ziggy package.
 - Consume its tokenizer or AST locations while retaining the original source.
 - Cover comments, strings, numbers, booleans, nulls, enum cases, punctuation, and malformed data.
 
-### Slice 6.2: Ziggy Schema adapter
+### Slice 5.2: Ziggy Schema adapter
 
 - Use the schema tokenizer and AST as the syntax authority.
 - Classify schema declarations, identifiers, types, literals, comments, and punctuation.
 - Keep schema scopes within the common taxonomy unless evidence requires a documented extension.
 
-### Slice 6.3: Scripty adapter
+Phase gate:
+
+- Ziggy and Ziggy Schema can be enabled independently.
+- Parser errors leave safely escaped, readable output rather than failing rendering.
+
+## Phase 6: Add Scripty
+
+Goal: implement the expression language used by Zine and embedded in SuperHTML.
+
+### Slice 6.1: Scripty adapter
 
 - Prefer an exported tokenizer API; use parser node locations only if they provide sufficient source
   coverage.
@@ -309,7 +289,7 @@ Goal: implement the small data and expression languages already used by Zine and
 
 Phase gate:
 
-- Each backend can be enabled independently.
+- The Scripty backend can be enabled independently of Ziggy and Ziggy Schema.
 - Parser errors leave safely escaped, readable output rather than failing rendering.
 
 ## Phase 7: Add HTML, XML, And CSS
@@ -370,17 +350,48 @@ Phase gate:
 - SuperHTML output preserves the entire original source.
 - Nested failures cannot create invalid ranges or unsafe HTML.
 
-## Phase 9: Resolve Markdown Ownership
+## Phase 9: Perform The First Zine Integration Spike
+
+Goal: validate the public API and completed native backends in their first real consumer.
+
+### Slice 9.1: Local dependency wiring
+
+- Add `zig-native-syntax` as a local path dependency on Zine's experiment branch.
+- Route canonical languages with completed native backends through the library.
+- Keep Tree-sitter as the fallback for every other currently supported language.
+
+### Slice 9.2: CSS and snapshot adaptation
+
+- Map stable library classes into Zine's starter highlight stylesheet.
+- Update only snapshots whose markup changes intentionally for native languages.
+- Verify source escaping for fenced blocks, code directives, and string highlighting helpers.
+
+### Slice 9.3: Integration evidence
+
+- Compare build time, executable size, peak allocations, and representative output with the current
+  Tree-sitter path.
+- Record API friction in this plan or the relevant architecture document before expanding the Zine
+  migration.
+- Revise Phase 1 APIs while compatibility is still experimental if the integration exposes a poor
+  ownership or lifetime boundary.
+
+Phase gate:
+
+- Zine renders the completed library languages natively and all other languages through the
+  unchanged fallback.
+- Zine's focused rendering and workflow tests pass on the local architecture.
+
+## Phase 10: Resolve Markdown Ownership
 
 Goal: support Markdown source highlighting without creating a dependency cycle with Zine.
 
-### Slice 9.1: Requirements audit
+### Slice 10.1: Requirements audit
 
 - Measure whether Zine or another intended consumer actually needs highlighted Markdown source.
 - Define required constructs and whether embedded HTML or fenced-language composition is in scope.
 - Compare a bounded scanner with extracting the existing Markdown parser into an independent package.
 
-### Slice 9.2: Implement the selected boundary
+### Slice 10.2: Implement the selected boundary
 
 - Keep the adapter in Zine if it depends on Zine-owned parser internals; or
 - consume an independently extracted parser package; or
@@ -391,32 +402,32 @@ Phase gate:
 - No dependency path leads from `zig-native-syntax` back into Zine.
 - The selected behavior and limitations are documented before it is advertised as supported.
 
-## Phase 10: Add Compatibility Scanners By Demand
+## Phase 11: Add Compatibility Scanners By Demand
 
 Goal: preserve the most valuable non-native language coverage without building hidden full parsers.
 
-### Slice 10.1: Usage and compatibility contract
+### Slice 11.1: Usage and compatibility contract
 
 - Audit Zine fixtures, example sites, and known consumer language labels.
 - Define the language set required before Tree-sitter can be removed from Zine.
 - Specify whether unsupported languages are rejected, rendered as escaped plain text, or delegated to
   an optional fallback.
 
-### Slice 10.2: Shell/Bash scanner
+### Slice 11.2: Shell/Bash scanner
 
 - Document the supported shell dialect and lexical subset.
 - Cover comments, quoting forms, variables, substitutions, operators, keywords, and heredocs according
   to that subset.
 - Include incomplete quotes, substitutions, and heredocs in the corpus.
 
-### Slice 10.3: Rust scanner
+### Slice 11.3: Rust scanner
 
 - Document the supported Rust lexical subset.
 - Cover comments, raw and byte strings, character literals versus lifetimes, numbers, attributes,
   keywords, identifiers, macros, and punctuation.
 - Include nested block comments and incomplete raw strings.
 
-### Slice 10.4: Prioritize further languages
+### Slice 11.4: Prioritize further languages
 
 - Rank candidates using real consumer demand, availability of maintained Zig syntax APIs, implementation
   complexity, binary-size cost, and security risk.
@@ -428,25 +439,25 @@ Phase gate:
 - Every owned scanner states what it recognizes and what remains plain text.
 - Scanner tests do not claim syntax validation or full grammar conformance.
 
-## Phase 11: Complete The Zine Migration
+## Phase 12: Complete The Zine Migration
 
 Goal: make native highlighting operationally selectable, then remove Tree-sitter only after explicit
 compatibility approval.
 
-### Slice 11.1: Backend selection
+### Slice 12.1: Backend selection
 
 - Add a temporary Zine selection mode for native-first with Tree-sitter fallback, native-only, and
   current Tree-sitter behavior.
 - Keep unknown-language diagnostics consistent with the selected mode.
 - Ensure disabling highlighting still emits safely escaped plain text.
 
-### Slice 11.2: Native coverage conversion
+### Slice 12.2: Native coverage conversion
 
 - Convert Zine fixtures language by language.
 - Update snapshots for intentional class and span changes.
 - Verify code fences, code directives, imported snippets, and string helper highlighting.
 
-### Slice 11.3: Tree-sitter removal decision
+### Slice 12.3: Tree-sitter removal decision
 
 - Review supported-language differences and obtain explicit compatibility approval.
 - Verify local-architecture builds and tests without `flow-syntax`, `tree_sitter`, or `treez` imports.
@@ -460,30 +471,30 @@ Phase gate:
 - Zine's required tests pass locally; platform-specific and release validation remains in CI rather
   than requiring all targets to be built locally.
 
-## Phase 12: Harden And Release The Package
+## Phase 13: Harden And Release The Package
 
 Goal: turn the experiment into a versioned dependency suitable for Zine and other consumers.
 
-### Slice 12.1: Public documentation
+### Slice 13.1: Public documentation
 
 - Add API examples for core-only, selected backends, custom rendering, and plain-text fallback.
 - Publish the supported-language and supported-subset matrix.
 - Document scope class stability, error behavior, allocation behavior, and dependency selection.
 
-### Slice 12.2: Quality gates
+### Slice 13.2: Quality gates
 
 - Add formatting, Debug, and ReleaseSafe tests to CI using the declared Zig version.
 - Run corpus, randomized range, escaping, allocation, and integration tests.
 - Add representative benchmarks and record baselines without imposing arbitrary thresholds.
 
-### Slice 12.3: Package policy
+### Slice 13.3: Package policy
 
 - Choose and document the project license before publication.
 - Define semantic-versioning expectations for scope names, backend behavior, and parser dependency
   upgrades.
 - Create a changelog or release-note policy.
 
-### Slice 12.4: Zine dependency pin
+### Slice 13.4: Zine dependency pin
 
 - Publish the repository at its intended remote.
 - Replace Zine's experimental local path with a pinned Git revision and Zig package hash.
@@ -527,7 +538,7 @@ The project is successful when:
 
 | Risk | Mitigation |
 | --- | --- |
-| Scope API freezes before real backends exercise it | Integrate Zig with Zine before adding many adapters |
+| Scope API freezes before real backends exercise it | Exercise it with several independent backends, then validate the result in the Phase 9 Zine spike |
 | Parser APIs expose ASTs but insufficient lexical ranges | Prefer tokenizers; request small upstream exports rather than copying code |
 | Overlapping captures produce invalid HTML | Define and property-test normalization before language work |
 | Parser errors discard useful tokens | Keep lexical paths and escaped fallback independent of successful parsing |

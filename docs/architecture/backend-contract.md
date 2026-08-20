@@ -61,5 +61,5 @@ consumers or a future configured module choose which descriptors to include. Con
 - consumer aliases do not expand the core API;
 - adding a backend does not require a central exhaustive language enum.
 
-The build-system mechanism for selecting parser-backed modules will be proven in Phase 5 before it is
+The build-system mechanism for selecting parser-backed modules will be proven in Phase 4 before it is
 treated as stable.

@@ -15,7 +15,7 @@ The representative inputs are the complete, malformed, incomplete, and golden fi
 - the deterministic HTML asserted by `tests/zig_corpus.zig`.
 
 The golden test fixes this package's structural output. CSS colors and typography remain consumer
-owned and will be compared in Zine during Phase 4.
+owned and will be compared in Zine during Phase 9.
 
 ## Classification Comparison
 
