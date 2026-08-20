@@ -1,0 +1,10 @@
+/* Native highlighting fixture. */
+@media (min-width: 48rem) {
+  main.cards {
+    --gap: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--gap);
+    background-image: url(images/grid.png);
+  }
+}

@@ -34,6 +34,10 @@ case "${1:-}" in
         shift
         exec "${zig_exe}" build render-xml -Dbackend-xml=true -- "$@"
         ;;
+    render-css)
+        shift
+        exec "${zig_exe}" build render-css -Dbackend-css=true -- "$@"
+        ;;
 esac
 
 exec "${zig_exe}" build "$@"

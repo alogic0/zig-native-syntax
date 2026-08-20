@@ -48,3 +48,19 @@ escaped by the shared renderer.
 SuperHTML's XML tokenizer reports processing instructions through its bogus-comment token path. The
 adapter recognizes the tokenizer-provided `<?...?>` range and maps it to `special`; it does not
 attempt to interpret the instruction body.
+
+## CSS Adapter Boundary
+
+The CSS backend consumes `superhtml.css.Tokenizer` for identifiers, functions, at-keywords, hashes,
+strings, URLs, numbers, percentages, dimensions, errors, delimiters, and structural punctuation.
+The tokenizer does not emit comments, so the adapter uses a bounded byte scan to reserve `/*...*/`
+ranges before mapping tokens. Tokens wholly inside those ranges are ignored.
+
+A bounded declaration lookahead distinguishes property names from selectors and values. It tracks
+quotes, parentheses, and square brackets and declines to call a name a property when the construct
+reaches an opening rule brace first. This is highlighting context, not CSS validation.
+
+The upstream CSS AST is intentionally not used because its current parser contains `TODO` panic
+paths for valid but unsupported constructs, including attribute selectors. Malformed snippets must
+remain data rather than terminate highlighting. Invalid tokenizer spans are therefore ignored while
+the shared renderer preserves their original bytes.

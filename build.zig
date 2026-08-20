@@ -389,6 +389,44 @@ pub fn build(b: *std.Build) void {
         };
     } else null;
 
+    const css_backend_runs: ?OptionalBackendRuns = if (enable_css_backend) enabled: {
+        const dependency = superhtml_dependency.?;
+        const css_backend = b.addModule("native_syntax_css", .{
+            .root_source_file = b.path("src/optional/css.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "superhtml", .module = dependency.module("superhtml") },
+            },
+        });
+        const css_backend_tests = b.addTest(.{
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("tests/css_backend.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "native_syntax", .module = native_syntax },
+                    .{ .name = "native_syntax_css", .module = css_backend },
+                },
+            }),
+        });
+        const preview = addPreviewTool(b, .{
+            .command_name = "render-css",
+            .display_name = "CSS",
+            .language_class = "language-css",
+            .sample_path = "source.css",
+            .backend = css_backend,
+            .native_syntax = native_syntax,
+            .target = target,
+            .optimize = optimize,
+        });
+        break :enabled .{
+            .backend_test_run = b.addRunArtifact(css_backend_tests),
+            .preview_test_run = preview.test_run,
+        };
+    } else null;
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
@@ -416,6 +454,10 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.preview_test_run.step);
     }
     if (xml_backend_runs) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (css_backend_runs) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }

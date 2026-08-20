@@ -333,6 +333,8 @@ Status: complete.
 
 ### Slice 7.3: CSS adapter
 
+Status: complete.
+
 - Classify comments, identifiers, functions, at-keywords, hashes, strings, URLs, numbers, dimensions,
   delimiters, and structural punctuation.
 - Add AST context for selectors and properties only where reliable and useful.
@@ -342,6 +344,8 @@ Phase gate:
 
 - HTML, XML, and CSS can be enabled without Ziggy or Scripty.
 - Corpus tests include hostile HTML-shaped source and incomplete markup.
+
+Phase 7 status: complete.
 
 ## Phase 8: Add SuperHTML Composition
 
