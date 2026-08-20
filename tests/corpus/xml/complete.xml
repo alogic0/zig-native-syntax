@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!-- Native highlighting fixture. -->
+<catalog xmlns="urn:example:catalog">
+  <entry id="first">Zine &amp; Zig</entry>
+  <empty />
+</catalog>

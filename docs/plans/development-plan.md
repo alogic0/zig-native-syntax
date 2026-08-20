@@ -323,6 +323,8 @@ Status: complete.
 
 ### Slice 7.2: HTML and XML adapter
 
+Status: complete.
+
 - Classify tag delimiters, tag names, attribute names, attribute values, comments, doctypes, entities,
   and text where useful.
 - Respect HTML and XML tokenizer-mode differences.

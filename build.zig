@@ -313,6 +313,82 @@ pub fn build(b: *std.Build) void {
         };
     } else null;
 
+    const html_backend_runs: ?OptionalBackendRuns = if (enable_html_backend) enabled: {
+        const dependency = superhtml_dependency.?;
+        const html_backend = b.addModule("native_syntax_html", .{
+            .root_source_file = b.path("src/optional/html.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "superhtml", .module = dependency.module("superhtml") },
+            },
+        });
+        const html_backend_tests = b.addTest(.{
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("tests/html_backend.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "native_syntax", .module = native_syntax },
+                    .{ .name = "native_syntax_html", .module = html_backend },
+                },
+            }),
+        });
+        const preview = addPreviewTool(b, .{
+            .command_name = "render-html",
+            .display_name = "HTML",
+            .language_class = "language-html",
+            .sample_path = "source.html",
+            .backend = html_backend,
+            .native_syntax = native_syntax,
+            .target = target,
+            .optimize = optimize,
+        });
+        break :enabled .{
+            .backend_test_run = b.addRunArtifact(html_backend_tests),
+            .preview_test_run = preview.test_run,
+        };
+    } else null;
+
+    const xml_backend_runs: ?OptionalBackendRuns = if (enable_xml_backend) enabled: {
+        const dependency = superhtml_dependency.?;
+        const xml_backend = b.addModule("native_syntax_xml", .{
+            .root_source_file = b.path("src/optional/xml.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "superhtml", .module = dependency.module("superhtml") },
+            },
+        });
+        const xml_backend_tests = b.addTest(.{
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("tests/xml_backend.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "native_syntax", .module = native_syntax },
+                    .{ .name = "native_syntax_xml", .module = xml_backend },
+                },
+            }),
+        });
+        const preview = addPreviewTool(b, .{
+            .command_name = "render-xml",
+            .display_name = "XML",
+            .language_class = "language-xml",
+            .sample_path = "source.xml",
+            .backend = xml_backend,
+            .native_syntax = native_syntax,
+            .target = target,
+            .optimize = optimize,
+        });
+        break :enabled .{
+            .backend_test_run = b.addRunArtifact(xml_backend_tests),
+            .preview_test_run = preview.test_run,
+        };
+    } else null;
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
@@ -332,6 +408,14 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.preview_test_run.step);
     }
     if (scripty_backend_runs) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (html_backend_runs) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (xml_backend_runs) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }

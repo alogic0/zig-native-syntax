@@ -32,3 +32,19 @@ Before updating the pin, verify that:
 
 `tests/superhtml_api.zig` is the compile-and-run probe for this boundary. Adapter corpus tests own
 the behavioral compatibility requirements added by later phases.
+
+## HTML And XML Adapter Boundary
+
+The HTML and XML backends use the same tokenizer with distinct `.html` and `.xml` modes. They
+classify tokenizer-reported tag names, attributes, values, comments, doctypes, text entities, and
+parse errors. A bounded structural pass derives delimiters and assignment punctuation from those
+reported ranges without attempting to parse document structure.
+
+Ordinary text is intentionally unclassified. Contents of `script` and `style` elements are also
+left unclassified until a composed backend owns their nested-language policy. Malformed input is
+highlighted as far as the tokenizer reports reliable ranges; remaining bytes are preserved and
+escaped by the shared renderer.
+
+SuperHTML's XML tokenizer reports processing instructions through its bogus-comment token path. The
+adapter recognizes the tokenizer-provided `<?...?>` range and maps it to `special`; it does not
+attempt to interpret the instruction body.
