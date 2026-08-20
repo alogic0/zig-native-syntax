@@ -8,6 +8,11 @@ pub fn build(b: *std.Build) void {
         "backend-dummy",
         "Enable the test-only optional backend used to verify dependency selection",
     ) orelse false;
+    const enable_ziggy_backend = b.option(
+        bool,
+        "backend-ziggy",
+        "Enable the optional Ziggy document backend",
+    ) orelse false;
 
     const native_syntax = b.addModule("native_syntax", .{
         .root_source_file = b.path("src/root.zig"),
@@ -142,6 +147,35 @@ pub fn build(b: *std.Build) void {
         break :enabled b.addRunArtifact(dummy_backend_tests);
     } else null;
 
+    const run_ziggy_backend_tests: ?*std.Build.Step.Run = if (enable_ziggy_backend) enabled: {
+        const dependency = b.lazyDependency("ziggy", .{
+            .target = target,
+            .optimize = optimize,
+        }) orelse return;
+
+        const ziggy_backend = b.addModule("native_syntax_ziggy", .{
+            .root_source_file = b.path("src/optional/ziggy.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "ziggy", .module = dependency.module("ziggy") },
+            },
+        });
+        const ziggy_backend_tests = b.addTest(.{
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("tests/ziggy_backend.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "native_syntax", .module = native_syntax },
+                    .{ .name = "native_syntax_ziggy", .module = ziggy_backend },
+                },
+            }),
+        });
+        break :enabled b.addRunArtifact(ziggy_backend_tests);
+    } else null;
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
@@ -151,4 +185,5 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_render_zig_tests.step);
     test_step.dependOn(&run_core_only_tests.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);
+    if (run_ziggy_backend_tests) |run| test_step.dependOn(&run.step);
 }
