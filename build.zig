@@ -39,8 +39,21 @@ pub fn build(b: *std.Build) void {
     });
     const run_html_property_tests = b.addRunArtifact(html_property_tests);
 
+    const zig_corpus_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/zig_corpus.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+            },
+        }),
+    });
+    const run_zig_corpus_tests = b.addRunArtifact(zig_corpus_tests);
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
     test_step.dependOn(&run_html_property_tests.step);
+    test_step.dependOn(&run_zig_corpus_tests.step);
 }

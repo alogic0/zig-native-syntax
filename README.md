@@ -34,6 +34,8 @@ Zine integration remain experimental work.
   between language implementations, highlighting adapters, the shared renderer, and consumers.
 - [Development plan](docs/plans/development-plan.md) defines the phased implementation and
   integration sequence.
+- [Zig highlighting compatibility](docs/compatibility/zig.md) records corpus coverage and intentional
+  differences from Zig's documentation renderer and Zine's Tree-sitter path.
 
 ## Development
 

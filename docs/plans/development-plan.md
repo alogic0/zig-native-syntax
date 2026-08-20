@@ -218,6 +218,8 @@ Status: complete.
 
 ### Slice 3.3: Zig corpus and parity review
 
+Status: complete.
+
 - Add complete declarations, expressions, comments, multiline strings, builtins, malformed snippets,
   and incomplete snippets.
 - Compare representative output visually and structurally with Zig's standard documentation renderer
@@ -228,6 +230,8 @@ Phase gate:
 
 - Zig highlighting is source-preserving and safe for malformed snippets.
 - The Zig backend has no C dependency and no Tree-sitter dependency.
+
+Phase 3 status: complete.
 
 ## Phase 4: Perform The First Zine Integration Spike
 
