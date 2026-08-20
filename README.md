@@ -35,6 +35,8 @@ experimental work.
   between language implementations, highlighting adapters, the shared renderer, and consumers.
 - [Optional backend selection](docs/architecture/backend-selection.md) defines how external parser
   adapters remain independently selectable without changing the core module.
+- [Embedded language composition](docs/architecture/composition.md) defines nested backend offset
+  translation and overlapping-scope behavior.
 - [Development plan](docs/plans/development-plan.md) defines the phased implementation and
   integration sequence.
 - [Zig highlighting compatibility](docs/compatibility/zig.md) records corpus coverage and intentional

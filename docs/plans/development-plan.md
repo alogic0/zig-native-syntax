@@ -353,6 +353,8 @@ Goal: combine markup and Scripty classifications without duplicating either pars
 
 ### Slice 8.1: Embedded-region contract
 
+Status: complete.
+
 - Define how a parent backend delegates a byte range to a nested backend.
 - Translate nested offsets safely into the original source coordinate space.
 - Specify precedence at language boundaries and for overlapping parent classifications.

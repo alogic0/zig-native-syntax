@@ -1,7 +1,7 @@
 # Experimental API Guide
 
 The public API currently covers language-neutral scopes, byte ranges, captures, backend metadata,
-and caller-owned capture storage. HTML rendering and real language backends arrive in later phases.
+caller-owned capture storage, source-preserving HTML rendering, and embedded-language composition.
 
 The API remains experimental until the first stable package release. See the
 [development plan](plans/development-plan.md) for sequencing and compatibility gates.
@@ -113,6 +113,25 @@ rules.
 
 See the [language backend contract](architecture/backend-contract.md) for the full responsibility and
 error boundary.
+
+## Compose Embedded Languages
+
+A composed backend can delegate one source range to another backend without making the nested
+backend aware of parent offsets:
+
+```zig
+try syntax.composition.highlightEmbedded(
+    source,
+    .{ .start = expression_start, .end = expression_end },
+    expression_backend,
+    &sink,
+);
+```
+
+The helper validates the range, highlights the borrowed subslice in a temporary sink, marks the
+region as `embedded`, and translates nested captures back into the original source coordinates.
+Parent and nested scopes remain composable. See
+[embedded language composition](architecture/composition.md) for boundary and failure rules.
 
 ## Stability
 

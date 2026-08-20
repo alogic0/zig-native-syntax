@@ -64,3 +64,7 @@ consumers or a future configured module choose which descriptors to include. Con
 External parser adapters use the separate-module and lazy-dependency mechanism defined in
 [Optional Backend Selection](backend-selection.md). The core module never imports optional parser
 packages.
+
+Composed backends use the source-range translation rules defined in
+[Embedded Language Composition](composition.md). The shared helper keeps nested backends unaware of
+their parent source offsets.
