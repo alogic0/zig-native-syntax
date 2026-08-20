@@ -125,7 +125,7 @@ follow the package's documented semantic-versioning policy.
 
 ## Zig Backend
 
-The first native backend uses the pinned Zig standard library tokenizer:
+The first native backend uses the pinned Zig standard library tokenizer and recovering AST parser:
 
 ```zig
 var sink: syntax.CaptureSink = .init(allocator, source.len);
@@ -136,6 +136,10 @@ try syntax.html.render(source, sink.captures(), allocator, writer);
 ```
 
 It classifies Zig tokens lexically, recognizes primitive types and values, recovers ordinary comments
-from tokenizer trivia, and marks escape sequences inside string and character literals. It copies the
-borrowed source into temporary sentinel-terminated storage required by `std.zig.Tokenizer`; captures
-still contain offsets into the caller's original source.
+from tokenizer trivia, and marks escape sequences inside string and character literals. Recovering
+AST context adds function declarations and calls, parameters, declared container and function types,
+and member properties. Lexical captures remain available when parsing reports syntax errors.
+
+The backend copies the borrowed source into temporary sentinel-terminated storage required by the
+Zig syntax APIs; captures still contain offsets into the caller's original source. Contextual scopes
+overlap lexical scopes intentionally and are normalized by the shared HTML renderer.

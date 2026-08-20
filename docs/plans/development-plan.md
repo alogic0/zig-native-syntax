@@ -209,6 +209,8 @@ Status: complete.
 
 ### Slice 3.2: Optional AST context
 
+Status: complete.
+
 - Parse with `std.zig.Ast` only for classifications that materially improve output, such as function
   declarations or type context.
 - Retain lexical highlighting when the AST reports syntax errors.

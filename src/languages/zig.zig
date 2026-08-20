@@ -8,7 +8,7 @@ const Scope = @import("../scope.zig").Scope;
 pub const backend: Backend = .init(.{
     .canonical_name = "zig",
     .display_name = "Zig",
-    .kind = .lexical,
+    .kind = .parser_backed,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {
@@ -17,28 +17,38 @@ fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {
     const terminated = try sink.allocator.dupeSentinel(u8, source, 0);
     defer sink.allocator.free(terminated);
 
-    var tokenizer: std.zig.Tokenizer = .init(terminated);
+    var tree = try std.zig.Ast.parse(sink.allocator, terminated, .{
+        .recover = true,
+        .mode = .zig,
+    });
+    defer tree.deinit(sink.allocator);
+
     var previous_end: usize = 0;
 
-    while (true) {
-        const token = tokenizer.next();
-        try classifyComments(source, previous_end, token.loc.start, sink);
+    for (0..tree.tokens.len) |token_index_usize| {
+        const token_index: std.zig.Ast.TokenIndex = @intCast(token_index_usize);
+        const start: usize = tree.tokenStart(token_index);
+        try classifyComments(source, previous_end, start, sink);
 
-        if (token.tag == .eof) break;
-        try classifyToken(source, token, sink);
-        previous_end = token.loc.end;
+        const tag = tree.tokenTag(token_index);
+        if (tag == .eof) break;
+
+        const end = start + tree.tokenSlice(token_index).len;
+        try classifyToken(source, tag, start, end, sink);
+        previous_end = end;
     }
+
+    try classifyAstContext(&tree, sink);
 }
 
 fn classifyToken(
     source: []const u8,
-    token: std.zig.Token,
+    tag: std.zig.Token.Tag,
+    start: usize,
+    end: usize,
     sink: *CaptureSink,
 ) HighlightError!void {
-    const start = token.loc.start;
-    const end = token.loc.end;
-
-    switch (token.tag) {
+    switch (tag) {
         .eof => {},
         .invalid => try sink.add(start, end, .invalid),
         .identifier => try classifyIdentifier(source[start..end], start, end, sink),
@@ -169,6 +179,136 @@ fn classifyToken(
     }
 }
 
+fn classifyAstContext(
+    tree: *const std.zig.Ast,
+    sink: *CaptureSink,
+) HighlightError!void {
+    for (1..tree.nodes.len) |node_index_usize| {
+        const node: std.zig.Ast.Node.Index = @enumFromInt(node_index_usize);
+        const tag = tree.nodeTag(node);
+
+        switch (tag) {
+            .fn_proto_simple,
+            .fn_proto_multi,
+            .fn_proto_one,
+            .fn_proto,
+            => try classifyFunctionPrototype(tree, node, sink),
+
+            .call_one,
+            .call_one_comma,
+            .call,
+            .call_comma,
+            => {
+                var buffer: [1]std.zig.Ast.Node.Index = undefined;
+                const call = tree.fullCall(&buffer, node).?;
+                if (calleeToken(tree, call.ast.fn_expr)) |token| {
+                    try addTokenScope(tree, token, .function, sink);
+                }
+            },
+
+            .field_access => {
+                const field_token = tree.nodeData(node).node_and_token[1];
+                try addTokenScope(tree, field_token, .property, sink);
+            },
+
+            .container_field,
+            .container_field_init,
+            .container_field_align,
+            => {
+                const field = tree.fullContainerField(node).?;
+                if (!field.ast.tuple_like and
+                    tree.tokenTag(field.ast.main_token) == .identifier)
+                {
+                    try addTokenScope(tree, field.ast.main_token, .property, sink);
+                }
+            },
+
+            .global_var_decl,
+            .local_var_decl,
+            .simple_var_decl,
+            .aligned_var_decl,
+            => try classifyTypeDeclaration(tree, node, sink),
+
+            else => {},
+        }
+    }
+}
+
+fn classifyFunctionPrototype(
+    tree: *const std.zig.Ast,
+    node: std.zig.Ast.Node.Index,
+    sink: *CaptureSink,
+) HighlightError!void {
+    var buffer: [1]std.zig.Ast.Node.Index = undefined;
+    const fn_proto = tree.fullFnProto(&buffer, node).?;
+
+    if (fn_proto.name_token) |name_token| {
+        try addTokenScope(tree, name_token, .function, sink);
+    }
+
+    var iterator = fn_proto.iterate(tree);
+    while (iterator.next()) |param| {
+        if (param.name_token) |name_token| {
+            try addTokenScope(tree, name_token, .parameter, sink);
+        }
+    }
+}
+
+fn classifyTypeDeclaration(
+    tree: *const std.zig.Ast,
+    node: std.zig.Ast.Node.Index,
+    sink: *CaptureSink,
+) HighlightError!void {
+    const var_decl = tree.fullVarDecl(node).?;
+    const init_node = var_decl.ast.init_node.unwrap() orelse return;
+    if (!isTypeInitializer(tree, init_node)) return;
+
+    const name_token = var_decl.ast.mut_token + 1;
+    if (tree.tokenTag(name_token) == .identifier) {
+        try addTokenScope(tree, name_token, .type, sink);
+    }
+}
+
+fn isTypeInitializer(
+    tree: *const std.zig.Ast,
+    node: std.zig.Ast.Node.Index,
+) bool {
+    var buffer: [2]std.zig.Ast.Node.Index = undefined;
+    if (tree.fullContainerDecl(&buffer, node) != null) return true;
+
+    return switch (tree.nodeTag(node)) {
+        .error_set_decl,
+        .fn_proto_simple,
+        .fn_proto_multi,
+        .fn_proto_one,
+        .fn_proto,
+        => true,
+        else => false,
+    };
+}
+
+fn calleeToken(
+    tree: *const std.zig.Ast,
+    node: std.zig.Ast.Node.Index,
+) ?std.zig.Ast.TokenIndex {
+    return switch (tree.nodeTag(node)) {
+        .identifier => tree.nodeMainToken(node),
+        .field_access => tree.nodeData(node).node_and_token[1],
+        .grouped_expression => calleeToken(tree, tree.nodeData(node).node_and_token[0]),
+        else => null,
+    };
+}
+
+fn addTokenScope(
+    tree: *const std.zig.Ast,
+    token: std.zig.Ast.TokenIndex,
+    scope: Scope,
+    sink: *CaptureSink,
+) HighlightError!void {
+    const start: usize = tree.tokenStart(token);
+    try sink.add(start, start + tree.tokenSlice(token).len, scope);
+}
+
 fn classifyIdentifier(
     identifier: []const u8,
     start: usize,
@@ -285,6 +425,50 @@ test "Zig backend classifies lexical roles" {
     try std.testing.expect(hasCapture(captures, source, "// ordinary", .comment));
     try std.testing.expect(hasCapture(captures, source, "\\n", .escape));
     try std.testing.expect(hasCapture(captures, source, "\\u{21}", .escape));
+}
+
+test "Zig backend adds reliable AST context" {
+    const source =
+        \\const Thing = struct {
+        \\    field: u32,
+        \\};
+        \\const Failure = error{Bad};
+        \\const Callback = fn (argument: u32) void;
+        \\fn compute(input: Thing) void {
+        \\    const object: Thing = .{ .field = 1 };
+        \\    object.field = compute(input);
+        \\    object.method(input);
+        \\}
+    ;
+    var sink: CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+
+    try backend.highlight(source, &sink);
+    const captures = sink.captures();
+
+    try std.testing.expectEqual(backend_api.BackendKind.parser_backed, backend.info.kind);
+    try std.testing.expect(hasCapture(captures, source, "Thing", .type));
+    try std.testing.expect(hasCapture(captures, source, "Failure", .type));
+    try std.testing.expect(hasCapture(captures, source, "Callback", .type));
+    try std.testing.expect(hasCapture(captures, source, "compute", .function));
+    try std.testing.expect(hasCapture(captures, source, "input", .parameter));
+    try std.testing.expect(hasCapture(captures, source, "argument", .parameter));
+    try std.testing.expect(hasCapture(captures, source, "field", .property));
+    try std.testing.expect(hasCapture(captures, source, "method", .property));
+    try std.testing.expect(hasCapture(captures, source, "method", .function));
+}
+
+test "Zig backend retains lexical output after parser recovery" {
+    const source = "fn incomplete(value: u32) void { const after =";
+    var sink: CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+
+    try backend.highlight(source, &sink);
+    const captures = sink.captures();
+
+    try std.testing.expect(hasCapture(captures, source, "fn", .keyword));
+    try std.testing.expect(hasCapture(captures, source, "incomplete", .variable));
+    try std.testing.expect(hasCapture(captures, source, "after", .variable));
 }
 
 test "Zig backend preserves useful tokens around invalid source" {
