@@ -1,0 +1,19 @@
+/// Article frontmatter.
+$ = Article
+
+struct Article {
+    title: bytes,
+    published: bool,
+    views: int,
+    kind: Kind,
+    author: ?Author,
+}
+
+union Kind {
+    article,
+    note,
+}
+
+struct Author {
+    name: bytes,
+}

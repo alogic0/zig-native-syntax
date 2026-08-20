@@ -51,20 +51,24 @@ The project currently tracks the Zig version used by Zine:
 ./build.sh test
 ```
 
-Render a Zig source file as an HTML fragment for manual inspection:
+Render source files as HTML fragments for manual inspection:
 
 ```sh
 ./build.sh render-zig tests/corpus/zig/complete.zig > /tmp/complete.html
+./build.sh render-ziggy tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
+./build.sh render-ziggy-schema tests/corpus/ziggy-schema/complete.ziggy-schema > /tmp/schema.html
 ```
 
-Add `--page` to emit a complete HTML document with a built-in development theme:
+Add `--page` to any preview command to emit a complete HTML document with a built-in development
+theme:
 
 ```sh
-./build.sh render-zig --page tests/corpus/zig/complete.zig > /tmp/complete.html
+./build.sh render-ziggy --page tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
 ```
 
 The command writes only to standard output. Fragment mode emits escaped source and `syntax-*` spans;
-page mode wraps the same rendering in a preview document suitable for opening in a browser. Its
-development theme is maintained in `tools/render_zig.css` and embedded into the generated page.
+page mode wraps the same rendering in a preview document suitable for opening in a browser. The
+shared development theme is maintained in `tools/render_zig.css` and embedded into each generated
+page. The Ziggy commands enable only their matching optional backend automatically.
 
 The [experimental API guide](docs/api.md) shows the current public classification interface.

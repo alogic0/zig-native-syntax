@@ -9,9 +9,19 @@ if [ ! -x "${zig_exe}" ]; then
     exit 1
 fi
 
-if [ "${1:-}" = "render-zig" ]; then
-    shift
-    exec "${zig_exe}" build render-zig -- "$@"
-fi
+case "${1:-}" in
+    render-zig)
+        shift
+        exec "${zig_exe}" build render-zig -- "$@"
+        ;;
+    render-ziggy)
+        shift
+        exec "${zig_exe}" build render-ziggy -Dbackend-ziggy=true -- "$@"
+        ;;
+    render-ziggy-schema)
+        shift
+        exec "${zig_exe}" build render-ziggy-schema -Dbackend-ziggy-schema=true -- "$@"
+        ;;
+esac
 
 exec "${zig_exe}" build "$@"

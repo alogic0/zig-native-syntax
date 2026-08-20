@@ -30,7 +30,8 @@ pre {
     font-style: italic;
 }
 
-.syntax-keyword {
+.syntax-keyword,
+.syntax-special {
     color: #c084fc;
 }
 
@@ -39,7 +40,8 @@ pre {
     color: #67e8f9;
 }
 
-.syntax-function {
+.syntax-function,
+.syntax-constructor {
     color: #fde68a;
 }
 

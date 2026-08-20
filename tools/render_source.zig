@@ -1,5 +1,7 @@
 const std = @import("std");
 const syntax = @import("native_syntax");
+const preview_backend = @import("preview_backend");
+const preview_config = @import("preview_config");
 
 const Options = struct {
     path: []const u8,
@@ -24,14 +26,12 @@ const page_header =
     "<html lang=\"en\">\n" ++
     "<head>\n" ++
     "<meta charset=\"utf-8\">\n" ++
-    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" ++
-    "<title>Zig syntax preview</title>\n" ++
-    "<style>\n";
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n";
 
 const page_code_header =
     "</style>\n" ++
     "</head>\n" ++
-    "<body><main><pre><code class=\"language-zig\">";
+    "<body><main><pre><code";
 
 const page_footer = "</code></pre></main></body>\n</html>\n";
 
@@ -41,7 +41,10 @@ pub fn main(init: std.process.Init) !void {
         var stderr_buffer: [1024]u8 = undefined;
         var stderr_writer = std.Io.File.stderr().writer(init.io, &stderr_buffer);
         const stderr = &stderr_writer.interface;
-        try stderr.print("render-zig: {s}\n\n", .{argumentErrorMessage(err)});
+        try stderr.print("{s}: {s}\n\n", .{
+            preview_config.command_name,
+            argumentErrorMessage(err),
+        });
         try writeUsage(stderr);
         try stderr.flush();
         std.process.exit(2);
@@ -67,8 +70,8 @@ pub fn main(init: std.process.Init) !void {
                 var stderr_writer = std.Io.File.stderr().writer(init.io, &stderr_buffer);
                 const stderr = &stderr_writer.interface;
                 try stderr.print(
-                    "render-zig: cannot read '{s}': {s}\n",
-                    .{ options.path, @errorName(err) },
+                    "{s}: cannot read '{s}': {s}\n",
+                    .{ preview_config.command_name, options.path, @errorName(err) },
                 );
                 try stderr.flush();
                 std.process.exit(1);
@@ -114,24 +117,28 @@ fn parseArgs(args: []const [:0]const u8) ArgumentError!Command {
 
 fn argumentErrorMessage(err: ArgumentError) []const u8 {
     return switch (err) {
-        error.MissingPath => "missing Zig source path",
-        error.MultiplePaths => "expected exactly one Zig source path",
+        error.MissingPath => "missing source path",
+        error.MultiplePaths => "expected exactly one source path",
         error.UnknownOption => "unknown option",
     };
 }
 
 fn writeUsage(writer: *std.Io.Writer) std.Io.Writer.Error!void {
-    try writer.writeAll(
-        \\Usage: ./build.sh render-zig [--page] <source.zig>
+    try writer.print(
+        \\Usage: ./build.sh {s} [--page] <{s}>
         \\
-        \\Render Zig source as safely escaped highlighted HTML.
+        \\Render {s} source as safely escaped highlighted HTML.
         \\
         \\Options:
         \\  --page    Emit a complete HTML document with a development theme.
         \\  -h, --help
         \\            Show this help text.
         \\
-    );
+    , .{
+        preview_config.command_name,
+        preview_config.sample_path,
+        preview_config.display_name,
+    });
 }
 
 fn renderSource(
@@ -142,24 +149,27 @@ fn renderSource(
 ) !void {
     var sink: syntax.CaptureSink = .init(allocator, source.len);
     defer sink.deinit();
-    try syntax.languages.zig.backend.highlight(source, &sink);
+    try preview_backend.backend.highlight(source, &sink);
 
     if (page) {
         try writer.writeAll(page_header);
+        try writer.print("<title>{s} syntax preview</title>\n", .{preview_config.display_name});
+        try writer.writeAll("<style>\n");
         try writer.writeAll(page_css);
         try writer.writeAll(page_code_header);
+        try writer.print(" class=\"{s}\">", .{preview_config.language_class});
     }
     try syntax.html.render(source, sink.captures(), allocator, writer);
     if (page) try writer.writeAll(page_footer);
 }
 
 test "arguments select fragment and page output" {
-    const fragment = try parseArgs(&.{"sample.zig"});
-    try std.testing.expectEqualStrings("sample.zig", fragment.render.path);
+    const fragment = try parseArgs(&.{"sample.source"});
+    try std.testing.expectEqualStrings("sample.source", fragment.render.path);
     try std.testing.expect(!fragment.render.page);
 
-    const page = try parseArgs(&.{ "sample.zig", "--page" });
-    try std.testing.expectEqualStrings("sample.zig", page.render.path);
+    const page = try parseArgs(&.{ "sample.source", "--page" });
+    try std.testing.expectEqualStrings("sample.source", page.render.path);
     try std.testing.expect(page.render.page);
 
     const dash_path = try parseArgs(&.{ "--", "--page" });
@@ -170,28 +180,26 @@ test "arguments select fragment and page output" {
 test "arguments report invalid invocations" {
     try std.testing.expectError(error.MissingPath, parseArgs(&.{}));
     try std.testing.expectError(error.UnknownOption, parseArgs(&.{"--unknown"}));
-    try std.testing.expectError(error.MultiplePaths, parseArgs(&.{ "one.zig", "two.zig" }));
+    try std.testing.expectError(error.MultiplePaths, parseArgs(&.{ "one", "two" }));
     try std.testing.expectEqual(Command.help, try parseArgs(&.{"--help"}));
 }
 
-test "fragment output contains only highlighted source" {
-    const source = "const value: u8 = 42;";
+test "fragment output contains only safely escaped source" {
+    const source = "<tag title=\"x\">&'";
     var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
     defer output.deinit();
 
     try renderSource(source, false, std.testing.allocator, &output.writer);
 
     try std.testing.expect(!std.mem.startsWith(u8, output.written(), "<!doctype html>"));
-    try std.testing.expect(std.mem.startsWith(
-        u8,
-        output.written(),
-        "<span class=\"syntax-keyword\">const</span>",
-    ));
+    try std.testing.expect(std.mem.indexOf(u8, output.written(), "<tag") == null);
+    try std.testing.expect(std.mem.indexOf(u8, output.written(), "&lt;") != null);
+    try std.testing.expect(std.mem.indexOf(u8, output.written(), "&amp;") != null);
     try std.testing.expect(std.mem.indexOf(u8, output.written(), "<pre>") == null);
 }
 
 test "page output is complete, themed, and source safe" {
-    const source = "const text = \"</code><script>alert('x')</script>\";";
+    const source = "</code><script>alert('x')</script>";
     var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
     defer output.deinit();
 
@@ -200,6 +208,7 @@ test "page output is complete, themed, and source safe" {
     try std.testing.expect(std.mem.startsWith(u8, output.written(), "<!doctype html>\n"));
     try std.testing.expect(std.mem.indexOf(u8, output.written(), ".syntax-keyword") != null);
     try std.testing.expect(std.mem.indexOf(u8, output.written(), "<script>") == null);
-    try std.testing.expect(std.mem.indexOf(u8, output.written(), "&lt;/code&gt;") != null);
+    try std.testing.expect(std.mem.indexOf(u8, output.written(), "&lt;") != null);
+    try std.testing.expect(std.mem.indexOf(u8, output.written(), preview_config.language_class) != null);
     try std.testing.expect(std.mem.endsWith(u8, output.written(), "</html>\n"));
 }

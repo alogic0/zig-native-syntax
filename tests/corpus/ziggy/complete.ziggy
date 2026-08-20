@@ -1,0 +1,8 @@
+// Article frontmatter.
+.title = "Native syntax highlighting",
+.published = true,
+.views = 42,
+.kind = .article,
+.author = .person(
+    .name = "Zine",
+),

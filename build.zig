@@ -32,25 +32,24 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const render_zig = b.addExecutable(.{
-        .name = "render-zig",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("tools/render_zig.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{
-                .{ .name = "native_syntax", .module = native_syntax },
-            },
-        }),
+    const zig_preview_backend = b.addModule("zig_preview_backend", .{
+        .root_source_file = b.path("tools/zig_preview_backend.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "native_syntax", .module = native_syntax },
+        },
     });
-    const run_render_zig = b.addRunArtifact(render_zig);
-    run_render_zig.addPassthruArgs();
-
-    const render_zig_step = b.step(
-        "render-zig",
-        "Render a Zig source file as highlighted HTML",
-    );
-    render_zig_step.dependOn(&run_render_zig.step);
+    const zig_preview = addPreviewTool(b, .{
+        .command_name = "render-zig",
+        .display_name = "Zig",
+        .language_class = "language-zig",
+        .sample_path = "source.zig",
+        .backend = zig_preview_backend,
+        .native_syntax = native_syntax,
+        .target = target,
+        .optimize = optimize,
+    });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -105,18 +104,6 @@ pub fn build(b: *std.Build) void {
     });
     const run_zig_conformance_tests = b.addRunArtifact(zig_conformance_tests);
 
-    const render_zig_tests = b.addTest(.{
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("tools/render_zig.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{
-                .{ .name = "native_syntax", .module = native_syntax },
-            },
-        }),
-    });
-    const run_render_zig_tests = b.addRunArtifact(render_zig_tests);
-
     const core_only_tests = b.addTest(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("tests/core_only.zig"),
@@ -159,7 +146,7 @@ pub fn build(b: *std.Build) void {
         break :enabled b.addRunArtifact(dummy_backend_tests);
     } else null;
 
-    const run_ziggy_backend_tests: ?*std.Build.Step.Run = if (enable_ziggy_backend) enabled: {
+    const ziggy_backend_runs: ?OptionalBackendRuns = if (enable_ziggy_backend) enabled: {
         const dependency = ziggy_dependency.?;
 
         const ziggy_backend = b.addModule("native_syntax_ziggy", .{
@@ -182,10 +169,23 @@ pub fn build(b: *std.Build) void {
                 },
             }),
         });
-        break :enabled b.addRunArtifact(ziggy_backend_tests);
+        const preview = addPreviewTool(b, .{
+            .command_name = "render-ziggy",
+            .display_name = "Ziggy",
+            .language_class = "language-ziggy",
+            .sample_path = "source.ziggy",
+            .backend = ziggy_backend,
+            .native_syntax = native_syntax,
+            .target = target,
+            .optimize = optimize,
+        });
+        break :enabled .{
+            .backend_test_run = b.addRunArtifact(ziggy_backend_tests),
+            .preview_test_run = preview.test_run,
+        };
     } else null;
 
-    const run_ziggy_schema_backend_tests: ?*std.Build.Step.Run = if (enable_ziggy_schema_backend) enabled: {
+    const ziggy_schema_backend_runs: ?OptionalBackendRuns = if (enable_ziggy_schema_backend) enabled: {
         const dependency = ziggy_dependency.?;
 
         const ziggy_schema_backend = b.addModule("native_syntax_ziggy_schema", .{
@@ -208,7 +208,20 @@ pub fn build(b: *std.Build) void {
                 },
             }),
         });
-        break :enabled b.addRunArtifact(ziggy_schema_backend_tests);
+        const preview = addPreviewTool(b, .{
+            .command_name = "render-ziggy-schema",
+            .display_name = "Ziggy Schema",
+            .language_class = "language-ziggy-schema",
+            .sample_path = "source.ziggy-schema",
+            .backend = ziggy_schema_backend,
+            .native_syntax = native_syntax,
+            .target = target,
+            .optimize = optimize,
+        });
+        break :enabled .{
+            .backend_test_run = b.addRunArtifact(ziggy_schema_backend_tests),
+            .preview_test_run = preview.test_run,
+        };
     } else null;
 
     const test_step = b.step("test", "Run the native syntax highlighting tests");
@@ -217,9 +230,79 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_html_property_tests.step);
     test_step.dependOn(&run_zig_corpus_tests.step);
     test_step.dependOn(&run_zig_conformance_tests.step);
-    test_step.dependOn(&run_render_zig_tests.step);
+    test_step.dependOn(&zig_preview.test_run.step);
     test_step.dependOn(&run_core_only_tests.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);
-    if (run_ziggy_backend_tests) |run| test_step.dependOn(&run.step);
-    if (run_ziggy_schema_backend_tests) |run| test_step.dependOn(&run.step);
+    if (ziggy_backend_runs) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (ziggy_schema_backend_runs) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
+}
+
+const OptionalBackendRuns = struct {
+    backend_test_run: *std.Build.Step.Run,
+    preview_test_run: *std.Build.Step.Run,
+};
+
+const PreviewOptions = struct {
+    command_name: []const u8,
+    display_name: []const u8,
+    language_class: []const u8,
+    sample_path: []const u8,
+    backend: *std.Build.Module,
+    native_syntax: *std.Build.Module,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+};
+
+const PreviewTool = struct {
+    test_run: *std.Build.Step.Run,
+};
+
+fn addPreviewTool(b: *std.Build, options: PreviewOptions) PreviewTool {
+    const config = b.addOptions();
+    config.addOption([]const u8, "command_name", options.command_name);
+    config.addOption([]const u8, "display_name", options.display_name);
+    config.addOption([]const u8, "language_class", options.language_class);
+    config.addOption([]const u8, "sample_path", options.sample_path);
+
+    const executable = b.addExecutable(.{
+        .name = options.command_name,
+        .root_module = createPreviewModule(b, options, config),
+    });
+    const run = b.addRunArtifact(executable);
+    run.addPassthruArgs();
+
+    const render_step = b.step(
+        options.command_name,
+        b.fmt("Render {s} source as highlighted HTML", .{options.display_name}),
+    );
+    render_step.dependOn(&run.step);
+
+    const tests = b.addTest(.{
+        .root_module = createPreviewModule(b, options, config),
+    });
+    return .{ .test_run = b.addRunArtifact(tests) };
+}
+
+fn createPreviewModule(
+    b: *std.Build,
+    options: PreviewOptions,
+    config: *std.Build.Step.Options,
+) *std.Build.Module {
+    const module = b.createModule(.{
+        .root_source_file = b.path("tools/render_source.zig"),
+        .target = options.target,
+        .optimize = options.optimize,
+        .imports = &.{
+            .{ .name = "native_syntax", .module = options.native_syntax },
+            .{ .name = "preview_backend", .module = options.backend },
+        },
+    });
+    module.addOptions("preview_config", config);
+    return module;
 }
