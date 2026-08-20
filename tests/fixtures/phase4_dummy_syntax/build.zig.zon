@@ -1,0 +1,11 @@
+.{
+    .name = .phase4_dummy_syntax,
+    .version = "0.0.0",
+    .fingerprint = 0x25530ab541470a42,
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

@@ -239,6 +239,8 @@ Goal: add parser-backed languages without forcing unused parser packages into ev
 
 ### Slice 4.1: Dependency and module layout
 
+Status: complete.
+
 - Prototype lazy Zig package dependencies and backend build options.
 - Decide whether optional languages are exposed as separate modules or one configured root module.
 - Verify a core-only consumer does not fetch, compile, or link optional parser dependencies.
