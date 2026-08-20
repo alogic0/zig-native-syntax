@@ -28,6 +28,11 @@ Captures can be unsorted, duplicated, nested, or crossing. The renderer validate
 non-overlapping segments whose class lists contain the active scopes in deterministic enum order.
 Unclassified gaps are escaped without an added span.
 
+The renderer treats source as untrusted bytes. Only library-controlled `span` elements and scope
+classes are emitted. Source is escaped in both classified segments and unclassified gaps, including
+invalid UTF-8. Property tests verify that stripping generated spans and decoding emitted entities
+recovers the original bytes exactly.
+
 ## Classify Source
 
 A backend receives borrowed source and reports captures through a sink:

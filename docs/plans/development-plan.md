@@ -171,6 +171,8 @@ Status: complete.
 
 ### Slice 2.3: Security and preservation properties
 
+Status: complete.
+
 - Test empty input, all escapable bytes, invalid UTF-8, multiline input, and embedded tag-shaped
   strings.
 - Add a test helper that removes generated markup, decodes entities, and verifies recovery of the
