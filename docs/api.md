@@ -122,3 +122,20 @@ and external-consumer tests in the same slice.
 
 After the first stable release, scope names, CSS classes, range semantics, and public ownership rules
 follow the package's documented semantic-versioning policy.
+
+## Zig Backend
+
+The first native backend uses the pinned Zig standard library tokenizer:
+
+```zig
+var sink: syntax.CaptureSink = .init(allocator, source.len);
+defer sink.deinit();
+
+try syntax.languages.zig.backend.highlight(source, &sink);
+try syntax.html.render(source, sink.captures(), allocator, writer);
+```
+
+It classifies Zig tokens lexically, recognizes primitive types and values, recovers ordinary comments
+from tokenizer trivia, and marks escape sequences inside string and character literals. It copies the
+borrowed source into temporary sentinel-terminated storage required by `std.zig.Tokenizer`; captures
+still contain offsets into the caller's original source.

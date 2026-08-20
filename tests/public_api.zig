@@ -81,6 +81,33 @@ test "public API renders classified source" {
     );
 }
 
+test "public Zig backend classifies and renders source" {
+    const source = "const value: u8 = 42;";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try syntax.languages.zig.backend.highlight(source, &sink);
+
+    var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+    try syntax.html.render(
+        source,
+        sink.captures(),
+        std.testing.allocator,
+        &output.writer,
+    );
+
+    try std.testing.expect(std.mem.indexOf(
+        u8,
+        output.written(),
+        "class=\"syntax-keyword\">const</span>",
+    ) != null);
+    try std.testing.expect(std.mem.indexOf(
+        u8,
+        output.written(),
+        "class=\"syntax-builtin syntax-type\">u8</span>",
+    ) != null);
+}
+
 test "all public declarations are referenced" {
     std.testing.refAllDecls(syntax);
 }

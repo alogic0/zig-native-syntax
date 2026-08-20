@@ -17,6 +17,10 @@ pub const CaptureSink = backend.CaptureSink;
 pub const HighlightError = backend.HighlightError;
 pub const MetadataError = backend.MetadataError;
 
+pub const languages = struct {
+    pub const zig = @import("languages/zig.zig");
+};
+
 test "span preserves source offsets" {
     const source = "const answer = 42;";
     const span: Span = try .init(0, 5);

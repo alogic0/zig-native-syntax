@@ -10,8 +10,8 @@ other Zig projects.
 
 ## Status
 
-The project contains the initial classification API and source-preserving HTML renderer. No real
-language backend has been implemented yet.
+The project contains the initial classification API, source-preserving HTML renderer, and lexical Zig
+backend. Additional language adapters and Zine integration remain experimental work.
 
 ## Design constraints
 

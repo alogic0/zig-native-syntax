@@ -18,7 +18,7 @@ authoritative for every phase of this plan.
 - [x] Parser, adapter, renderer, and consumer ownership boundaries documented.
 - [x] Public highlighting API finalized for the experimental phase.
 - [x] Source-preserving HTML renderer implemented.
-- [ ] First language backend implemented.
+- [x] First language backend implemented.
 - [ ] Zine integration started.
 
 The existing `Scope` and `Span` declarations are provisional. Phase 1 may replace them before any
@@ -199,6 +199,8 @@ Phase 2 status: complete.
 Goal: prove the architecture using the pinned Zig standard library as the syntax authority.
 
 ### Slice 3.1: Lexical Zig highlighting
+
+Status: complete.
 
 - Use `std.zig.Tokenizer` to classify keywords, builtins, strings, character literals, comments,
   numbers, primitive values, identifiers, and punctuation.
