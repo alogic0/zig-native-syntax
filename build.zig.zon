@@ -5,8 +5,8 @@
     .minimum_zig_version = "0.17.0-dev.1756+613c03321",
     .dependencies = .{
         .scripty = .{
-            .url = "git+https://github.com/kristoff-it/scripty#51a03222e9a125a65888a5df6e2a41e36c86ccd5",
-            .hash = "scripty-0.1.0-LKK5O-wUAQCZ2AQ8HKrYDny2POKmzmzzgaj392VVbVPg",
+            .url = "git+https://github.com/alogic0/scripty#4e765e82a1b4c1a15204c61ac40aca0eae1c3737",
+            .hash = "scripty-0.1.0-LKK5O98XAQCetMC1dgQfIZz6zROX6Xn5rRxmcnVOEumu",
             .lazy = true,
         },
         .ziggy = .{

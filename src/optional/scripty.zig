@@ -11,18 +11,17 @@ pub const backend: core.Backend = .init(.{
 fn highlight(source: []const u8, sink: *core.CaptureSink) core.HighlightError!void {
     try classifyLexical(source, sink);
 
-    const parser_source = std.mem.trimEnd(u8, source, " \n\t\r");
-    if (parser_source.len > std.math.maxInt(u32)) return;
+    if (source.len > std.math.maxInt(u32)) return;
 
     var parser: scripty.Parser = .{};
-    while (parser.next(parser_source)) |node| {
+    while (parser.next(source)) |node| {
         if (node.tag.isError()) {
             try sink.add(node.loc.start, node.loc.end, .invalid);
             break;
         }
 
         switch (node.tag) {
-            .path => try classifyPath(parser_source, node.loc.start, node.loc.end, sink),
+            .path => try classifyPath(source, node.loc.start, node.loc.end, sink),
             .call => try addUnique(node.loc.start, node.loc.end, .function, sink),
             .apply, .true, .false, .string, .integer, .float => {},
             .err_invalid_token,
