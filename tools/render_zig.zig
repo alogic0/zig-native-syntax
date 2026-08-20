@@ -17,33 +17,21 @@ const ArgumentError = error{
     UnknownOption,
 };
 
+const page_css = @embedFile("render_zig.css");
+
 const page_header =
-    \\<!doctype html>
-    \\<html lang="en">
-    \\<head>
-    \\<meta charset="utf-8">
-    \\<meta name="viewport" content="width=device-width, initial-scale=1">
-    \\<title>Zig syntax preview</title>
-    \\<style>
-    \\:root { color-scheme: dark; }
-    \\body { margin: 0; background: #111827; color: #d1d5db; font-family: ui-monospace, monospace; }
-    \\main { padding: 2rem; }
-    \\pre { margin: 0; padding: 1.25rem; overflow: auto; border: 1px solid #374151; border-radius: .5rem; background: #0b1020; line-height: 1.5; tab-size: 4; }
-    \\.syntax-comment, .syntax-documentation { color: #6b7280; font-style: italic; }
-    \\.syntax-keyword { color: #c084fc; }
-    \\.syntax-builtin, .syntax-type { color: #67e8f9; }
-    \\.syntax-function { color: #fde68a; }
-    \\.syntax-parameter { color: #fdba74; }
-    \\.syntax-property { color: #93c5fd; }
-    \\.syntax-string { color: #86efac; }
-    \\.syntax-escape { color: #f0abfc; font-weight: 600; }
-    \\.syntax-number, .syntax-boolean, .syntax-constant { color: #fca5a5; }
-    \\.syntax-operator, .syntax-punctuation { color: #9ca3af; }
-    \\.syntax-invalid { color: #f87171; text-decoration: underline wavy; }
-    \\</style>
-    \\</head>
-    \\<body><main><pre><code class="language-zig">
-;
+    "<!doctype html>\n" ++
+    "<html lang=\"en\">\n" ++
+    "<head>\n" ++
+    "<meta charset=\"utf-8\">\n" ++
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" ++
+    "<title>Zig syntax preview</title>\n" ++
+    "<style>\n";
+
+const page_code_header =
+    "</style>\n" ++
+    "</head>\n" ++
+    "<body><main><pre><code class=\"language-zig\">";
 
 const page_footer = "</code></pre></main></body>\n</html>\n";
 
@@ -156,7 +144,11 @@ fn renderSource(
     defer sink.deinit();
     try syntax.languages.zig.backend.highlight(source, &sink);
 
-    if (page) try writer.writeAll(page_header);
+    if (page) {
+        try writer.writeAll(page_header);
+        try writer.writeAll(page_css);
+        try writer.writeAll(page_code_header);
+    }
     try syntax.html.render(source, sink.captures(), allocator, writer);
     if (page) try writer.writeAll(page_footer);
 }

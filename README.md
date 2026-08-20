@@ -58,6 +58,7 @@ Add `--page` to emit a complete HTML document with a built-in development theme:
 ```
 
 The command writes only to standard output. Fragment mode emits escaped source and `syntax-*` spans;
-page mode wraps the same rendering in a preview document suitable for opening in a browser.
+page mode wraps the same rendering in a preview document suitable for opening in a browser. Its
+development theme is maintained in `tools/render_zig.css` and embedded into the generated page.
 
 The [experimental API guide](docs/api.md) shows the current public classification interface.
