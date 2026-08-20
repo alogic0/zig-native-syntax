@@ -1,0 +1,30 @@
+# zig-native-syntax
+
+`zig-native-syntax` is an experimental, source-preserving syntax-highlighting library written
+in Zig. It is intended to classify source code with native Zig tokenizers and parsers, then
+render those classifications safely without depending on Tree-sitter.
+
+The first consumer will be the Zine static site generator. This repository is intentionally
+independent so that its highlighting adapters, tests, and compatibility policy can be reused by
+other Zig projects.
+
+## Status
+
+The project currently contains only the initial library and span model. No language backend or
+HTML renderer has been implemented yet.
+
+## Design constraints
+
+- Preserve the input source byte-for-byte in rendered output.
+- Escape untrusted source before emitting HTML.
+- Continue highlighting valid regions around malformed or incomplete input.
+- Keep language backends selectable so consumers only compile the languages they use.
+- Adapt existing native tokenizers and parsers where suitable instead of duplicating them.
+
+## Development
+
+The project currently tracks the Zig version used by Zine:
+
+```sh
+./build.sh test
+```
