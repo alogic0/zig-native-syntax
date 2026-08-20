@@ -60,6 +60,27 @@ test "public API renders escaped plain text" {
     );
 }
 
+test "public API renders classified source" {
+    const source = "const value";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try example_backend.highlight(source, &sink);
+
+    var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+    try syntax.html.render(
+        source,
+        sink.captures(),
+        std.testing.allocator,
+        &output.writer,
+    );
+
+    try std.testing.expectEqualStrings(
+        "<span class=\"syntax-keyword\">const</span> value",
+        output.written(),
+    );
+}
+
 test "all public declarations are referenced" {
     std.testing.refAllDecls(syntax);
 }

@@ -163,6 +163,8 @@ Status: complete.
 
 ### Slice 2.2: Classified span renderer
 
+Status: complete.
+
 - Render validated classifications as spans with library-controlled class names.
 - Preserve unclassified gaps and trailing source.
 - Produce deterministic nesting or normalized segments for overlapping captures.

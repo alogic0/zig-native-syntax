@@ -18,6 +18,16 @@ The function escapes ampersands, angle brackets, and both quote characters. It p
 bytes, whitespace, newlines, and invalid UTF-8. It writes only HTML text and does not add a `code` or
 `pre` element.
 
+Classified source uses the same escaping path:
+
+```zig
+try syntax.html.render(source, sink.captures(), allocator, writer);
+```
+
+Captures can be unsorted, duplicated, nested, or crossing. The renderer validates them and emits
+non-overlapping segments whose class lists contain the active scopes in deterministic enum order.
+Unclassified gaps are escaped without an added span.
+
 ## Classify Source
 
 A backend receives borrowed source and reports captures through a sink:
@@ -69,6 +79,7 @@ outlive the sink. The caller then frees that slice with the same allocator.
 - Empty captures are accepted but not stored.
 - Identical, nested, and crossing captures are valid.
 - Captures retain insertion order until the future renderer normalizes them.
+- The HTML renderer normalizes overlapping captures into disjoint output segments.
 
 See the [capture and range model](architecture/capture-model.md) for the complete invariants.
 
