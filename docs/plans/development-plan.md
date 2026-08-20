@@ -16,7 +16,7 @@ authoritative for every phase of this plan.
 - [x] Zig `0.17.0-dev.1756+613c03321` recorded as the minimum and local development version.
 - [x] Initial `Scope` and `Span` model created.
 - [x] Parser, adapter, renderer, and consumer ownership boundaries documented.
-- [ ] Public highlighting API finalized.
+- [x] Public highlighting API finalized for the experimental phase.
 - [ ] Source-preserving HTML renderer implemented.
 - [ ] First language backend implemented.
 - [ ] Zine integration started.
@@ -134,6 +134,8 @@ Acceptance criteria:
 
 ### Slice 1.4: Public API tests and documentation
 
+Status: complete.
+
 - Add compile-time API examples.
 - Add tests using `std.testing.allocator` where allocations occur.
 - Document which declarations are stable and which remain experimental.
@@ -142,6 +144,8 @@ Phase gate:
 
 - `./build.sh test` passes with the pinned compiler.
 - The public contract supports the renderer and Zig backend without a language-specific exception.
+
+Phase 1 status: complete.
 
 ## Phase 2: Implement Source-Preserving Rendering
 

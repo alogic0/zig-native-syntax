@@ -41,3 +41,5 @@ The project currently tracks the Zig version used by Zine:
 ```sh
 ./build.sh test
 ```
+
+The [experimental API guide](docs/api.md) shows the current public classification interface.
