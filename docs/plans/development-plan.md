@@ -17,7 +17,7 @@ authoritative for every phase of this plan.
 - [x] Initial `Scope` and `Span` model created.
 - [x] Parser, adapter, renderer, and consumer ownership boundaries documented.
 - [x] Public highlighting API finalized for the experimental phase.
-- [ ] Source-preserving HTML renderer implemented.
+- [x] Source-preserving HTML renderer implemented.
 - [ ] First language backend implemented.
 - [ ] Zine integration started.
 
@@ -181,6 +181,8 @@ Status: complete.
 
 ### Slice 2.4: Failure behavior
 
+Status: complete.
+
 - Verify writer failures propagate without hidden allocations or partial-state reuse.
 - Verify malformed capture sets fail predictably or normalize according to the Phase 1 contract.
 - Add randomized range tests for renderer bounds safety.
@@ -189,6 +191,8 @@ Phase gate:
 
 - Every renderer test is independent of a language parser.
 - Source-preservation and injection tests pass under Debug and ReleaseSafe modes.
+
+Phase 2 status: complete.
 
 ## Phase 3: Implement The Zig Backend
 

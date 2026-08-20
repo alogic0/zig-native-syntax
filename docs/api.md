@@ -33,6 +33,11 @@ classes are emitted. Source is escaped in both classified segments and unclassif
 invalid UTF-8. Property tests verify that stripping generated spans and decoding emitted entities
 recovers the original bytes exactly.
 
+Before allocating capture events or writing output, the renderer validates the entire capture set.
+Range errors therefore take precedence over allocation and writer failures, and invalid backend
+output cannot leave partially rendered HTML. Allocation and writer failures are propagated after all
+temporary renderer allocations are released.
+
 ## Classify Source
 
 A backend receives borrowed source and reports captures through a sink:

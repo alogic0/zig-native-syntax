@@ -69,8 +69,13 @@ pub fn render(
     var events: std.ArrayList(Event) = .empty;
     defer events.deinit(allocator);
 
+    // Validate the complete backend result before allocation or output. This
+    // gives range errors deterministic precedence over resource failures.
     for (captures) |item| {
         try item.validate(source.len);
+    }
+
+    for (captures) |item| {
         if (item.span.isEmpty()) continue;
 
         try events.append(allocator, .{
@@ -253,4 +258,58 @@ test "classified renderer validates every capture" {
         render("abc", &captures, std.testing.allocator, &output.writer),
     );
     try std.testing.expectEqual(@as(usize, 0), output.written().len);
+}
+
+test "capture validation precedes allocation and output" {
+    const captures = [_]Capture{
+        try .init(0, 2, .keyword),
+        .{
+            .span = .{ .start = 3, .end = 2 },
+            .scope = .invalid,
+        },
+    };
+    var output: Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+
+    try std.testing.expectError(
+        error.ReversedRange,
+        render("abc", &captures, std.testing.failing_allocator, &output.writer),
+    );
+    try std.testing.expectEqual(@as(usize, 0), output.written().len);
+}
+
+test "plain and classified renderers propagate writer failure" {
+    var plain_writer: Writer = .failing;
+    try std.testing.expectError(
+        error.WriteFailed,
+        renderPlain("source", &plain_writer),
+    );
+
+    const captures = [_]Capture{try .init(0, 6, .string)};
+    var classified_writer: Writer = .failing;
+    try std.testing.expectError(
+        error.WriteFailed,
+        render("source", &captures, std.testing.allocator, &classified_writer),
+    );
+}
+
+fn renderAllocationCase(allocator: Allocator) !void {
+    const source = "const value = \"text\";";
+    const captures = [_]Capture{
+        try .init(0, 5, .keyword),
+        try .init(6, 11, .variable),
+        try .init(14, 20, .string),
+    };
+    var discard_buffer: [32]u8 = undefined;
+    var discarding: Writer.Discarding = .init(&discard_buffer);
+
+    try render(source, &captures, allocator, &discarding.writer);
+}
+
+test "classified renderer handles every allocation failure" {
+    try std.testing.checkAllAllocationFailures(
+        std.testing.allocator,
+        renderAllocationCase,
+        .{},
+    );
 }

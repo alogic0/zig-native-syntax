@@ -152,3 +152,48 @@ test "newline forms remain byte-exact across capture boundaries" {
     defer std.testing.allocator.free(recovered);
     try std.testing.expectEqualStrings(source, recovered);
 }
+
+test "random invalid ranges fail before rendering" {
+    const source = "0123456789abcdef";
+    var random_state: u64 = 0xd061_65ec_9af3_42b7;
+
+    for (0..512) |_| {
+        const start: usize = @intCast(nextRandom(&random_state) % 24);
+        const end: usize = @intCast(nextRandom(&random_state) % 24);
+        const captures = [_]syntax.Capture{.{
+            .span = .{ .start = start, .end = end },
+            .scope = .special,
+        }};
+        var discard_buffer: [32]u8 = undefined;
+        var discarding: std.Io.Writer.Discarding = .init(&discard_buffer);
+
+        if (start > end) {
+            try std.testing.expectError(
+                error.ReversedRange,
+                syntax.html.render(
+                    source,
+                    &captures,
+                    std.testing.allocator,
+                    &discarding.writer,
+                ),
+            );
+        } else if (end > source.len) {
+            try std.testing.expectError(
+                error.RangeOutOfBounds,
+                syntax.html.render(
+                    source,
+                    &captures,
+                    std.testing.allocator,
+                    &discarding.writer,
+                ),
+            );
+        } else {
+            try syntax.html.render(
+                source,
+                &captures,
+                std.testing.allocator,
+                &discarding.writer,
+            );
+        }
+    }
+}
