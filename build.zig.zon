@@ -10,8 +10,8 @@
             .lazy = true,
         },
         .superhtml = .{
-            .url = "git+https://github.com/kristoff-it/superhtml#23ef2f44ca0df2d2e05a0be3874370553c5b591d",
-            .hash = "superhtml-0.7.0-Y7MdPHKkJgA1s7ycx0okrfwclJaChKuAbTrsjmQ3uGlM",
+            .url = "git+https://github.com/alogic0/superhtml#398343534f5a3c57e2a82792a3282234526774d5",
+            .hash = "superhtml-0.7.0-Y7MdPKLDJgBZWdqCE_KYn6LIA9Vua-JdwaKNJLUL0nUL",
             .lazy = true,
         },
         .ziggy = .{

@@ -1,15 +1,15 @@
 const std = @import("std");
 const core = @import("native_syntax");
-const superhtml = @import("superhtml");
+const html = @import("superhtml_html");
 
 pub fn highlight(
     source: []const u8,
-    language: superhtml.Language,
+    language: html.Language,
     sink: *core.CaptureSink,
 ) core.HighlightError!void {
     if (source.len > std.math.maxInt(u32)) return;
 
-    var tokenizer: superhtml.html.Tokenizer = .{
+    var tokenizer: html.Tokenizer = .{
         .language = language,
         .return_attrs = true,
     };
@@ -80,7 +80,7 @@ fn rawElement(name: []const u8) ?RawElement {
     return null;
 }
 
-fn isStartTag(source: []const u8, name: superhtml.Span) bool {
+fn isStartTag(source: []const u8, name: html.Span) bool {
     return name.start > 0 and source[name.start - 1] == '<';
 }
 
@@ -90,7 +90,7 @@ fn nextTagByte(source: []const u8, start: u32) u8 {
     return if (index < source.len) source[index] else 0;
 }
 
-fn enterRawElement(tokenizer: *superhtml.html.Tokenizer, raw_element: RawElement) void {
+fn enterRawElement(tokenizer: *html.Tokenizer, raw_element: RawElement) void {
     switch (raw_element) {
         .script => tokenizer.gotoScriptData(),
         .style => tokenizer.gotoRawText("style"),
@@ -99,7 +99,7 @@ fn enterRawElement(tokenizer: *superhtml.html.Tokenizer, raw_element: RawElement
 
 fn classifyAttribute(
     source: []const u8,
-    attribute: superhtml.html.Tokenizer.Attr,
+    attribute: html.Tokenizer.Attr,
     sink: *core.CaptureSink,
 ) core.HighlightError!void {
     try addSpan(attribute.name, .attribute, sink);
@@ -131,7 +131,7 @@ fn classifyAttribute(
 
 fn classifyTagDelimiters(
     source: []const u8,
-    name: superhtml.Span,
+    name: html.Span,
     sink: *core.CaptureSink,
 ) core.HighlightError!void {
     const name_start: usize = name.start;
@@ -198,7 +198,7 @@ fn classifyEntities(
 }
 
 fn addSpan(
-    span: superhtml.Span,
+    span: html.Span,
     scope: core.Scope,
     sink: *core.CaptureSink,
 ) core.HighlightError!void {

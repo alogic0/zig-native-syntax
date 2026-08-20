@@ -2,32 +2,35 @@
 
 ## Dependency Boundary
 
-The HTML, XML, and CSS adapters use the independently consumable upstream package at
-`kristoff-it/superhtml`. They do not use the copy vendored in Zine.
+The HTML, XML, CSS, and composed SuperHTML adapters use the independently consumable fork at
+`alogic0/superhtml`. They do not use the copy vendored in Zine. The fork retains
+`kristoff-it/superhtml` as its upstream project and carries a small syntax-consumer API layer.
 
-The pinned compatibility revision is `23ef2f44ca0df2d2e05a0be3874370553c5b591d`, whose package
+The pinned compatibility revision is `398343534f5a3c57e2a82792a3282234526774d5`, whose package
 version is `0.7.0` and whose declared minimum Zig version is compatible with this project's pinned
 compiler.
 
-SuperHTML currently publishes one Zig module named `superhtml`. Its public root exports the required
-syntax APIs as:
+The fork publishes dependency-free syntax modules for this integration:
 
-- `superhtml.html.Tokenizer` for HTML and XML;
-- `superhtml.css.Tokenizer` for CSS.
+- `html-tokenizer` for HTML, XML, and SuperHTML markup tokenization;
+- `css-tokenizer` for CSS tokenization, including opt-in comment tokens;
+- `template-syntax` for SuperHTML directive and embedded-expression discovery.
 
-There are no smaller independently selectable HTML-only or CSS-only modules in the upstream build.
-The adapters therefore import the root module but use only these public tokenizer declarations.
-The dependency remains lazy and is configured only when at least one of `backend-html`,
-`backend-xml`, `backend-css`, or `backend-superhtml` is enabled.
+The dependency is configured with `tokenizers_only = true`, so loading these modules does not
+configure the SuperHTML CLI, LSP, VM, semantic AST, Scripty, Tracy, or generated language registry.
+It remains lazy and is configured only when at least one of `backend-html`, `backend-xml`,
+`backend-css`, or `backend-superhtml` is enabled.
 
 ## Upgrade Contract
 
 Before updating the pin, verify that:
 
-- both tokenizer declarations remain public through the same module;
+- all three lightweight modules remain independently consumable together;
 - HTML mode still supports `return_attrs` and reports tag-name and attribute ranges;
 - XML remains a distinct tokenizer language mode;
-- CSS tokens still expose source spans through `Token.span()`;
+- CSS tokens still expose source spans through `Token.span()` and comments through
+  `return_comments`;
+- `template-syntax` still reports directive names and embedded expression spans;
 - the package's declared Zig version remains compatible with this project.
 
 `tests/superhtml_api.zig` is the compile-and-run probe for this boundary. Adapter corpus tests own
@@ -51,10 +54,9 @@ attempt to interpret the instruction body.
 
 ## CSS Adapter Boundary
 
-The CSS backend consumes `superhtml.css.Tokenizer` for identifiers, functions, at-keywords, hashes,
-strings, URLs, numbers, percentages, dimensions, errors, delimiters, and structural punctuation.
-The tokenizer does not emit comments, so the adapter uses a bounded byte scan to reserve `/*...*/`
-ranges before mapping tokens. Tokens wholly inside those ranges are ignored.
+The CSS backend consumes `css-tokenizer` for identifiers, functions, at-keywords, hashes, strings,
+URLs, numbers, percentages, dimensions, comments, errors, delimiters, and structural punctuation.
+It enables `return_comments`; the adapter no longer maintains a duplicate comment scanner.
 
 A bounded declaration lookahead distinguishes property names from selectors and values. It tracks
 quotes, parentheses, and square brackets and declines to call a name a property when the construct
@@ -67,10 +69,10 @@ the shared renderer preserves their original bytes.
 
 ## Composed SuperHTML Adapter
 
-The SuperHTML backend runs the markup adapter in `.superhtml` mode and uses tokenizer-reported
-attribute ranges to locate Scripty expressions. Values of `:if`, `:loop`, `:text`, and `:html` are
-embedded expressions. Ordinary attribute values beginning with `$` are expressions as well.
-`:else` is classified as a directive but has no embedded value.
+The SuperHTML backend runs the markup adapter in `.superhtml` mode and passes tokenizer-reported
+attributes to `template-syntax`. That module owns the rules for locating directive names and
+Scripty expression regions: values of `:if`, `:loop`, `:text`, and `:html` are embedded expressions,
+ordinary attribute values beginning with `$` are expressions, and `:else` has no embedded value.
 
 Directive names retain `attribute` and add `special`. Quotation marks retain `string`, while the
 value contents drop the parent string classification and receive `embedded` plus scopes from the

@@ -1,6 +1,6 @@
 const std = @import("std");
 const core = @import("native_syntax");
-const superhtml = @import("superhtml");
+const css = @import("superhtml_css");
 
 pub const backend: core.Backend = .init(.{
     .canonical_name = "css",
@@ -11,16 +11,11 @@ pub const backend: core.Backend = .init(.{
 fn highlight(source: []const u8, sink: *core.CaptureSink) core.HighlightError!void {
     if (source.len > std.math.maxInt(u32)) return;
 
-    const first_comment = sink.captures().len;
-    try classifyComments(source, sink);
-
-    var tokenizer: superhtml.css.Tokenizer = .{};
+    var tokenizer: css.Tokenizer = .{ .return_comments = true };
     var in_declaration_value = false;
     var pending_property = false;
     while (tokenizer.next(source)) |token| {
         const span = token.span();
-        if (insideComment(span, sink.captures()[first_comment..])) continue;
-
         switch (token) {
             .ident => |ident| {
                 if (looksLikeProperty(source, ident)) {
@@ -80,6 +75,7 @@ fn highlight(source: []const u8, sink: *core.CaptureSink) core.HighlightError!vo
                 try addSpan(source.len, dimension.unit, .type, sink);
                 pending_property = false;
             },
+            .comment => |comment| try addSpan(source.len, comment, .comment, sink),
             .cdo, .cdc => try addSpan(source.len, span, .comment, sink),
             .colon => |index| {
                 try sink.add(index, index + 1, .punctuation);
@@ -124,46 +120,7 @@ fn highlight(source: []const u8, sink: *core.CaptureSink) core.HighlightError!vo
     }
 }
 
-fn classifyComments(source: []const u8, sink: *core.CaptureSink) core.HighlightError!void {
-    var index: usize = 0;
-    var quote: ?u8 = null;
-    while (index + 1 < source.len) {
-        if (quote) |active_quote| {
-            if (source[index] == '\\') {
-                index += @min(@as(usize, 2), source.len - index);
-            } else {
-                if (source[index] == active_quote or source[index] == '\n') quote = null;
-                index += 1;
-            }
-            continue;
-        }
-        if (source[index] == '\'' or source[index] == '"') {
-            quote = source[index];
-            index += 1;
-            continue;
-        }
-        if (source[index] != '/' or source[index + 1] != '*') {
-            index += 1;
-            continue;
-        }
-
-        const start = index;
-        index += 2;
-        while (index + 1 < source.len and
-            (source[index] != '*' or source[index + 1] != '/')) index += 1;
-        if (index + 1 < source.len) index += 2 else index = source.len;
-        try sink.add(start, index, .comment);
-    }
-}
-
-fn insideComment(span: superhtml.Span, comments: []const core.Capture) bool {
-    for (comments) |comment| {
-        if (span.start >= comment.span.start and span.end <= comment.span.end) return true;
-    }
-    return false;
-}
-
-fn looksLikeProperty(source: []const u8, identifier: superhtml.Span) bool {
+fn looksLikeProperty(source: []const u8, identifier: css.Span) bool {
     const name = identifier.slice(source);
     var index = skipTrivia(source, identifier.end);
     if (index >= source.len or source[index] != ':') return false;
@@ -219,7 +176,7 @@ fn skipTrivia(source: []const u8, start: usize) usize {
 
 fn classifyUrl(
     source: []const u8,
-    url: superhtml.Span,
+    url: css.Span,
     scope: core.Scope,
     sink: *core.CaptureSink,
 ) core.HighlightError!void {
@@ -235,7 +192,7 @@ fn classifyUrl(
 
 fn addSpan(
     source_len: usize,
-    span: superhtml.Span,
+    span: css.Span,
     scope: core.Scope,
     sink: *core.CaptureSink,
 ) core.HighlightError!void {

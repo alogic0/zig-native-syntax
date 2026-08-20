@@ -1,7 +1,8 @@
 const std = @import("std");
 const core = @import("native_syntax");
 const scripty_backend = @import("native_syntax_scripty").backend;
-const super = @import("superhtml");
+const html = @import("superhtml_html");
+const template_syntax = @import("superhtml_template");
 const markup = @import("html_markup.zig");
 
 pub const backend: core.Backend = .init(.{
@@ -38,42 +39,29 @@ fn findScriptyRegions(
     regions: *std.ArrayList(core.Span),
     directives: *std.ArrayList(core.Span),
 ) std.mem.Allocator.Error!void {
-    var tokenizer: super.html.Tokenizer = .{
+    var tokenizer: html.Tokenizer = .{
         .language = .superhtml,
         .return_attrs = true,
     };
     while (tokenizer.next(source)) |token| switch (token) {
         .attr => |attribute| {
             const name = attribute.name.slice(source);
-            const directive = isDirective(name);
-            if (directive) {
+            if (template_syntax.directive(name) != null) {
                 try directives.append(allocator, .{
                     .start = attribute.name.start,
                     .end = attribute.name.end,
                 });
             }
 
-            const value = attribute.value orelse continue;
-            const value_source = value.span.slice(source);
-            if ((directive and !std.mem.eql(u8, name, ":else")) or
-                std.mem.startsWith(u8, value_source, "$"))
-            {
+            if (template_syntax.embeddedExpression(attribute, source)) |expression| {
                 try regions.append(allocator, .{
-                    .start = value.span.start,
-                    .end = value.span.end,
+                    .start = expression.span.start,
+                    .end = expression.span.end,
                 });
             }
         },
         else => {},
     };
-}
-
-fn isDirective(name: []const u8) bool {
-    return std.mem.eql(u8, name, ":if") or
-        std.mem.eql(u8, name, ":loop") or
-        std.mem.eql(u8, name, ":else") or
-        std.mem.eql(u8, name, ":text") or
-        std.mem.eql(u8, name, ":html");
 }
 
 fn copyMarkupCaptures(

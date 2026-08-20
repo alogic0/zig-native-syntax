@@ -65,7 +65,7 @@ pub fn build(b: *std.Build) void {
         b.lazyDependency("superhtml", .{
             .target = target,
             .optimize = optimize,
-            .tracy = false,
+            .tokenizers_only = true,
         }) orelse return
     else
         null;
@@ -179,7 +179,9 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
                 .imports = &.{
-                    .{ .name = "superhtml", .module = dependency.module("superhtml") },
+                    .{ .name = "superhtml_html", .module = dependency.module("html-tokenizer") },
+                    .{ .name = "superhtml_css", .module = dependency.module("css-tokenizer") },
+                    .{ .name = "superhtml_template", .module = dependency.module("template-syntax") },
                 },
             }),
         });
@@ -331,7 +333,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "native_syntax", .module = native_syntax },
-                .{ .name = "superhtml", .module = dependency.module("superhtml") },
+                .{ .name = "superhtml_html", .module = dependency.module("html-tokenizer") },
             },
         });
         const html_backend_tests = b.addTest(.{
@@ -369,7 +371,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "native_syntax", .module = native_syntax },
-                .{ .name = "superhtml", .module = dependency.module("superhtml") },
+                .{ .name = "superhtml_html", .module = dependency.module("html-tokenizer") },
             },
         });
         const xml_backend_tests = b.addTest(.{
@@ -407,7 +409,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "native_syntax", .module = native_syntax },
-                .{ .name = "superhtml", .module = dependency.module("superhtml") },
+                .{ .name = "superhtml_css", .module = dependency.module("css-tokenizer") },
             },
         });
         const css_backend_tests = b.addTest(.{
@@ -446,7 +448,8 @@ pub fn build(b: *std.Build) void {
             .imports = &.{
                 .{ .name = "native_syntax", .module = native_syntax },
                 .{ .name = "native_syntax_scripty", .module = scripty_backend_module.? },
-                .{ .name = "superhtml", .module = dependency.module("superhtml") },
+                .{ .name = "superhtml_html", .module = dependency.module("html-tokenizer") },
+                .{ .name = "superhtml_template", .module = dependency.module("template-syntax") },
             },
         });
         const superhtml_backend_tests = b.addTest(.{
