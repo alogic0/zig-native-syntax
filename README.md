@@ -21,6 +21,11 @@ HTML renderer has been implemented yet.
 - Keep language backends selectable so consumers only compile the languages they use.
 - Adapt existing native tokenizers and parsers where suitable instead of duplicating them.
 
+## Architecture
+
+- [Parser and tokenizer ownership](docs/architecture/parser-ownership.md) defines the boundary
+  between language implementations, highlighting adapters, the shared renderer, and consumers.
+
 ## Development
 
 The project currently tracks the Zig version used by Zine:
