@@ -23,6 +23,21 @@ pub fn build(b: *std.Build) void {
         "backend-scripty",
         "Enable the optional Scripty backend",
     ) orelse false;
+    const enable_html_backend = b.option(
+        bool,
+        "backend-html",
+        "Enable the optional HTML backend",
+    ) orelse false;
+    const enable_xml_backend = b.option(
+        bool,
+        "backend-xml",
+        "Enable the optional XML backend",
+    ) orelse false;
+    const enable_css_backend = b.option(
+        bool,
+        "backend-css",
+        "Enable the optional CSS backend",
+    ) orelse false;
     const ziggy_dependency = if (enable_ziggy_backend or enable_ziggy_schema_backend)
         b.lazyDependency("ziggy", .{
             .target = target,
@@ -32,6 +47,14 @@ pub fn build(b: *std.Build) void {
         null;
     const scripty_dependency = if (enable_scripty_backend)
         b.lazyDependency("scripty", .{
+            .target = target,
+            .optimize = optimize,
+            .tracy = false,
+        }) orelse return
+    else
+        null;
+    const superhtml_dependency = if (enable_html_backend or enable_xml_backend or enable_css_backend)
+        b.lazyDependency("superhtml", .{
             .target = target,
             .optimize = optimize,
             .tracy = false,
@@ -128,6 +151,20 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const run_core_only_tests = b.addRunArtifact(core_only_tests);
+
+    const run_superhtml_api_tests: ?*std.Build.Step.Run = if (superhtml_dependency) |dependency| enabled: {
+        const api_tests = b.addTest(.{
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("tests/superhtml_api.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "superhtml", .module = dependency.module("superhtml") },
+                },
+            }),
+        });
+        break :enabled b.addRunArtifact(api_tests);
+    } else null;
 
     const run_dummy_backend_tests: ?*std.Build.Step.Run = if (enable_dummy_backend) enabled: {
         const dependency = b.lazyDependency("phase4_dummy_syntax", .{
@@ -284,6 +321,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_zig_conformance_tests.step);
     test_step.dependOn(&zig_preview.test_run.step);
     test_step.dependOn(&run_core_only_tests.step);
+    if (run_superhtml_api_tests) |run| test_step.dependOn(&run.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);
     if (ziggy_backend_runs) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);

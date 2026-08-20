@@ -1,0 +1,34 @@
+# SuperHTML Syntax API Compatibility
+
+## Dependency Boundary
+
+The HTML, XML, and CSS adapters use the independently consumable upstream package at
+`kristoff-it/superhtml`. They do not use the copy vendored in Zine.
+
+The pinned compatibility revision is `23ef2f44ca0df2d2e05a0be3874370553c5b591d`, whose package
+version is `0.7.0` and whose declared minimum Zig version is compatible with this project's pinned
+compiler.
+
+SuperHTML currently publishes one Zig module named `superhtml`. Its public root exports the required
+syntax APIs as:
+
+- `superhtml.html.Tokenizer` for HTML and XML;
+- `superhtml.css.Tokenizer` for CSS.
+
+There are no smaller independently selectable HTML-only or CSS-only modules in the upstream build.
+The adapters therefore import the root module but use only these public tokenizer declarations.
+The dependency remains lazy and is configured only when at least one of `backend-html`,
+`backend-xml`, or `backend-css` is enabled.
+
+## Upgrade Contract
+
+Before updating the pin, verify that:
+
+- both tokenizer declarations remain public through the same module;
+- HTML mode still supports `return_attrs` and reports tag-name and attribute ranges;
+- XML remains a distinct tokenizer language mode;
+- CSS tokens still expose source spans through `Token.span()`;
+- the package's declared Zig version remains compatible with this project.
+
+`tests/superhtml_api.zig` is the compile-and-run probe for this boundary. Adapter corpus tests own
+the behavioral compatibility requirements added by later phases.

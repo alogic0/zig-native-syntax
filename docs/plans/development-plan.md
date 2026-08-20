@@ -314,6 +314,8 @@ Goal: consume maintained SuperHTML syntax APIs for markup and stylesheet highlig
 
 ### Slice 7.1: SuperHTML dependency boundary
 
+Status: complete.
+
 - Determine whether a stable independently consumable upstream package exposes the required HTML and
   CSS tokenizers.
 - Do not depend on a copy vendored only inside Zine.
