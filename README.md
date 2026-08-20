@@ -25,6 +25,8 @@ HTML renderer has been implemented yet.
 
 - [Parser and tokenizer ownership](docs/architecture/parser-ownership.md) defines the boundary
   between language implementations, highlighting adapters, the shared renderer, and consumers.
+- [Development plan](docs/plans/development-plan.md) defines the phased implementation and
+  integration sequence.
 
 ## Development
 
