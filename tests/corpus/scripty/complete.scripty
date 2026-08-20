@@ -1,0 +1,4 @@
+$page.author.name.is('Oleg').then(
+    $page.title.trim(),
+    "Anonymous",
+)

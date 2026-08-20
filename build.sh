@@ -22,6 +22,10 @@ case "${1:-}" in
         shift
         exec "${zig_exe}" build render-ziggy-schema -Dbackend-ziggy-schema=true -- "$@"
         ;;
+    render-scripty)
+        shift
+        exec "${zig_exe}" build render-scripty -Dbackend-scripty=true -- "$@"
+        ;;
 esac
 
 exec "${zig_exe}" build "$@"

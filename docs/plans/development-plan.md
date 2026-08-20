@@ -294,6 +294,8 @@ Goal: implement the expression language used by Zine and embedded in SuperHTML.
 
 ### Slice 6.1: Scripty adapter
 
+Status: complete.
+
 - Prefer an exported tokenizer API; use parser node locations only if they provide sufficient source
   coverage.
 - If the required tokenizer is private, propose the smallest upstream export rather than copying it.
@@ -303,6 +305,8 @@ Phase gate:
 
 - The Scripty backend can be enabled independently of Ziggy and Ziggy Schema.
 - Parser errors leave safely escaped, readable output rather than failing rendering.
+
+Phase 6 status: complete.
 
 ## Phase 7: Add HTML, XML, And CSS
 

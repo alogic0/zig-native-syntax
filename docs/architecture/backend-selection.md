@@ -62,6 +62,9 @@ mechanism. Their shared pinned package remains lazy. `-Dbackend-ziggy=true` expo
 `native_syntax_ziggy`, while `-Dbackend-ziggy-schema=true` independently exposes
 `native_syntax_ziggy_schema`. Enabling both options configures the same Ziggy package once.
 
+The independently pinned Scripty package remains lazy as well. `-Dbackend-scripty=true` exposes
+`native_syntax_scripty` without enabling or configuring either Ziggy backend.
+
 ## Phase 4 Proof
 
 The test-only `backend-dummy` option exercises this boundary with a lazy local package. Its build

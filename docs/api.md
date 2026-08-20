@@ -144,7 +144,7 @@ The backend copies the borrowed source into temporary sentinel-terminated storag
 Zig syntax APIs; captures still contain offsets into the caller's original source. Contextual scopes
 overlap lexical scopes intentionally and are normalized by the shared HTML renderer.
 
-## Optional Ziggy Backends
+## Optional Parser Backends
 
 The Ziggy document and Ziggy Schema adapters are separate modules backed by the same lazy, pinned
 Ziggy package. Consumers enable and import only the modules they use:
@@ -171,3 +171,7 @@ Each imported module exposes `backend`. The document adapter uses tokenizer loca
 lexical classification. The schema adapter combines those resilient token captures with recovering
 AST context for declared types and fields. See the [Ziggy](compatibility/ziggy.md) and
 [Ziggy Schema](compatibility/ziggy-schema.md) compatibility notes for their exact boundaries.
+
+Scripty is independently enabled with `.@"backend-scripty" = true` and imported from the
+`native_syntax_scripty` module. It combines public parser context with bounded lexical recovery; see
+the [Scripty compatibility note](compatibility/scripty.md) for the tokenizer API boundary.
