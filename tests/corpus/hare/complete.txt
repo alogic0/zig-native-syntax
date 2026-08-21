@@ -1,0 +1,6 @@
+export fn main() void = {
+    let value: str = "x\\n";
+    let enabled: bool = true;
+    let count: int = 42;
+};
+// comment

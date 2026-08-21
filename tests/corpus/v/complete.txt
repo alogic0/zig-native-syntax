@@ -1,0 +1,10 @@
+module main
+struct Item {
+    value string
+    enabled bool
+    count int
+}
+value := "x\\n"
+enabled := true
+count := 42
+// comment

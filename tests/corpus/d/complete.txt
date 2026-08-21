@@ -1,0 +1,7 @@
+module demo;
+struct Item {
+    string value = "x\\n";
+    bool enabled = true;
+    int count = 42;
+}
+// comment

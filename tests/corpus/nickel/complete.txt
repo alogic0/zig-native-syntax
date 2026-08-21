@@ -1,0 +1,6 @@
+let item = {
+  value = "x\\n",
+  enabled = true,
+  count = 42,
+} in item
+# comment

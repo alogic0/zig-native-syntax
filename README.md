@@ -87,6 +87,8 @@ language adapters and Zine integration remain experimental work.
   and embedded-language boundaries for Java through Protocol Buffers.
 - [Roadmap languages 43–74 compatibility](docs/compatibility/roadmap-43-74.md) defines bounded
   format and programming-language coverage from KDL through Nim.
+- [Roadmap languages 75–83 compatibility](docs/compatibility/roadmap-75-83.md) defines bounded
+  language coverage from D through Hare.
 
 ## Development
 

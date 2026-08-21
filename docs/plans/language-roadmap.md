@@ -87,15 +87,15 @@ as programming languages.
 - [x] 72. Elm
 - [x] 73. PureScript
 - [x] 74. Nim
-- [ ] 75. D
-- [ ] 76. V
-- [ ] 77. Odin
-- [ ] 78. C3
-- [ ] 79. SystemVerilog
-- [ ] 80. LLVM IR
-- [ ] 81. OpenSCAD
-- [ ] 82. Nickel
-- [ ] 83. Hare
+- [x] 75. D
+- [x] 76. V
+- [x] 77. Odin
+- [x] 78. C3
+- [x] 79. SystemVerilog
+- [x] 80. LLVM IR
+- [x] 81. OpenSCAD
+- [x] 82. Nickel
+- [x] 83. Hare
 - [ ] 84. Agda
 - [ ] 85. Tree-sitter Query
 - [ ] 86. Vimscript

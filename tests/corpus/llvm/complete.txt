@@ -1,0 +1,7 @@
+@text = private constant [3 x i8] c"x\\0A"
+define i32 @main() {
+entry:
+    %enabled = add i1 true, false
+    %count = add i32 40, 2 ; comment
+    ret i32 42
+}

@@ -1,0 +1,10 @@
+module demo;
+struct Item {
+    String value;
+    bool enabled;
+    int count;
+}
+String value = "x\\n";
+bool enabled = true;
+int count = 42;
+// comment

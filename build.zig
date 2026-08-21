@@ -408,6 +408,15 @@ pub fn build(b: *std.Build) void {
     const elm_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "elm", .display_name = "Elm", .sample_path = "source.elm" });
     const purescript_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "purescript", .display_name = "PureScript", .sample_path = "source.purs" });
     const nim_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nim", .display_name = "Nim", .sample_path = "source.nim" });
+    const d_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "d", .display_name = "D", .sample_path = "source.d" });
+    const v_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "v", .display_name = "V", .sample_path = "source.v" });
+    const odin_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "odin", .display_name = "Odin", .sample_path = "source.odin" });
+    const c3_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "c3", .display_name = "C3", .sample_path = "source.c3" });
+    const systemverilog_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "systemverilog", .display_name = "SystemVerilog", .sample_path = "source.sv" });
+    const llvm_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "llvm", .display_name = "LLVM IR", .sample_path = "source.ll" });
+    const openscad_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "openscad", .display_name = "OpenSCAD", .sample_path = "source.scad" });
+    const nickel_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nickel", .display_name = "Nickel", .sample_path = "source.ncl" });
+    const hare_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "hare", .display_name = "Hare", .sample_path = "source.ha" });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -997,6 +1006,10 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.preview_test_run.step);
     }
     inline for (.{ kdl_runs, nix_runs, fish_runs, nu_runs, awk_runs, ssh_config_runs, gitcommit_runs, git_rebase_runs, po_runs, rst_runs, latex_runs, typst_runs, org_runs, dtd_runs, mail_runs, hurl_runs, ninja_runs, rpmspec_runs, rpmbash_runs, gdscript_runs, perl_runs, elixir_runs, fsharp_runs, ocaml_runs, haskell_runs, gleam_runs, commonlisp_runs, scheme_runs, julia_runs, elm_runs, purescript_runs, nim_runs }) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
+    inline for (.{ d_runs, v_runs, odin_runs, c3_runs, systemverilog_runs, llvm_runs, openscad_runs, nickel_runs, hare_runs }) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }

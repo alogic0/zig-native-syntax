@@ -1,0 +1,7 @@
+module demo() {
+    value = "x\\n";
+    enabled = true;
+    count = 42;
+    cube([1, 2, 3]);
+}
+// comment

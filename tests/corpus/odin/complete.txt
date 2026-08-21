@@ -1,0 +1,10 @@
+package main
+Item :: struct {
+    value: string,
+    enabled: bool,
+    count: int,
+}
+value := "x\\n"
+enabled := true
+count := 42
+// comment

@@ -1,0 +1,6 @@
+module demo;
+    string value = "x\\n";
+    logic enabled = true;
+    int count = 42;
+    // comment
+endmodule
