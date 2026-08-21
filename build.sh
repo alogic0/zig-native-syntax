@@ -46,6 +46,10 @@ case "${1:-}" in
         shift
         exec "${zig_exe}" build render-sql -- "$@"
         ;;
+    render-c)
+        shift
+        exec "${zig_exe}" build render-c -- "$@"
+        ;;
     render-ziggy)
         shift
         exec "${zig_exe}" build render-ziggy -Dbackend-ziggy=true -- "$@"

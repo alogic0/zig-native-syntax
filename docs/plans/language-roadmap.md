@@ -30,7 +30,7 @@ as programming languages.
 - [x] Dockerfile
 - [x] Python
 - [x] SQL
-- [ ] C
+- [x] C
 - [ ] JavaScript
 - [ ] TypeScript
 - [ ] YAML

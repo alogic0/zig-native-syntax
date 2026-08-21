@@ -20,6 +20,7 @@ pub const MetadataError = backend.MetadataError;
 
 pub const languages = struct {
     pub const bash = @import("languages/bash.zig");
+    pub const c = @import("languages/c.zig");
     pub const diff = @import("languages/diff.zig");
     pub const dockerfile = @import("languages/dockerfile.zig");
     pub const json = @import("languages/json.zig");

@@ -268,6 +268,22 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const c_preview_backend = b.addModule("c_preview_backend", .{
+        .root_source_file = b.path("tools/c_preview_backend.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+    });
+    const c_preview = addPreviewTool(b, .{
+        .command_name = "render-c",
+        .display_name = "C",
+        .language_class = "language-c",
+        .sample_path = "source.c",
+        .backend = c_preview_backend,
+        .native_syntax = native_syntax,
+        .target = target,
+        .optimize = optimize,
+    });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -409,6 +425,16 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const run_sql_conformance_tests = b.addRunArtifact(sql_conformance_tests);
+
+    const c_conformance_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/c_conformance.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+        }),
+    });
+    const run_c_conformance_tests = b.addRunArtifact(c_conformance_tests);
 
     const core_only_tests = b.addTest(.{
         .root_module = b.createModule(.{
@@ -788,6 +814,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&python_preview.test_run.step);
     test_step.dependOn(&run_sql_conformance_tests.step);
     test_step.dependOn(&sql_preview.test_run.step);
+    test_step.dependOn(&run_c_conformance_tests.step);
+    test_step.dependOn(&c_preview.test_run.step);
     test_step.dependOn(&run_core_only_tests.step);
     if (run_superhtml_api_tests) |run| test_step.dependOn(&run.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);
