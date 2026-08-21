@@ -508,6 +508,12 @@ recorded in `docs/compatibility/bash.md`.
 
 ### Slice 11.3: Rust scanner
 
+Status: complete. The dependency-free `rust` backend recognizes the documented lexical subset and
+is exposed through `native_syntax.languages.rust`. Shared conformance tests and the Rust corpus cover
+comments, nested block comments, documentation comments, attributes, identifiers, macros, keywords,
+numbers, character literals versus lifetimes, byte and raw strings, invalid bytes, and incomplete raw
+strings. The exact boundary is recorded in `docs/compatibility/rust.md`.
+
 - Document the supported Rust lexical subset.
 - Cover comments, raw and byte strings, character literals versus lifetimes, numbers, attributes,
   keywords, identifiers, macros, and punctuation.

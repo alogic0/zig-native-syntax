@@ -10,8 +10,8 @@ other Zig projects.
 
 ## Status
 
-The project contains the initial classification API, source-preserving HTML renderer, Zig and Bash
-backends, and optional Ziggy document, Ziggy Schema,
+The project contains the initial classification API, source-preserving HTML renderer, Zig, Bash, and
+Rust backends, and optional Ziggy document, Ziggy Schema,
 Scripty, HTML, XML, CSS, composed SuperHTML, and parser-backed Markdown backends. Additional
 language adapters and Zine integration remain experimental work.
 
@@ -55,6 +55,8 @@ language adapters and Zine integration remain experimental work.
   Zine language labels, migration requirements, and unsupported-language behavior.
 - [Bash highlighting compatibility](docs/compatibility/bash.md) defines the owned shell lexical
   subset and the constructs intentionally left as plain text.
+- [Rust highlighting compatibility](docs/compatibility/rust.md) defines the owned Rust lexical
+  subset, recovery rules, and grammar-dependent limitations.
 
 ## Development
 
@@ -69,6 +71,7 @@ Render source files as HTML fragments for manual inspection:
 ```sh
 ./build.sh render-zig tests/corpus/zig/complete.zig > /tmp/complete.html
 ./build.sh render-bash tests/corpus/bash/complete.sh > /tmp/bash.html
+./build.sh render-rust tests/corpus/rust/complete.rs > /tmp/rust.html
 ./build.sh render-ziggy tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
 ./build.sh render-ziggy-schema tests/corpus/ziggy-schema/complete.ziggy-schema > /tmp/schema.html
 ./build.sh render-scripty tests/corpus/scripty/complete.scripty > /tmp/scripty.html
