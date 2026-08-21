@@ -43,6 +43,11 @@ pub fn build(b: *std.Build) void {
         "backend-superhtml",
         "Enable the optional composed SuperHTML backend",
     ) orelse false;
+    const enable_markdown_backend = b.option(
+        bool,
+        "backend-markdown",
+        "Enable the optional Markdown backend",
+    ) orelse false;
     const ziggy_dependency = if (enable_ziggy_backend or enable_ziggy_schema_backend)
         b.lazyDependency("ziggy", .{
             .target = target,
@@ -66,6 +71,13 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
             .tokenizers_only = true,
+        }) orelse return
+    else
+        null;
+    const markdown_dependency = if (enable_markdown_backend)
+        b.lazyDependency("markdown_parser", .{
+            .target = target,
+            .optimize = optimize,
         }) orelse return
     else
         null;
@@ -492,6 +504,30 @@ pub fn build(b: *std.Build) void {
         };
     } else null;
 
+    const run_markdown_backend_tests: ?*std.Build.Step.Run = if (markdown_dependency) |dependency| enabled: {
+        const markdown_backend = b.addModule("native_syntax_markdown", .{
+            .root_source_file = b.path("src/optional/markdown.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "markdown", .module = dependency.module("markdown") },
+            },
+        });
+        const markdown_backend_tests = b.addTest(.{
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("tests/markdown_backend.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "native_syntax", .module = native_syntax },
+                    .{ .name = "native_syntax_markdown", .module = markdown_backend },
+                },
+            }),
+        });
+        break :enabled b.addRunArtifact(markdown_backend_tests);
+    } else null;
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
@@ -530,6 +566,7 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }
+    if (run_markdown_backend_tests) |run| test_step.dependOn(&run.step);
 }
 
 const OptionalBackendRuns = struct {
