@@ -353,6 +353,11 @@ pub fn build(b: *std.Build) void {
         .display_name = "Make",
         .sample_path = "source.mk",
     });
+    const cmake_runs = addCoreLanguage(b, native_syntax, target, optimize, .{
+        .name = "cmake",
+        .display_name = "CMake",
+        .sample_path = "CMakeLists.txt",
+    });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -935,6 +940,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&hcl_preview.test_run.step);
     test_step.dependOn(&make_runs.backend_test_run.step);
     test_step.dependOn(&make_runs.preview_test_run.step);
+    test_step.dependOn(&cmake_runs.backend_test_run.step);
+    test_step.dependOn(&cmake_runs.preview_test_run.step);
     test_step.dependOn(&run_core_only_tests.step);
     if (run_superhtml_api_tests) |run| test_step.dependOn(&run.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);

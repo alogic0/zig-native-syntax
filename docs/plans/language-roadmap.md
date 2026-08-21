@@ -36,7 +36,7 @@ as programming languages.
 - [x] 21. YAML
 - [x] 22. HCL
 - [x] 23. Make
-- [ ] 24. CMake
+- [x] 24. CMake
 - [ ] 25. Java
 - [ ] 26. C#
 - [ ] 27. C++
