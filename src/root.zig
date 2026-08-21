@@ -19,6 +19,7 @@ pub const HighlightError = backend.HighlightError;
 pub const MetadataError = backend.MetadataError;
 
 pub const languages = struct {
+    pub const bash = @import("languages/bash.zig");
     pub const zig = @import("languages/zig.zig");
 };
 

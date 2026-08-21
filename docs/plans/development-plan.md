@@ -495,6 +495,12 @@ fallback rules are recorded in `docs/compatibility/language-demand.md`.
 
 ### Slice 11.2: Shell/Bash scanner
 
+Status: complete. The dependency-free `bash` backend recognizes the documented lexical subset and
+is exposed through `native_syntax.languages.bash`. Shared conformance tests and the Bash corpus cover
+comments, quoting, escapes, variables, command and arithmetic substitutions, operators, keywords,
+numbers, static heredocs, invalid bytes, and incomplete constructs. The exact recovery boundary is
+recorded in `docs/compatibility/bash.md`.
+
 - Document the supported shell dialect and lexical subset.
 - Cover comments, quoting forms, variables, substitutions, operators, keywords, and heredocs according
   to that subset.
