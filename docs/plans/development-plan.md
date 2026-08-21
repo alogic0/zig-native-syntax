@@ -521,6 +521,12 @@ strings. The exact boundary is recorded in `docs/compatibility/rust.md`.
 
 ### Slice 11.4: Prioritize further languages
 
+Status: complete. Current Zine rendering fixtures no longer require a Tree-sitter backend after
+Rust integration. JSON and diff/patch lead the demand-triggered candidate list because suitable
+bounded implementations are low-risk; JavaScript/TypeScript and YAML remain deferred because their
+complexity is not justified by current evidence. The full ranking and criteria are recorded in
+`docs/compatibility/language-demand.md`.
+
 - Rank candidates using real consumer demand, availability of maintained Zig syntax APIs, implementation
   complexity, binary-size cost, and security risk.
 - Add one backend per independently reviewable slice.
@@ -530,6 +536,8 @@ Phase gate:
 
 - Every owned scanner states what it recognizes and what remains plain text.
 - Scanner tests do not claim syntax validation or full grammar conformance.
+
+Phase 11 status: complete.
 
 ## Phase 12: Complete The Zine Migration
 
