@@ -154,6 +154,7 @@ const Scanner = struct {
         }
         try scanner.sink.add(start, scanner.index, .operator);
         scanner.after_dot = false;
+        scanner.next_identifier_scope = null;
     }
 
     fn scanIdentifier(scanner: *Scanner) HighlightError!void {

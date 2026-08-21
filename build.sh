@@ -54,6 +54,10 @@ case "${1:-}" in
         shift
         exec "${zig_exe}" build render-javascript -- "$@"
         ;;
+    render-typescript)
+        shift
+        exec "${zig_exe}" build render-typescript -- "$@"
+        ;;
     render-ziggy)
         shift
         exec "${zig_exe}" build render-ziggy -Dbackend-ziggy=true -- "$@"

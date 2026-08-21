@@ -29,6 +29,7 @@ pub const languages = struct {
     pub const rust = @import("languages/rust.zig");
     pub const sql = @import("languages/sql.zig");
     pub const toml = @import("languages/toml.zig");
+    pub const typescript = @import("languages/typescript.zig");
     pub const zig = @import("languages/zig.zig");
 };
 

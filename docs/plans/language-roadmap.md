@@ -32,7 +32,7 @@ as programming languages.
 - [x] SQL
 - [x] C
 - [x] JavaScript
-- [ ] TypeScript
+- [x] TypeScript
 - [ ] YAML
 - [ ] HCL
 - [ ] Make
