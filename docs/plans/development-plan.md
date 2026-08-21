@@ -19,7 +19,7 @@ authoritative for every phase of this plan.
 - [x] Public highlighting API finalized for the experimental phase.
 - [x] Source-preserving HTML renderer implemented.
 - [x] First language backend implemented.
-- [ ] Zine integration started.
+- [x] Zine integration started.
 
 The existing `Scope` and `Span` declarations are provisional. Phase 1 may replace them before any
 compatibility promise is made.
@@ -388,17 +388,23 @@ Goal: validate the public API and completed native backends in their first real 
 
 ### Slice 9.1: Local dependency wiring
 
+Status: complete.
+
 - Add `zig-native-syntax` as a local path dependency on Zine's experiment branch.
 - Route canonical languages with completed native backends through the library.
 - Keep Tree-sitter as the fallback for every other currently supported language.
 
 ### Slice 9.2: CSS and snapshot adaptation
 
+Status: complete.
+
 - Map stable library classes into Zine's starter highlight stylesheet.
 - Update only snapshots whose markup changes intentionally for native languages.
 - Verify source escaping for fenced blocks, code directives, and string highlighting helpers.
 
 ### Slice 9.3: Integration evidence
+
+Status: complete.
 
 - Compare build time, executable size, peak allocations, and representative output with the current
   Tree-sitter path.
@@ -407,11 +413,32 @@ Goal: validate the public API and completed native backends in their first real 
 - Revise Phase 1 APIs while compatibility is still experimental if the integration exposes a poor
   ownership or lifetime boundary.
 
+Evidence and findings:
+
+- The Zine spike routes Zig, Ziggy, Ziggy Schema, Scripty, HTML, XML, CSS, and SuperHTML through
+  native backends and retains Rust as representative Tree-sitter fallback output.
+- On one same-machine fresh host build, the native-first graph completed in 93.04 seconds versus
+  95.65 seconds for the pre-integration graph. Maximum build RSS was 1,288,632 KiB versus
+  1,209,484 KiB. These observations are diagnostic, not portable thresholds.
+- The installed ReleaseFast host executable grew from 156,452,784 bytes to 157,963,872 bytes;
+  loaded ELF sections grew by 217,088 bytes, indicating that most of the file increase is debug
+  metadata.
+- The public backend, caller-owned capture sink, and separate renderer fit Zine's arena and writer
+  lifetimes without a Phase 1 API revision.
+- The spike exposed one package-graph issue: HTML, XML, and SuperHTML imported a common markup
+  implementation under different module owners. The build now provides one shared private markup
+  module to all three backends.
+- Direct end-to-end allocation counts are not comparable because Tree-sitter allocations cross a C
+  boundary. Process maximum RSS was recorded as the explicit first-spike peak-memory proxy; a common
+  allocation harness can be added with the permanent Phase 13 benchmarks.
+
 Phase gate:
 
 - Zine renders the completed library languages natively and all other languages through the
   unchanged fallback.
 - Zine's focused rendering and workflow tests pass on the local architecture.
+
+Phase 9 status: complete.
 
 ## Phase 10: Resolve Markdown Ownership
 
