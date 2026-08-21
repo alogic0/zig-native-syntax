@@ -118,19 +118,18 @@ const Scanner = struct {
         scope: Scope,
     ) HighlightError!bool {
         const remaining = scanner.source[scanner.index..];
-        const length = @min(remaining.len, literal.len);
-        if (!std.mem.eql(u8, remaining[0..length], literal[0..length])) return false;
-
-        const is_complete = remaining.len >= literal.len;
-        if (!is_complete and length == remaining.len) {
-            try scanner.sink.add(scanner.index, scanner.source.len, scope);
-            scanner.index = scanner.source.len;
-            return true;
+        var matched: usize = 0;
+        while (matched < remaining.len and
+            matched < literal.len and
+            remaining[matched] == literal[matched])
+        {
+            matched += 1;
         }
-        if (!is_complete or !isLiteralBoundary(remaining[literal.len..])) return false;
+        if (matched == 0 or !isLiteralBoundary(remaining[matched..])) return false;
 
-        try scanner.sink.add(scanner.index, scanner.index + literal.len, scope);
-        scanner.index += literal.len;
+        const capture_length = if (matched == literal.len) literal.len else matched;
+        try scanner.sink.add(scanner.index, scanner.index + capture_length, scope);
+        scanner.index += capture_length;
         return true;
     }
 };

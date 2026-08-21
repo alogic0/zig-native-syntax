@@ -36,7 +36,7 @@ test "JSON scanner conforms to the shared backend contract" {
         },
         .extra_cases = &.{
             .{
-                .source = "[tru",
+                .source = "[tru\n",
                 .required_scopes = &.{ .boolean, .punctuation },
             },
             .{
