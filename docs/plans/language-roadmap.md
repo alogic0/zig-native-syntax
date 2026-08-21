@@ -29,7 +29,7 @@ as programming languages.
 - [x] TOML
 - [x] Dockerfile
 - [x] Python
-- [ ] SQL
+- [x] SQL
 - [ ] C
 - [ ] JavaScript
 - [ ] TypeScript

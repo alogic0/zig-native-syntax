@@ -11,7 +11,7 @@ other Zig projects.
 ## Status
 
 The project contains the initial classification API, source-preserving HTML renderer, Zig, Bash,
-Rust, JSON, Diff, TOML, Dockerfile, and Python backends, and optional Ziggy document, Ziggy Schema,
+Rust, JSON, Diff, TOML, Dockerfile, Python, and SQL backends, and optional Ziggy document, Ziggy Schema,
 Scripty, HTML, XML, CSS, composed SuperHTML, and parser-backed Markdown backends. Additional
 language adapters and Zine integration remain experimental work.
 
@@ -67,6 +67,8 @@ language adapters and Zine integration remain experimental work.
   structure coverage and the embedded shell boundary.
 - [Python highlighting compatibility](docs/compatibility/python.md) defines tokenizer-style
   coverage and the f-string and indentation boundary.
+- [SQL highlighting compatibility](docs/compatibility/sql.md) defines the common lexical subset and
+  dialect boundary.
 
 ## Development
 
@@ -87,6 +89,7 @@ Render source files as HTML fragments for manual inspection:
 ./build.sh render-toml tests/corpus/toml/complete.toml > /tmp/toml.html
 ./build.sh render-dockerfile tests/corpus/dockerfile/complete.Dockerfile > /tmp/dockerfile.html
 ./build.sh render-python tests/corpus/python/complete.py > /tmp/python.html
+./build.sh render-sql tests/corpus/sql/complete.sql > /tmp/sql.html
 ./build.sh render-ziggy tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
 ./build.sh render-ziggy-schema tests/corpus/ziggy-schema/complete.ziggy-schema > /tmp/schema.html
 ./build.sh render-scripty tests/corpus/scripty/complete.scripty > /tmp/scripty.html
