@@ -4,7 +4,7 @@
 in Zig. It is intended to classify source code with native Zig tokenizers and parsers, then
 render those classifications safely without depending on Tree-sitter.
 
-The first consumer will be the Zine static site generator. This repository is intentionally
+The first consumer is the Zine static site generator. This repository is intentionally
 independent so that its highlighting adapters, tests, and compatibility policy can be reused by
 other Zig projects.
 
@@ -12,8 +12,8 @@ other Zig projects.
 
 The project contains the initial classification API, source-preserving HTML renderer, a Zig backend
 with lexical classification plus recovering AST context, and optional Ziggy document, Ziggy Schema,
-Scripty, HTML, XML, CSS, and composed SuperHTML backends. Additional language adapters and Zine
-integration remain experimental work.
+Scripty, HTML, XML, CSS, composed SuperHTML, and parser-backed Markdown backends. Additional
+language adapters and Zine integration remain experimental work.
 
 ## Design constraints
 
@@ -49,6 +49,8 @@ integration remain experimental work.
   adapter, bounded recovery scanner, and proposed upstream tokenizer export.
 - [SuperHTML syntax API compatibility](docs/compatibility/superhtml.md) records the upstream
   dependency boundary and the HTML, XML, and CSS adapter behavior.
+- [Markdown highlighting compatibility](docs/compatibility/markdown.md) records the standalone
+  parser boundary, classifications, and deferred composition behavior.
 
 ## Development
 

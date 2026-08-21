@@ -65,6 +65,11 @@ mechanism. Their shared pinned package remains lazy. `-Dbackend-ziggy=true` expo
 The independently pinned Scripty package remains lazy as well. `-Dbackend-scripty=true` exposes
 `native_syntax_scripty` without enabling or configuring either Ziggy backend.
 
+Markdown follows the same boundary. `-Dbackend-markdown=true` lazily configures the independently
+pinned `zig-markdown-parser` package and exposes `native_syntax_markdown`. The core module and
+disabled backend graph do not import or compile the parser. Consumers remain responsible for aliases
+such as `md`, `smd`, or `supermd`.
+
 ## Phase 4 Proof
 
 The test-only `backend-dummy` option exercises this boundary with a lazy local package. Its build

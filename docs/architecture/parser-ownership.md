@@ -96,22 +96,21 @@ escaped plain text.
 
 ## Markdown Boundary
 
-Zine currently owns its Markdown parser. Importing that parser into `zig-native-syntax` would create
-the wrong dependency direction:
+The Markdown parser is independently maintained as `zig-markdown-parser`. Both Zine and the optional
+Markdown backend consume that package directly:
 
 ```text
-Zine → zig-native-syntax → Zine Markdown parser
+Zine ────────────────→ zig-markdown-parser
+  └→ zig-native-syntax ─→ zig-markdown-parser
 ```
 
-Until Markdown syntax has an independently consumable package, one of these boundaries must be
-used:
+This avoids a dependency path from `zig-native-syntax` back into Zine. The parser owns Markdown
+syntax, immutable document traversal, and original-source byte spans. The highlighting adapter owns
+the mapping from parser nodes to language-neutral scopes. Zine retains SuperMD directives, page
+semantics, fence aliases, and fallback policy.
 
-1. Zine retains its own Markdown highlighting adapter.
-2. The Markdown parser is extracted into a separate parser package with its own responsibilities.
-3. `zig-native-syntax` implements a limited Markdown lexical highlighter without claiming to be a
-   complete Markdown parser.
-
-The highlighter must not copy Zine's full parser merely to avoid the dependency cycle.
+The adapter consumes only the parser's public read-only traversal API. It does not copy parser
+storage, use Zine's compatibility AST, or add highlighting concerns to the parser package.
 
 The same rule applies when another useful parser is vendored only inside a consumer: use a stable
 upstream package API, keep the adapter in the consumer temporarily, or extract the parser under a

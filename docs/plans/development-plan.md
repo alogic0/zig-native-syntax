@@ -64,7 +64,7 @@ Consumers own:
 | Native package adapters | Ziggy, Ziggy Schema, Scripty | Maintained upstream tokenizers or parsers |
 | Markup and style adapters | HTML, XML, CSS | Maintained SuperHTML syntax APIs |
 | Composed adapter | SuperHTML | HTML structure plus nested Scripty classifications |
-| Boundary decision | Markdown/SuperMD | Keep consumer-owned, extract parser, or add bounded scanner |
+| Parser-backed adapter | Markdown | Independently extracted `zig-markdown-parser` package |
 | Compatibility scanners | Shell/Bash, Rust | Purpose-built lexical scanners after their supported subsets are documented |
 | Deferred | JavaScript and remaining Tree-sitter languages | Add according to measured consumer demand and suitable syntax APIs |
 
@@ -446,11 +446,23 @@ Goal: support Markdown source highlighting without creating a dependency cycle w
 
 ### Slice 10.1: Requirements audit
 
+Status: complete. Zine's rendering fixture requires highlighted Markdown source and owns the
+`markdown`, `md`, `smd`, and `supermd` aliases. The required initial surface is structural Markdown:
+headings, emphasis, strong text, strikethrough, links and images, code, block quotes, list/task
+markers, thematic breaks, footnotes, and raw HTML regions. Raw HTML is marked as embedded; nested
+HTML classification and language-aware fenced-code composition are deferred.
+
 - Measure whether Zine or another intended consumer actually needs highlighted Markdown source.
 - Define required constructs and whether embedded HTML or fenced-language composition is in scope.
 - Compare a bounded scanner with extracting the existing Markdown parser into an independent package.
 
 ### Slice 10.2: Implement the selected boundary
+
+Status: complete. The parser was extracted into the independent `zig-markdown-parser` package with
+a stable read-only traversal API. The lazy `native_syntax_markdown` module maps parser nodes and
+original-source spans to shared scopes. Its conformance and corpus tests cover malformed input,
+invalid UTF-8, escaping, multiline ranges, list/task markers, and fenced code. Zine enables the
+optional module, owns its aliases, and retains Tree-sitter for unsupported languages.
 
 - Keep the adapter in Zine if it depends on Zine-owned parser internals; or
 - consume an independently extracted parser package; or
@@ -460,6 +472,8 @@ Phase gate:
 
 - No dependency path leads from `zig-native-syntax` back into Zine.
 - The selected behavior and limitations are documented before it is advertised as supported.
+
+Phase 10 status: complete.
 
 ## Phase 11: Add Compatibility Scanners By Demand
 

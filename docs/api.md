@@ -194,3 +194,9 @@ AST context for declared types and fields. See the [Ziggy](compatibility/ziggy.m
 Scripty is independently enabled with `.@"backend-scripty" = true` and imported from the
 `native_syntax_scripty` module. It combines public parser context with bounded lexical recovery; see
 the [Scripty compatibility note](compatibility/scripty.md) for the tokenizer API boundary.
+
+Markdown is enabled with `.@"backend-markdown" = true` and imported from the
+`native_syntax_markdown` module. It maps the standalone Markdown parser's immutable nodes and source
+spans to markup scopes. The package exposes only the canonical name `markdown`; filename and fence
+aliases remain consumer policy. See the
+[Markdown compatibility note](compatibility/markdown.md) for the exact scope and composition limits.
