@@ -28,7 +28,7 @@ as programming languages.
 - [x] Diff/patch
 - [x] TOML
 - [x] Dockerfile
-- [ ] Python
+- [x] Python
 - [ ] SQL
 - [ ] C
 - [ ] JavaScript

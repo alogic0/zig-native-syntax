@@ -38,6 +38,10 @@ case "${1:-}" in
         shift
         exec "${zig_exe}" build render-dockerfile -- "$@"
         ;;
+    render-python)
+        shift
+        exec "${zig_exe}" build render-python -- "$@"
+        ;;
     render-ziggy)
         shift
         exec "${zig_exe}" build render-ziggy -Dbackend-ziggy=true -- "$@"
