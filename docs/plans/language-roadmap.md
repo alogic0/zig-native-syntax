@@ -25,7 +25,7 @@ as programming languages.
 - [x] Bash
 - [x] Rust
 - [x] JSON
-- [ ] Diff/patch
+- [x] Diff/patch
 - [ ] TOML
 - [ ] Dockerfile
 - [ ] Python

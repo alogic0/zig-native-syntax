@@ -560,10 +560,11 @@ highlight option remains compatible.
 
 ### Slice 12.2: Native coverage expansion and comparison
 
-Progress: the JSON increment is complete. It adds the dependency-free backend,
+Progress: the JSON and Diff/patch increments are complete. They add dependency-free backends,
 standard-scanner oracle coverage, compatibility boundary, preview command, and
 Zine routing/fixture comparison while retaining Tree-sitter for subsequent
-languages.
+languages. Diff intentionally classifies line structure without interpreting
+the programming language embedded in changed payload.
 
 - Implement unchecked backends from the [Language Backend Roadmap](language-roadmap.md) in order,
   revisiting demand and parser availability before each one.

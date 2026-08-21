@@ -26,6 +26,10 @@ case "${1:-}" in
         shift
         exec "${zig_exe}" build render-json -- "$@"
         ;;
+    render-diff)
+        shift
+        exec "${zig_exe}" build render-diff -- "$@"
+        ;;
     render-ziggy)
         shift
         exec "${zig_exe}" build render-ziggy -Dbackend-ziggy=true -- "$@"

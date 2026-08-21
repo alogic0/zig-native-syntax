@@ -1,0 +1,10 @@
+diff --git a/src/main.zig b/src/main.zig
+index 1234567..89abcde 100644
+--- a/src/main.zig
++++ b/src/main.zig
+@@ -1,4 +1,5 @@
+ const std = @import("std");
+-const old = true;
++const updated = true;
++const escaped = "<&>";
+\ No newline at end of file
