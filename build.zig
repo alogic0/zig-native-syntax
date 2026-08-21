@@ -358,6 +358,24 @@ pub fn build(b: *std.Build) void {
         .display_name = "CMake",
         .sample_path = "CMakeLists.txt",
     });
+    const java_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "java", .display_name = "Java", .sample_path = "source.java" });
+    const c_sharp_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "c-sharp", .file_stem = "c_sharp", .display_name = "C#", .sample_path = "source.cs" });
+    const cpp_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "cpp", .display_name = "C++", .sample_path = "source.cpp" });
+    const go_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "go", .display_name = "Go", .sample_path = "source.go" });
+    const powershell_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "powershell", .display_name = "PowerShell", .sample_path = "source.ps1" });
+    const php_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "php", .display_name = "PHP", .sample_path = "source.php" });
+    const lua_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "lua", .display_name = "Lua", .sample_path = "source.lua" });
+    const kotlin_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "kotlin", .display_name = "Kotlin", .sample_path = "source.kt" });
+    const ruby_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "ruby", .display_name = "Ruby", .sample_path = "source.rb" });
+    const swift_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "swift", .display_name = "Swift", .sample_path = "source.swift" });
+    const assembly_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "asm", .file_stem = "assembly", .display_name = "Assembly", .sample_path = "source.s" });
+    const nasm_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nasm", .display_name = "NASM", .sample_path = "source.nasm" });
+    const objc_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "objc", .display_name = "Objective-C", .sample_path = "source.m" });
+    const vue_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "vue", .display_name = "Vue", .sample_path = "source.vue" });
+    const astro_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "astro", .display_name = "Astro", .sample_path = "source.astro" });
+    const jsdoc_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "jsdoc", .display_name = "JSDoc", .sample_path = "source.jsdoc" });
+    const regex_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "regex", .display_name = "Regular expression", .sample_path = "source.regex" });
+    const proto_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "proto", .display_name = "Protocol Buffers", .sample_path = "source.proto" });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -942,6 +960,10 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&make_runs.preview_test_run.step);
     test_step.dependOn(&cmake_runs.backend_test_run.step);
     test_step.dependOn(&cmake_runs.preview_test_run.step);
+    inline for (.{ java_runs, c_sharp_runs, cpp_runs, go_runs, powershell_runs, php_runs, lua_runs, kotlin_runs, ruby_runs, swift_runs, assembly_runs, nasm_runs, objc_runs, vue_runs, astro_runs, jsdoc_runs, regex_runs, proto_runs }) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
     test_step.dependOn(&run_core_only_tests.step);
     if (run_superhtml_api_tests) |run| test_step.dependOn(&run.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);
@@ -986,6 +1008,7 @@ const OptionalBackendRuns = struct {
 
 const CoreLanguageOptions = struct {
     name: []const u8,
+    file_stem: ?[]const u8 = null,
     display_name: []const u8,
     sample_path: []const u8,
 };
@@ -997,8 +1020,9 @@ fn addCoreLanguage(
     optimize: std.builtin.OptimizeMode,
     options: CoreLanguageOptions,
 ) OptionalBackendRuns {
+    const file_stem = options.file_stem orelse options.name;
     const backend_module = b.addModule(b.fmt("{s}_preview_backend", .{options.name}), .{
-        .root_source_file = b.path(b.fmt("tools/{s}_preview_backend.zig", .{options.name})),
+        .root_source_file = b.path(b.fmt("tools/{s}_preview_backend.zig", .{file_stem})),
         .target = target,
         .optimize = optimize,
         .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
@@ -1015,7 +1039,7 @@ fn addCoreLanguage(
     });
     const conformance_tests = b.addTest(.{
         .root_module = b.createModule(.{
-            .root_source_file = b.path(b.fmt("tests/{s}_conformance.zig", .{options.name})),
+            .root_source_file = b.path(b.fmt("tests/{s}_conformance.zig", .{file_stem})),
             .target = target,
             .optimize = optimize,
             .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},

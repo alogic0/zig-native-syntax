@@ -37,24 +37,24 @@ as programming languages.
 - [x] 22. HCL
 - [x] 23. Make
 - [x] 24. CMake
-- [ ] 25. Java
-- [ ] 26. C#
-- [ ] 27. C++
-- [ ] 28. Go
-- [ ] 29. PowerShell
-- [ ] 30. PHP
-- [ ] 31. Lua
-- [ ] 32. Kotlin
-- [ ] 33. Ruby
-- [ ] 34. Swift
-- [ ] 35. Assembly
-- [ ] 36. NASM
-- [ ] 37. Objective-C
-- [ ] 38. Vue
-- [ ] 39. Astro
-- [ ] 40. JSDoc
-- [ ] 41. Regular expressions
-- [ ] 42. Protocol Buffers
+- [x] 25. Java
+- [x] 26. C#
+- [x] 27. C++
+- [x] 28. Go
+- [x] 29. PowerShell
+- [x] 30. PHP
+- [x] 31. Lua
+- [x] 32. Kotlin
+- [x] 33. Ruby
+- [x] 34. Swift
+- [x] 35. Assembly
+- [x] 36. NASM
+- [x] 37. Objective-C
+- [x] 38. Vue
+- [x] 39. Astro
+- [x] 40. JSDoc
+- [x] 41. Regular expressions
+- [x] 42. Protocol Buffers
 - [ ] 43. KDL
 - [ ] 44. Nix
 - [ ] 45. Fish

@@ -66,7 +66,7 @@ No further language is required by the current Zine rendering fixtures. Future
 backends should be added only with new consumer evidence. The complete ordered
 checklist is maintained in the
 [language backend roadmap](../plans/language-roadmap.md). The demand-ordered
-increment through HCL is complete. Later languages remain prioritized by
+increment through Protocol Buffers is complete. Later languages remain prioritized by
 technical-document use, implementation bounds, and credible malformed-input
 recovery rather than by popularity alone.
 

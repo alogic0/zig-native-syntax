@@ -560,7 +560,7 @@ highlight option remains compatible.
 
 ### Slice 12.2: Native coverage expansion and comparison
 
-Progress: the ten-language increment from Diff/patch through HCL is complete,
+Progress: the demand-ordered increment through Protocol Buffers is complete,
 following the earlier JSON slice. Each language has a dependency-free backend,
 compatibility boundary, preview command, conformance corpus, and Zine
 routing/fixture comparison while Tree-sitter remains available for later

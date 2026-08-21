@@ -83,6 +83,8 @@ language adapters and Zine integration remain experimental work.
   and the embedded-recipe boundary.
 - [CMake highlighting compatibility](docs/compatibility/cmake.md) defines command-oriented lexical
   coverage and the generator/evaluation boundary.
+- [Roadmap languages 25–42 compatibility](docs/compatibility/roadmap-25-42.md) defines the lexical
+  and embedded-language boundaries for Java through Protocol Buffers.
 
 ## Development
 
@@ -111,6 +113,24 @@ Render source files as HTML fragments for manual inspection:
 ./build.sh render-hcl tests/corpus/hcl/complete.hcl > /tmp/hcl.html
 ./build.sh render-make tests/corpus/make/complete.mk > /tmp/make.html
 ./build.sh render-cmake tests/corpus/cmake/complete.cmake > /tmp/cmake.html
+./build.sh render-java tests/corpus/java/complete.java > /tmp/java.html
+./build.sh render-c-sharp tests/corpus/c_sharp/complete.cs > /tmp/c-sharp.html
+./build.sh render-cpp tests/corpus/cpp/complete.cpp > /tmp/cpp.html
+./build.sh render-go tests/corpus/go/complete.go > /tmp/go.html
+./build.sh render-powershell tests/corpus/powershell/complete.ps1 > /tmp/powershell.html
+./build.sh render-php tests/corpus/php/complete.php > /tmp/php.html
+./build.sh render-lua tests/corpus/lua/complete.lua > /tmp/lua.html
+./build.sh render-kotlin tests/corpus/kotlin/complete.kt > /tmp/kotlin.html
+./build.sh render-ruby tests/corpus/ruby/complete.rb > /tmp/ruby.html
+./build.sh render-swift tests/corpus/swift/complete.swift > /tmp/swift.html
+./build.sh render-asm tests/corpus/assembly/complete.s > /tmp/asm.html
+./build.sh render-nasm tests/corpus/nasm/complete.nasm > /tmp/nasm.html
+./build.sh render-objc tests/corpus/objc/complete.m > /tmp/objc.html
+./build.sh render-vue tests/corpus/vue/complete.vue > /tmp/vue.html
+./build.sh render-astro tests/corpus/astro/complete.astro > /tmp/astro.html
+./build.sh render-jsdoc tests/corpus/jsdoc/complete.jsdoc > /tmp/jsdoc.html
+./build.sh render-regex tests/corpus/regex/complete.regex > /tmp/regex.html
+./build.sh render-proto tests/corpus/proto/complete.proto > /tmp/proto.html
 ./build.sh render-ziggy tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
 ./build.sh render-ziggy-schema tests/corpus/ziggy-schema/complete.ziggy-schema > /tmp/schema.html
 ./build.sh render-scripty tests/corpus/scripty/complete.scripty > /tmp/scripty.html

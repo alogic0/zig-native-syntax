@@ -1,0 +1,6 @@
+// Protocol Buffers corpus
+syntax = "proto3";
+package demo;
+option java_package = "demo\n<&>";
+option deprecated = true;
+message Entry { string name = 1; int32 count = 2; bool enabled = 3; }
