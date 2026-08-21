@@ -21,6 +21,7 @@ pub const MetadataError = backend.MetadataError;
 pub const languages = struct {
     pub const bash = @import("languages/bash.zig");
     pub const diff = @import("languages/diff.zig");
+    pub const dockerfile = @import("languages/dockerfile.zig");
     pub const json = @import("languages/json.zig");
     pub const rust = @import("languages/rust.zig");
     pub const toml = @import("languages/toml.zig");

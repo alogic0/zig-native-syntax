@@ -27,7 +27,7 @@ as programming languages.
 - [x] JSON
 - [x] Diff/patch
 - [x] TOML
-- [ ] Dockerfile
+- [x] Dockerfile
 - [ ] Python
 - [ ] SQL
 - [ ] C
