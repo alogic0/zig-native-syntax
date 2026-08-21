@@ -33,10 +33,15 @@ followed by Rust because Rust is required by the rendering snapshot.
 ## Migration Contract
 
 During the Phase 11 native-first experiment, a language without a native
-backend continues through Zine's existing Tree-sitter path. Phase 12 will add
-an explicit native-only mode. In that mode, an unsupported language must be
-rendered as safely escaped plain text while preserving its code-block language
-class; lack of a highlighter must not make otherwise valid content fail.
+backend continued through Zine's existing Tree-sitter path. Phase 12 adds
+explicit `tree-sitter`, `native-first`, `native-only`, and `off` modes. In
+native-only mode, an unsupported language is rendered as safely escaped plain
+text while preserving its code-block language class; lack of a highlighter
+does not make otherwise valid content fail.
+
+Tree-sitter remains available as a temporary comparison backend while the
+ordered native-language roadmap is implemented. Native-only behavior proves
+the eventual dependency-free path but does not trigger immediate removal.
 
 Unknown languages still produce the existing diagnostic in the explicit
 Tree-sitter compatibility mode. Disabling syntax highlighting continues to
@@ -58,18 +63,13 @@ criterion.
 ## Further-Language Ranking
 
 No further language is required by the current Zine rendering fixtures. Future
-backends should be added only with new consumer evidence. The present ranking
-is:
-
-| Priority | Candidate | Rationale and boundary |
-| --- | --- | --- |
-| 1 | JSON | Common configuration format with a maintained Zig standard-library scanner; small, dependency-free, and low risk. |
-| 2 | Diff/patch | Useful in technical writing and operational notes; a line-prefix scanner is bounded and low risk. |
-| 3 | TOML | Common project configuration format, but no selected maintained Zig syntax API; requires a documented lexical subset. |
-| 4 | Python | Broad user demand, but triple strings, f-strings, indentation, and version drift make a credible scanner substantially larger. |
-| 5 | C | Aro offers a maintained Zig parser, but it would be an optional heavyweight dependency and needs a source-range/API audit first. |
-| 6 | JavaScript/TypeScript | High general demand but high grammar, JSX/template, dependency-size, and malformed-input complexity; defer until a suitable maintained Zig syntax API exists. |
-| 7 | YAML | Common but deceptively context-sensitive; defer without a maintained parser or concrete Zine demand. |
+backends should be added only with new consumer evidence. The complete ordered
+checklist is maintained in the
+[language backend roadmap](../plans/language-roadmap.md). JSON, diff/patch, and
+TOML lead because they combine common technical-document use with bounded,
+low-risk implementations. High-popularity languages move later when credible
+malformed-input handling requires a much larger scanner or a maintained parser
+has not been selected.
 
 Binary-size and dependency measurements belong to the implementation slice for
 any selected candidate. A simple scanner is preferred only when its recovery

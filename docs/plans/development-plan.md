@@ -524,8 +524,9 @@ strings. The exact boundary is recorded in `docs/compatibility/rust.md`.
 Status: complete. Current Zine rendering fixtures no longer require a Tree-sitter backend after
 Rust integration. JSON and diff/patch lead the demand-triggered candidate list because suitable
 bounded implementations are low-risk; JavaScript/TypeScript and YAML remain deferred because their
-complexity is not justified by current evidence. The full ranking and criteria are recorded in
-`docs/compatibility/language-demand.md`.
+complexity is not justified by current evidence. The compatibility criteria are recorded in
+[Language Demand And Fallback Policy](../compatibility/language-demand.md), and the complete ordered
+checklist is maintained in the [Language Backend Roadmap](language-roadmap.md).
 
 - Rank candidates using real consumer demand, availability of maintained Zig syntax APIs, implementation
   complexity, binary-size cost, and security risk.
@@ -546,19 +547,31 @@ compatibility approval.
 
 ### Slice 12.1: Backend selection
 
+Status: complete. Zine exposes `tree-sitter`, `native-first`, `native-only`,
+and `off` build modes. Native-first remains the default during the comparison
+period. Native-only and off compile without importing Tree-sitter, unsupported
+languages become escaped plain text in those modes, and the legacy boolean
+highlight option remains compatible.
+
 - Add a temporary Zine selection mode for native-first with Tree-sitter fallback, native-only, and
   current Tree-sitter behavior.
 - Keep unknown-language diagnostics consistent with the selected mode.
 - Ensure disabling highlighting still emits safely escaped plain text.
 
-### Slice 12.2: Native coverage conversion
+### Slice 12.2: Native coverage expansion and comparison
 
-- Convert Zine fixtures language by language.
-- Update snapshots for intentional class and span changes.
+- Implement unchecked backends from the [Language Backend Roadmap](language-roadmap.md) in order,
+  revisiting demand and parser availability before each one.
+- Compare every new native backend with Tree-sitter on representative complete, malformed, and
+  incomplete inputs while both implementations remain available.
+- Convert Zine fixtures language by language and update snapshots only for intentional class and span
+  changes.
 - Verify code fences, code directives, imported snippets, and string helper highlighting.
 
 ### Slice 12.3: Tree-sitter removal decision
 
+- Defer removal while the prioritized language backlog is still producing useful, feasible native
+  backends and Tree-sitter remains valuable for comparison.
 - Review supported-language differences and obtain explicit compatibility approval.
 - Verify local-architecture builds and tests without `flow-syntax`, `tree_sitter`, or `treez` imports.
 - Remove those dependencies and obsolete build options only after the native-only gate passes.
