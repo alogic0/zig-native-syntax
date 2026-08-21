@@ -1,0 +1,6 @@
+|0100
+@main
+  #2a #01 ADD
+  "x\\n
+  BRK
+( comment )

@@ -1,0 +1,11 @@
+module Demo where
+
+data Item : Set where
+  item : Item
+
+value : Item
+value = item
+text = "x\\n"
+enabled = true
+count = 42
+-- comment

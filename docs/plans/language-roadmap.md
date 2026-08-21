@@ -96,8 +96,8 @@ as programming languages.
 - [x] 81. OpenSCAD
 - [x] 82. Nickel
 - [x] 83. Hare
-- [ ] 84. Agda
-- [ ] 85. Tree-sitter Query
-- [ ] 86. Vimscript
-- [ ] 87. Uxntal
-- [ ] 88. Generic comment tags
+- [x] 84. Agda
+- [x] 85. Tree-sitter Query
+- [x] 86. Vimscript
+- [x] 87. Uxntal
+- [x] 88. Generic comment tags

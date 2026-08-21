@@ -89,6 +89,8 @@ language adapters and Zine integration remain experimental work.
   format and programming-language coverage from KDL through Nim.
 - [Roadmap languages 75–83 compatibility](docs/compatibility/roadmap-75-83.md) defines bounded
   language coverage from D through Hare.
+- [Roadmap languages 84–88 compatibility](docs/compatibility/roadmap-84-88.md) defines the final
+  lexical backends from Agda through generic comment tags.
 
 ## Development
 

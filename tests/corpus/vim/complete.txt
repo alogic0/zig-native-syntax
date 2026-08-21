@@ -1,0 +1,7 @@
+function Demo()
+  let value = 'x\\n'
+  let enabled = v:true
+  let count = 42
+  return value
+endfunction
+" comment

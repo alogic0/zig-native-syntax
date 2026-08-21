@@ -417,6 +417,11 @@ pub fn build(b: *std.Build) void {
     const openscad_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "openscad", .display_name = "OpenSCAD", .sample_path = "source.scad" });
     const nickel_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nickel", .display_name = "Nickel", .sample_path = "source.ncl" });
     const hare_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "hare", .display_name = "Hare", .sample_path = "source.ha" });
+    const agda_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "agda", .display_name = "Agda", .sample_path = "source.agda" });
+    const query_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "query", .display_name = "Tree-sitter Query", .sample_path = "highlights.scm" });
+    const vim_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "vim", .display_name = "Vimscript", .sample_path = "source.vim" });
+    const uxntal_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "uxntal", .display_name = "Uxntal", .sample_path = "source.tal" });
+    const comment_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "comment", .display_name = "Comment tags", .sample_path = "comment.txt" });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -1010,6 +1015,10 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.preview_test_run.step);
     }
     inline for (.{ d_runs, v_runs, odin_runs, c3_runs, systemverilog_runs, llvm_runs, openscad_runs, nickel_runs, hare_runs }) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
+    inline for (.{ agda_runs, query_runs, vim_runs, uxntal_runs, comment_runs }) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }
