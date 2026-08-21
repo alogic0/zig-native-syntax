@@ -481,6 +481,13 @@ Goal: preserve the most valuable non-native language coverage without building h
 
 ### Slice 11.1: Usage and compatibility contract
 
+Status: complete. The Zine repository audit found that its generated-site fixtures use the nine
+completed native backends, Rust, and Zine's separate `console` renderer. Rust is therefore the only
+remaining Tree-sitter language required by the current rendering fixtures. Shell/Bash remains the
+first compatibility scanner because contributor documentation uses shell snippets extensively and
+it is a common user fence, but it is not presented as current fixture demand. The audit and migration
+fallback rules are recorded in `docs/compatibility/language-demand.md`.
+
 - Audit Zine fixtures, example sites, and known consumer language labels.
 - Define the language set required before Tree-sitter can be removed from Zine.
 - Specify whether unsupported languages are rejected, rendered as escaped plain text, or delegated to

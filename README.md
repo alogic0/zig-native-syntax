@@ -51,6 +51,8 @@ language adapters and Zine integration remain experimental work.
   dependency boundary and the HTML, XML, and CSS adapter behavior.
 - [Markdown highlighting compatibility](docs/compatibility/markdown.md) records the standalone
   parser boundary, classifications, and deferred composition behavior.
+- [Language demand and fallback policy](docs/compatibility/language-demand.md) records the audited
+  Zine language labels, migration requirements, and unsupported-language behavior.
 
 ## Development
 
