@@ -80,6 +80,19 @@ test "Markdown fenced code is one source-preserving capture" {
     try expectCapture(source, sink.captures(), source[0 .. source.len - 1], .markup_code);
 }
 
+test "Markdown corpus covers supported source markup" {
+    const source = @embedFile("corpus/markdown/complete.md");
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try markdown_backend.backend.highlight(source, &sink);
+
+    try expectCapture(source, sink.captures(), "# Native Markdown fixture", .markup_heading);
+    try expectCapture(source, sink.captures(), "**strong**", .markup_strong);
+    try expectCapture(source, sink.captures(), "[link](https://example.com)", .markup_link);
+    try expectCapture(source, sink.captures(), "[^note]", .markup_link);
+    try expectCapture(source, sink.captures(), "<aside>raw HTML</aside>", .embedded);
+}
+
 fn expectCapture(
     source: []const u8,
     captures: []const syntax.Capture,

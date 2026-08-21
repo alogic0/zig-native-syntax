@@ -78,3 +78,42 @@ pre {
     color: #f87171;
     text-decoration: underline wavy;
 }
+
+.syntax-markup-heading {
+    color: #fde68a;
+    font-weight: 700;
+}
+
+.syntax-markup-emphasis,
+.syntax-markup-quote {
+    color: #c4b5fd;
+    font-style: italic;
+}
+
+.syntax-markup-strong {
+    color: #f9a8d4;
+    font-weight: 700;
+}
+
+.syntax-markup-strikethrough {
+    color: #9ca3af;
+    text-decoration: line-through;
+}
+
+.syntax-markup-code {
+    color: #86efac;
+}
+
+.syntax-markup-link {
+    color: #93c5fd;
+    text-decoration: underline;
+}
+
+.syntax-markup-list {
+    color: #c084fc;
+    font-weight: 700;
+}
+
+.syntax-embedded {
+    color: #fdba74;
+}

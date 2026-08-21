@@ -504,7 +504,7 @@ pub fn build(b: *std.Build) void {
         };
     } else null;
 
-    const run_markdown_backend_tests: ?*std.Build.Step.Run = if (markdown_dependency) |dependency| enabled: {
+    const markdown_backend_runs: ?OptionalBackendRuns = if (markdown_dependency) |dependency| enabled: {
         const markdown_backend = b.addModule("native_syntax_markdown", .{
             .root_source_file = b.path("src/optional/markdown.zig"),
             .target = target,
@@ -525,7 +525,20 @@ pub fn build(b: *std.Build) void {
                 },
             }),
         });
-        break :enabled b.addRunArtifact(markdown_backend_tests);
+        const preview = addPreviewTool(b, .{
+            .command_name = "render-markdown",
+            .display_name = "Markdown",
+            .language_class = "language-markdown",
+            .sample_path = "source.md",
+            .backend = markdown_backend,
+            .native_syntax = native_syntax,
+            .target = target,
+            .optimize = optimize,
+        });
+        break :enabled .{
+            .backend_test_run = b.addRunArtifact(markdown_backend_tests),
+            .preview_test_run = preview.test_run,
+        };
     } else null;
 
     const test_step = b.step("test", "Run the native syntax highlighting tests");
@@ -566,7 +579,10 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }
-    if (run_markdown_backend_tests) |run| test_step.dependOn(&run.step);
+    if (markdown_backend_runs) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
 }
 
 const OptionalBackendRuns = struct {

@@ -69,6 +69,7 @@ Render source files as HTML fragments for manual inspection:
 ./build.sh render-xml tests/corpus/xml/complete.xml > /tmp/xml.html
 ./build.sh render-css tests/corpus/css/complete.css > /tmp/css.html
 ./build.sh render-superhtml tests/corpus/superhtml/complete.shtml > /tmp/superhtml.html
+./build.sh render-markdown tests/corpus/markdown/complete.md > /tmp/markdown.html
 ```
 
 Add `--page` to any preview command to emit a complete HTML document with a built-in development
