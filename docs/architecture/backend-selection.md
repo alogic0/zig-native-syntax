@@ -7,8 +7,14 @@ capture model, renderer, and backends implemented only with Zig's standard libra
 uses an external parser is exposed as a separate module such as `native_syntax_ziggy`.
 
 Each external backend has a matching build option, such as `backend-ziggy`. The package build calls
-`lazyDependency` and creates that backend module only when the option is enabled. Disabled parser
-packages are therefore not fetched, configured, compiled, or linked by the core-only graph.
+`dependency` and creates that backend module only when the option is enabled. Disabled parser
+packages are not configured, compiled, or linked by the core-only graph.
+
+The external packages are eager manifest dependencies even though their modules remain optional.
+With the pinned Zig version, a dependency build that discovers a missing nested lazy dependency can
+return before registering its public modules; a clean parent then fails at `dependency.module(...)`.
+Making the source dependencies eagerly fetchable gives clean consumers a single-command build while
+the backend options still keep unused parser code out of compilation and final binaries.
 
 This structure is preferred over a configured root module because:
 
@@ -58,21 +64,22 @@ Requesting an optional module without enabling its matching option is a build-co
 This fails at build time rather than silently selecting a fallback parser.
 
 The Ziggy document and schema backends are the first supported external adapters using this
-mechanism. Their shared pinned package remains lazy. `-Dbackend-ziggy=true` exposes
+mechanism. Their shared pinned package is configured only when selected. `-Dbackend-ziggy=true` exposes
 `native_syntax_ziggy`, while `-Dbackend-ziggy-schema=true` independently exposes
 `native_syntax_ziggy_schema`. Enabling both options configures the same Ziggy package once.
 
-The independently pinned Scripty package remains lazy as well. `-Dbackend-scripty=true` exposes
+The independently pinned Scripty package is likewise configured only when selected.
+`-Dbackend-scripty=true` exposes
 `native_syntax_scripty` without enabling or configuring either Ziggy backend.
 
-Markdown follows the same boundary. `-Dbackend-markdown=true` lazily configures the independently
+Markdown follows the same boundary. `-Dbackend-markdown=true` configures the independently
 pinned `zig-markdown-parser` package and exposes `native_syntax_markdown`. The core module and
 disabled backend graph do not import or compile the parser. Consumers remain responsible for aliases
 such as `md`, `smd`, or `supermd`.
 
 ## Phase 4 Proof
 
-The test-only `backend-dummy` option exercises this boundary with a lazy local package. Its build
+The test-only `backend-dummy` option still exercises lazy selection with a local package. Its build
 script rejects configuration unless the parent passes an explicit opt-in value. Consequently:
 
 - `./build.sh test` proves the core graph succeeds without configuring the dummy dependency;

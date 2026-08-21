@@ -49,36 +49,36 @@ pub fn build(b: *std.Build) void {
         "Enable the optional Markdown backend",
     ) orelse false;
     const ziggy_dependency = if (enable_ziggy_backend or enable_ziggy_schema_backend)
-        b.lazyDependency("ziggy", .{
+        b.dependency("ziggy", .{
             .target = target,
             .optimize = optimize,
-        }) orelse return
+        })
     else
         null;
     const scripty_dependency = if (enable_scripty_backend or enable_superhtml_backend)
-        b.lazyDependency("scripty", .{
+        b.dependency("scripty", .{
             .target = target,
             .optimize = optimize,
             .tracy = false,
-        }) orelse return
+        })
     else
         null;
     const superhtml_dependency = if (enable_html_backend or
         enable_xml_backend or
         enable_css_backend or
         enable_superhtml_backend)
-        b.lazyDependency("superhtml", .{
+        b.dependency("superhtml", .{
             .target = target,
             .optimize = optimize,
             .tokenizers_only = true,
-        }) orelse return
+        })
     else
         null;
     const markdown_dependency = if (enable_markdown_backend)
-        b.lazyDependency("markdown_parser", .{
+        b.dependency("markdown_parser", .{
             .target = target,
             .optimize = optimize,
-        }) orelse return
+        })
     else
         null;
 

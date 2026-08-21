@@ -235,15 +235,16 @@ Phase 3 status: complete.
 
 ## Phase 4: Make External Backends Selectable
 
-Goal: add parser-backed languages without forcing unused parser packages into every consumer graph.
+Goal: add parser-backed languages without compiling or linking unused parser packages into every
+consumer graph.
 
 ### Slice 4.1: Dependency and module layout
 
 Status: complete.
 
-- Prototype lazy Zig package dependencies and backend build options.
+- Prototype Zig package dependency selection and backend build options.
 - Decide whether optional languages are exposed as separate modules or one configured root module.
-- Verify a core-only consumer does not fetch, compile, or link optional parser dependencies.
+- Verify a core-only consumer does not configure, compile, or link optional parser dependencies.
 
 ### Slice 4.2: Backend conformance suite
 

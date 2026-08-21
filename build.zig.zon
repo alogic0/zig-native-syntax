@@ -7,22 +7,18 @@
         .scripty = .{
             .url = "git+https://github.com/alogic0/scripty#4e765e82a1b4c1a15204c61ac40aca0eae1c3737",
             .hash = "scripty-0.1.0-LKK5O98XAQCetMC1dgQfIZz6zROX6Xn5rRxmcnVOEumu",
-            .lazy = true,
         },
         .superhtml = .{
             .url = "git+https://github.com/alogic0/superhtml#398343534f5a3c57e2a82792a3282234526774d5",
             .hash = "superhtml-0.7.0-Y7MdPKLDJgBZWdqCE_KYn6LIA9Vua-JdwaKNJLUL0nUL",
-            .lazy = true,
         },
         .ziggy = .{
             .url = "git+https://github.com/kristoff-it/ziggy#be51f4dfd95590eae7c8674d660c1f16edef116b",
             .hash = "ziggy-0.2.0-kTg8v53yBwCAN_CrgG3Y_ngWnkUb971-w-0LdZlE8hYJ",
-            .lazy = true,
         },
         .markdown_parser = .{
             .url = "git+https://github.com/alogic0/zig-markdown-parser#0842913426dde83d2527650bce238cd03b3b4103",
             .hash = "zig_markdown_parser-0.1.1-Hjn7-LWAAgBbOyNf5p_kYUKkgBYpN4U0MpHfSzt42BTk",
-            .lazy = true,
         },
         .phase4_dummy_syntax = .{
             .path = "tests/fixtures/phase4_dummy_syntax",

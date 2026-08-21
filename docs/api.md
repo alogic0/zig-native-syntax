@@ -165,7 +165,7 @@ overlap lexical scopes intentionally and are normalized by the shared HTML rende
 
 ## Optional Parser Backends
 
-The Ziggy document and Ziggy Schema adapters are separate modules backed by the same lazy, pinned
+The Ziggy document and Ziggy Schema adapters are separate modules backed by the same pinned
 Ziggy package. Consumers enable and import only the modules they use:
 
 ```zig
