@@ -31,7 +31,7 @@ as programming languages.
 - [x] Python
 - [x] SQL
 - [x] C
-- [ ] JavaScript
+- [x] JavaScript
 - [ ] TypeScript
 - [ ] YAML
 - [ ] HCL

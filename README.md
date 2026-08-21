@@ -11,7 +11,7 @@ other Zig projects.
 ## Status
 
 The project contains the initial classification API, source-preserving HTML renderer, Zig, Bash,
-Rust, JSON, Diff, TOML, Dockerfile, Python, SQL, and C backends, and optional Ziggy document, Ziggy Schema,
+Rust, JSON, Diff, TOML, Dockerfile, Python, SQL, C, and JavaScript backends, and optional Ziggy document, Ziggy Schema,
 Scripty, HTML, XML, CSS, composed SuperHTML, and parser-backed Markdown backends. Additional
 language adapters and Zine integration remain experimental work.
 
@@ -71,6 +71,8 @@ language adapters and Zine integration remain experimental work.
   dialect boundary.
 - [C highlighting compatibility](docs/compatibility/c.md) defines lexical coverage and explains why
   highlighting does not own an Aro compiler pipeline.
+- [JavaScript highlighting compatibility](docs/compatibility/javascript.md) defines tokenizer-style
+  coverage and regex, JSX, and template-expression boundaries.
 
 ## Development
 
@@ -93,6 +95,7 @@ Render source files as HTML fragments for manual inspection:
 ./build.sh render-python tests/corpus/python/complete.py > /tmp/python.html
 ./build.sh render-sql tests/corpus/sql/complete.sql > /tmp/sql.html
 ./build.sh render-c tests/corpus/c/complete.c > /tmp/c.html
+./build.sh render-javascript tests/corpus/javascript/complete.js > /tmp/javascript.html
 ./build.sh render-ziggy tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
 ./build.sh render-ziggy-schema tests/corpus/ziggy-schema/complete.ziggy-schema > /tmp/schema.html
 ./build.sh render-scripty tests/corpus/scripty/complete.scripty > /tmp/scripty.html

@@ -24,6 +24,7 @@ pub const languages = struct {
     pub const diff = @import("languages/diff.zig");
     pub const dockerfile = @import("languages/dockerfile.zig");
     pub const json = @import("languages/json.zig");
+    pub const javascript = @import("languages/javascript.zig");
     pub const python = @import("languages/python.zig");
     pub const rust = @import("languages/rust.zig");
     pub const sql = @import("languages/sql.zig");

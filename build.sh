@@ -50,6 +50,10 @@ case "${1:-}" in
         shift
         exec "${zig_exe}" build render-c -- "$@"
         ;;
+    render-javascript)
+        shift
+        exec "${zig_exe}" build render-javascript -- "$@"
+        ;;
     render-ziggy)
         shift
         exec "${zig_exe}" build render-ziggy -Dbackend-ziggy=true -- "$@"
