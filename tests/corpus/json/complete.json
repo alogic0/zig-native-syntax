@@ -1,0 +1,9 @@
+{
+  "name": "zig-native-syntax",
+  "escaped": "line\nquote=\" slash=\\ unicode=\u03bb <&>",
+  "enabled": true,
+  "disabled": false,
+  "missing": null,
+  "numbers": [0, -12, 1.25, 6.02e23, -4E-2],
+  "nested": {"items": ["one", "two"]}
+}

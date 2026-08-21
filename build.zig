@@ -168,6 +168,24 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const json_preview_backend = b.addModule("json_preview_backend", .{
+        .root_source_file = b.path("tools/json_preview_backend.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "native_syntax", .module = native_syntax },
+        },
+    });
+    const json_preview = addPreviewTool(b, .{
+        .command_name = "render-json",
+        .display_name = "JSON",
+        .language_class = "language-json",
+        .sample_path = "source.json",
+        .backend = json_preview_backend,
+        .native_syntax = native_syntax,
+        .target = target,
+        .optimize = optimize,
+    });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -245,6 +263,18 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const run_rust_conformance_tests = b.addRunArtifact(rust_conformance_tests);
+
+    const json_conformance_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/json_conformance.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+            },
+        }),
+    });
+    const run_json_conformance_tests = b.addRunArtifact(json_conformance_tests);
 
     const core_only_tests = b.addTest(.{
         .root_module = b.createModule(.{
@@ -612,6 +642,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&bash_preview.test_run.step);
     test_step.dependOn(&run_rust_conformance_tests.step);
     test_step.dependOn(&rust_preview.test_run.step);
+    test_step.dependOn(&run_json_conformance_tests.step);
+    test_step.dependOn(&json_preview.test_run.step);
     test_step.dependOn(&run_core_only_tests.step);
     if (run_superhtml_api_tests) |run| test_step.dependOn(&run.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);

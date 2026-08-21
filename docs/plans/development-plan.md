@@ -560,6 +560,11 @@ highlight option remains compatible.
 
 ### Slice 12.2: Native coverage expansion and comparison
 
+Progress: the JSON increment is complete. It adds the dependency-free backend,
+standard-scanner oracle coverage, compatibility boundary, preview command, and
+Zine routing/fixture comparison while retaining Tree-sitter for subsequent
+languages.
+
 - Implement unchecked backends from the [Language Backend Roadmap](language-roadmap.md) in order,
   revisiting demand and parser availability before each one.
 - Compare every new native backend with Tree-sitter on representative complete, malformed, and
