@@ -75,6 +75,20 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const html_markup_module = if (enable_html_backend or
+        enable_xml_backend or
+        enable_superhtml_backend)
+        b.createModule(.{
+            .root_source_file = b.path("src/optional/html_markup.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "superhtml_html", .module = superhtml_dependency.?.module("html-tokenizer") },
+            },
+        })
+    else
+        null;
     const scripty_backend_module = if (scripty_dependency) |dependency|
         b.addModule("native_syntax_scripty", .{
             .root_source_file = b.path("src/optional/scripty.zig"),
@@ -326,14 +340,13 @@ pub fn build(b: *std.Build) void {
     } else null;
 
     const html_backend_runs: ?OptionalBackendRuns = if (enable_html_backend) enabled: {
-        const dependency = superhtml_dependency.?;
         const html_backend = b.addModule("native_syntax_html", .{
             .root_source_file = b.path("src/optional/html.zig"),
             .target = target,
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "native_syntax", .module = native_syntax },
-                .{ .name = "superhtml_html", .module = dependency.module("html-tokenizer") },
+                .{ .name = "native_syntax_html_markup", .module = html_markup_module.? },
             },
         });
         const html_backend_tests = b.addTest(.{
@@ -364,14 +377,13 @@ pub fn build(b: *std.Build) void {
     } else null;
 
     const xml_backend_runs: ?OptionalBackendRuns = if (enable_xml_backend) enabled: {
-        const dependency = superhtml_dependency.?;
         const xml_backend = b.addModule("native_syntax_xml", .{
             .root_source_file = b.path("src/optional/xml.zig"),
             .target = target,
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "native_syntax", .module = native_syntax },
-                .{ .name = "superhtml_html", .module = dependency.module("html-tokenizer") },
+                .{ .name = "native_syntax_html_markup", .module = html_markup_module.? },
             },
         });
         const xml_backend_tests = b.addTest(.{
@@ -448,6 +460,7 @@ pub fn build(b: *std.Build) void {
             .imports = &.{
                 .{ .name = "native_syntax", .module = native_syntax },
                 .{ .name = "native_syntax_scripty", .module = scripty_backend_module.? },
+                .{ .name = "native_syntax_html_markup", .module = html_markup_module.? },
                 .{ .name = "superhtml_html", .module = dependency.module("html-tokenizer") },
                 .{ .name = "superhtml_template", .module = dependency.module("template-syntax") },
             },

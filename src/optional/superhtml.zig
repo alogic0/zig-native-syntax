@@ -3,7 +3,7 @@ const core = @import("native_syntax");
 const scripty_backend = @import("native_syntax_scripty").backend;
 const html = @import("superhtml_html");
 const template_syntax = @import("superhtml_template");
-const markup = @import("html_markup.zig");
+const markup = @import("native_syntax_html_markup");
 
 pub const backend: core.Backend = .init(.{
     .canonical_name = "superhtml",
