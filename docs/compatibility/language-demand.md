@@ -18,8 +18,8 @@ At the start of Phase 11, generated-site fixtures exercised these categories:
 
 Phase 11 added the Bash and Rust scanners and routed the Rust fixture natively.
 The current generated-site fixtures therefore have no required Tree-sitter
-language. Phase 12 now exercises the compatibility fallback with a language
-that remains unsupported by the native package.
+language. Phase 12 exercised the compatibility fallback with a deliberately
+unsupported language before removing the old backend.
 
 `=html` and `=mathtex` fences are SuperMD rendering directives rather than
 source-highlighting language requests. Deliberately invalid labels such as
@@ -30,35 +30,36 @@ though the current generated-site fixtures do not contain a `sh` or `bash`
 fence. Shell/Bash is therefore the first demand-informed compatibility scanner,
 followed by Rust because Rust is required by the rendering snapshot.
 
-## Migration Contract
+## Final Migration Contract
 
-During the Phase 11 native-first experiment, a language without a native
-backend continued through Zine's existing Tree-sitter path. Phase 12 adds
-explicit `tree-sitter`, `native-first`, `native-only`, and `off` modes. In
-native-only mode, an unsupported language is rendered as safely escaped plain
-text while preserving its code-block language class; lack of a highlighter
-does not make otherwise valid content fail.
+During the experiment, a language without a native backend continued through
+Zine's existing Tree-sitter path. Temporary `tree-sitter`, `native-first`,
+`native-only`, and `off` modes made the comparison explicit.
 
-Tree-sitter remains available as a temporary comparison backend while the
-ordered native-language roadmap is implemented. Native-only behavior proves
-the eventual dependency-free path but does not trigger immediate removal.
+The final audit covered every former Flow file type and allowed Zine to remove
+the Flow and Tree-sitter highlighting dependencies. Zine now exposes `native`
+and `off`, with native as the default. In either mode, an unsupported language
+is rendered as safely escaped plain text while preserving its code-block
+language class; lack of a highlighter does not make otherwise valid content
+fail.
 
-Unknown languages still produce the existing diagnostic in the explicit
-Tree-sitter compatibility mode. Disabling syntax highlighting continues to
-emit safely escaped plain text.
+Disabling syntax highlighting continues to emit safely escaped plain text.
 
 The package exposes canonical backend names only. Zine owns aliases, including
 `shell` and `sh` for the future canonical `bash` backend. Adding a backend does
 not imply full language conformance: each owned scanner documents the lexical
 subset it recognizes and leaves all other bytes unclassified.
 
-## Required Coverage Before Tree-sitter Removal
+## Removal Evidence
 
 The repository evidence required native Rust coverage in addition to the
 already completed backends. Shell/Bash was included because it is high-value,
 bounded, and heavily represented in operational documentation. Both are now
-complete. Matching the old Tree-sitter grammar count is not a removal
-criterion.
+complete. The eventual inventory audit covered all 93 former Flow file-type
+names through 87 direct native routes and six intentional reused backends.
+Matching a grammar count alone was not the removal criterion; aliases,
+unsupported-language behavior, generated rendering, build modes, and host
+validation were also checked.
 
 ## Further-Language Ranking
 

@@ -11,7 +11,7 @@ The representative inputs are the complete, malformed, incomplete, and golden fi
 
 - the tokenizer, recovering AST, and documentation HTML renderer shipped with the pinned Zig
   compiler;
-- the Zig highlighting query used by Zine's current flow-syntax and Tree-sitter path;
+- the Zig highlighting query used by Zine's former flow-syntax and Tree-sitter path;
 - the deterministic HTML asserted by `tests/zig_corpus.zig`.
 
 The golden test fixes this package's structural output. CSS colors and typography remain consumer

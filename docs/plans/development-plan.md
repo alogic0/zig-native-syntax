@@ -53,7 +53,7 @@ Consumers own:
 - Reproducing Tree-sitter capture names or HTML byte-for-byte.
 - Zig documentation symbol links or declaration navigation.
 - Browser-side or incremental editor highlighting in the initial releases.
-- Supporting every language bundled by Zine's current Tree-sitter dependency before the library is
+- Supporting every language bundled by Zine's former Tree-sitter dependency before the library is
   useful.
 
 ## Initial Language Targets
@@ -223,7 +223,7 @@ Status: complete.
 - Add complete declarations, expressions, comments, multiline strings, builtins, malformed snippets,
   and incomplete snippets.
 - Compare representative output visually and structurally with Zig's standard documentation renderer
-  and Zine's current Tree-sitter output.
+  and Zine's then-current Tree-sitter output.
 - Document intentional classification differences.
 
 Phase gate:
@@ -406,7 +406,7 @@ Status: complete.
 
 Status: complete.
 
-- Compare build time, executable size, peak allocations, and representative output with the current
+- Compare build time, executable size, peak allocations, and representative output with the then-current
   Tree-sitter path.
 - Record API friction in this plan or the relevant architecture document before expanding the Zine
   migration.
@@ -547,11 +547,10 @@ compatibility approval.
 
 ### Slice 12.1: Backend selection
 
-Status: complete. Zine exposes `tree-sitter`, `native-first`, `native-only`,
-and `off` build modes. Native-first remains the default during the comparison
-period. Native-only and off compile without importing Tree-sitter, unsupported
-languages become escaped plain text in those modes, and the legacy boolean
-highlight option remains compatible.
+Status: complete. Zine used `tree-sitter`, `native-first`, `native-only`, and
+`off` as temporary comparison modes. Unsupported languages became escaped
+plain text without a native backend, and the legacy boolean highlight option
+remained compatible.
 
 - Add a temporary Zine selection mode for native-first with Tree-sitter fallback, native-only, and
   current Tree-sitter behavior.
@@ -563,7 +562,7 @@ highlight option remains compatible.
 Status: complete. The ordered backend roadmap through generic comment tags is
 implemented, following the earlier JSON slice. Each language has a dependency-free backend,
 compatibility boundary, preview command, conformance corpus, and Zine
-routing/fixture comparison while Tree-sitter remains available as a comparison
+routing/fixture comparison while Tree-sitter remained available as a comparison
 backend. Diff intentionally classifies line structure without interpreting
 the programming language embedded in changed payload.
 
@@ -576,6 +575,14 @@ the programming language embedded in changed payload.
 - Verify code fences, code directives, imported snippets, and string helper highlighting.
 
 ### Slice 12.3: Tree-sitter removal decision
+
+Status: complete. Zine's audit covered all 93 former Flow file-type names,
+including six intentional reused grammars, and the generated-site snapshot
+covers all 88 canonical native languages. Zine now exposes only `native` and
+`off`, defaults to native highlighting, renders unsupported labels as escaped
+plain text, and has removed its Flow and Tree-sitter highlighting dependencies.
+The final host-only ReleaseFast comparison and validation commands are recorded
+in Zine's native-highlighting validation document.
 
 - Defer removal while the prioritized language backlog is still producing useful, feasible native
   backends and Tree-sitter remains valuable for comparison.
@@ -590,6 +597,8 @@ Phase gate:
 - Zine has no runtime, build, package-manifest, or validation dependency on Tree-sitter.
 - Zine's required tests pass locally; platform-specific and release validation remains in CI rather
   than requiring all targets to be built locally.
+
+Phase 12 status: complete.
 
 ## Phase 13: Harden And Release The Package
 
