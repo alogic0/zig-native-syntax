@@ -26,6 +26,7 @@ pub const languages = struct {
     pub const hcl = @import("languages/hcl.zig");
     pub const json = @import("languages/json.zig");
     pub const javascript = @import("languages/javascript.zig");
+    pub const make = @import("languages/make.zig");
     pub const python = @import("languages/python.zig");
     pub const rust = @import("languages/rust.zig");
     pub const sql = @import("languages/sql.zig");

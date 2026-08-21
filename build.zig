@@ -348,6 +348,11 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const make_runs = addCoreLanguage(b, native_syntax, target, optimize, .{
+        .name = "make",
+        .display_name = "Make",
+        .sample_path = "source.mk",
+    });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -928,6 +933,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&yaml_preview.test_run.step);
     test_step.dependOn(&run_hcl_conformance_tests.step);
     test_step.dependOn(&hcl_preview.test_run.step);
+    test_step.dependOn(&make_runs.backend_test_run.step);
+    test_step.dependOn(&make_runs.preview_test_run.step);
     test_step.dependOn(&run_core_only_tests.step);
     if (run_superhtml_api_tests) |run| test_step.dependOn(&run.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);
@@ -969,6 +976,49 @@ const OptionalBackendRuns = struct {
     backend_test_run: *std.Build.Step.Run,
     preview_test_run: *std.Build.Step.Run,
 };
+
+const CoreLanguageOptions = struct {
+    name: []const u8,
+    display_name: []const u8,
+    sample_path: []const u8,
+};
+
+fn addCoreLanguage(
+    b: *std.Build,
+    native_syntax: *std.Build.Module,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    options: CoreLanguageOptions,
+) OptionalBackendRuns {
+    const backend_module = b.addModule(b.fmt("{s}_preview_backend", .{options.name}), .{
+        .root_source_file = b.path(b.fmt("tools/{s}_preview_backend.zig", .{options.name})),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+    });
+    const preview = addPreviewTool(b, .{
+        .command_name = b.fmt("render-{s}", .{options.name}),
+        .display_name = options.display_name,
+        .language_class = b.fmt("language-{s}", .{options.name}),
+        .sample_path = options.sample_path,
+        .backend = backend_module,
+        .native_syntax = native_syntax,
+        .target = target,
+        .optimize = optimize,
+    });
+    const conformance_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path(b.fmt("tests/{s}_conformance.zig", .{options.name})),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+        }),
+    });
+    return .{
+        .backend_test_run = b.addRunArtifact(conformance_tests),
+        .preview_test_run = preview.test_run,
+    };
+}
 
 const PreviewOptions = struct {
     command_name: []const u8,

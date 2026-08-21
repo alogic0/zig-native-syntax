@@ -1,0 +1,11 @@
+# Make Highlighting Compatibility
+
+The dependency-free `make` backend is a line-bounded lexical scanner. It
+recognizes directives, assignment keys and operators, target labels, variable
+references, quoted strings and escapes, comments, and tab-prefixed recipe
+lines. Recipe bodies receive an embedded scope without being parsed as shell.
+
+The scanner is not a Make evaluator. It does not expand variables, distinguish
+GNU Make dialect extensions, resolve continuations, or parse functions and
+nested references. Unterminated strings stop at the current line so later
+assignments and targets recover.

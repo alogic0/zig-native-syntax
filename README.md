@@ -79,6 +79,8 @@ language adapters and Zine integration remain experimental work.
   recovery and the schema-resolution boundary.
 - [HCL highlighting compatibility](docs/compatibility/hcl.md) defines expression, template, and
   heredoc lexical coverage and the evaluation boundary.
+- [Make highlighting compatibility](docs/compatibility/make.md) defines line-oriented build rules
+  and the embedded-recipe boundary.
 
 ## Development
 
@@ -105,6 +107,7 @@ Render source files as HTML fragments for manual inspection:
 ./build.sh render-typescript tests/corpus/typescript/complete.ts > /tmp/typescript.html
 ./build.sh render-yaml tests/corpus/yaml/complete.yaml > /tmp/yaml.html
 ./build.sh render-hcl tests/corpus/hcl/complete.hcl > /tmp/hcl.html
+./build.sh render-make tests/corpus/make/complete.mk > /tmp/make.html
 ./build.sh render-ziggy tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
 ./build.sh render-ziggy-schema tests/corpus/ziggy-schema/complete.ziggy-schema > /tmp/schema.html
 ./build.sh render-scripty tests/corpus/scripty/complete.scripty > /tmp/scripty.html
