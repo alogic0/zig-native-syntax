@@ -204,6 +204,22 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const toml_preview_backend = b.addModule("toml_preview_backend", .{
+        .root_source_file = b.path("tools/toml_preview_backend.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+    });
+    const toml_preview = addPreviewTool(b, .{
+        .command_name = "render-toml",
+        .display_name = "TOML",
+        .language_class = "language-toml",
+        .sample_path = "source.toml",
+        .backend = toml_preview_backend,
+        .native_syntax = native_syntax,
+        .target = target,
+        .optimize = optimize,
+    });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -305,6 +321,16 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const run_diff_conformance_tests = b.addRunArtifact(diff_conformance_tests);
+
+    const toml_conformance_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/toml_conformance.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+        }),
+    });
+    const run_toml_conformance_tests = b.addRunArtifact(toml_conformance_tests);
 
     const core_only_tests = b.addTest(.{
         .root_module = b.createModule(.{
@@ -676,6 +702,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&json_preview.test_run.step);
     test_step.dependOn(&run_diff_conformance_tests.step);
     test_step.dependOn(&diff_preview.test_run.step);
+    test_step.dependOn(&run_toml_conformance_tests.step);
+    test_step.dependOn(&toml_preview.test_run.step);
     test_step.dependOn(&run_core_only_tests.step);
     if (run_superhtml_api_tests) |run| test_step.dependOn(&run.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);

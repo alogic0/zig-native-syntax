@@ -1,0 +1,10 @@
+title = "zig-native-syntax <&>"
+enabled = true
+count = 1_024
+ratio = -1.5e2
+created = 2026-08-21T12:30:00Z
+
+[package.metadata]
+authors = ["Oleg", 'Contributor']
+escaped = "line\nquote=\" unicode=\u03bb"
+inline = { name = "value", ok = false }

@@ -23,6 +23,7 @@ pub const languages = struct {
     pub const diff = @import("languages/diff.zig");
     pub const json = @import("languages/json.zig");
     pub const rust = @import("languages/rust.zig");
+    pub const toml = @import("languages/toml.zig");
     pub const zig = @import("languages/zig.zig");
 };
 
