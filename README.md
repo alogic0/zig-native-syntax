@@ -77,6 +77,8 @@ language adapters and Zine integration remain experimental work.
   JavaScript scanner boundary and TypeScript-specific lexical additions.
 - [YAML highlighting compatibility](docs/compatibility/yaml.md) defines line and block-scalar
   recovery and the schema-resolution boundary.
+- [HCL highlighting compatibility](docs/compatibility/hcl.md) defines expression, template, and
+  heredoc lexical coverage and the evaluation boundary.
 
 ## Development
 
@@ -102,6 +104,7 @@ Render source files as HTML fragments for manual inspection:
 ./build.sh render-javascript tests/corpus/javascript/complete.js > /tmp/javascript.html
 ./build.sh render-typescript tests/corpus/typescript/complete.ts > /tmp/typescript.html
 ./build.sh render-yaml tests/corpus/yaml/complete.yaml > /tmp/yaml.html
+./build.sh render-hcl tests/corpus/hcl/complete.hcl > /tmp/hcl.html
 ./build.sh render-ziggy tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
 ./build.sh render-ziggy-schema tests/corpus/ziggy-schema/complete.ziggy-schema > /tmp/schema.html
 ./build.sh render-scripty tests/corpus/scripty/complete.scripty > /tmp/scripty.html

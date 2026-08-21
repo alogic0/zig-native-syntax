@@ -34,7 +34,7 @@ as programming languages.
 - [x] JavaScript
 - [x] TypeScript
 - [x] YAML
-- [ ] HCL
+- [x] HCL
 - [ ] Make
 - [ ] CMake
 - [ ] Java

@@ -18,8 +18,8 @@ At the start of Phase 11, generated-site fixtures exercised these categories:
 
 Phase 11 added the Bash and Rust scanners and routed the Rust fixture natively.
 The current generated-site fixtures therefore have no required Tree-sitter
-language. Zine still tests the compatibility fallback with an unsupported
-Python sample until Phase 12 introduces explicit selection modes.
+language. Phase 12 now exercises the compatibility fallback with a language
+that remains unsupported by the native package.
 
 `=html` and `=mathtex` fences are SuperMD rendering directives rather than
 source-highlighting language requests. Deliberately invalid labels such as
@@ -65,11 +65,10 @@ criterion.
 No further language is required by the current Zine rendering fixtures. Future
 backends should be added only with new consumer evidence. The complete ordered
 checklist is maintained in the
-[language backend roadmap](../plans/language-roadmap.md). JSON, diff/patch, and
-TOML lead because they combine common technical-document use with bounded,
-low-risk implementations. High-popularity languages move later when credible
-malformed-input handling requires a much larger scanner or a maintained parser
-has not been selected.
+[language backend roadmap](../plans/language-roadmap.md). The demand-ordered
+increment through HCL is complete. Later languages remain prioritized by
+technical-document use, implementation bounds, and credible malformed-input
+recovery rather than by popularity alone.
 
 Binary-size and dependency measurements belong to the implementation slice for
 any selected candidate. A simple scanner is preferred only when its recovery

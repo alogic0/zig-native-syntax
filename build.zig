@@ -332,6 +332,22 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    const hcl_preview_backend = b.addModule("hcl_preview_backend", .{
+        .root_source_file = b.path("tools/hcl_preview_backend.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+    });
+    const hcl_preview = addPreviewTool(b, .{
+        .command_name = "render-hcl",
+        .display_name = "HCL",
+        .language_class = "language-hcl",
+        .sample_path = "source.hcl",
+        .backend = hcl_preview_backend,
+        .native_syntax = native_syntax,
+        .target = target,
+        .optimize = optimize,
+    });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -513,6 +529,16 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const run_yaml_conformance_tests = b.addRunArtifact(yaml_conformance_tests);
+
+    const hcl_conformance_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/hcl_conformance.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+        }),
+    });
+    const run_hcl_conformance_tests = b.addRunArtifact(hcl_conformance_tests);
 
     const core_only_tests = b.addTest(.{
         .root_module = b.createModule(.{
@@ -900,6 +926,8 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&typescript_preview.test_run.step);
     test_step.dependOn(&run_yaml_conformance_tests.step);
     test_step.dependOn(&yaml_preview.test_run.step);
+    test_step.dependOn(&run_hcl_conformance_tests.step);
+    test_step.dependOn(&hcl_preview.test_run.step);
     test_step.dependOn(&run_core_only_tests.step);
     if (run_superhtml_api_tests) |run| test_step.dependOn(&run.step);
     if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);

@@ -23,6 +23,7 @@ pub const languages = struct {
     pub const c = @import("languages/c.zig");
     pub const diff = @import("languages/diff.zig");
     pub const dockerfile = @import("languages/dockerfile.zig");
+    pub const hcl = @import("languages/hcl.zig");
     pub const json = @import("languages/json.zig");
     pub const javascript = @import("languages/javascript.zig");
     pub const python = @import("languages/python.zig");
