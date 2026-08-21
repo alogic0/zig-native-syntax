@@ -1,0 +1,1 @@
+let value = "x\n<&>"; let count = 42; let enabled = true // comment

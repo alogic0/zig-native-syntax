@@ -1,0 +1,3 @@
+msgid "x\n<&>"
+msgstr "value 42 true"
+# comment

@@ -1,0 +1,1 @@
+function run() value = "x\n<&>"; count = 42; enabled = true; end # comment

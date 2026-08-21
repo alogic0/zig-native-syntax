@@ -1,0 +1,1 @@
+func run(): var value = "x\n<&>"; var count = 42; var enabled = true # comment

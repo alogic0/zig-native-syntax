@@ -1,0 +1,23 @@
+# Roadmap Languages 43–74 Compatibility
+
+The backends from KDL through Nim are dependency-free bounded lexical scanners.
+Each recognizes its configured comments, quoted strings and escapes, numbers,
+booleans and constants, identifiers, calls, operators, punctuation, and a
+documented subset of language keywords and primitive types.
+
+The operational and document formats—SSH config, Git commit and rebase text,
+Gettext PO, reStructuredText, LaTeX, Typst, Org, DTD, e-mail, Hurl, Ninja, and
+RPM spec—receive structural keyword, label, comment, string, and value scopes
+without validation, expansion, or embedded-language parsing. RPM Bash reuses
+the owned Bash scanner.
+
+KDL, Nix, Fish, Nushell, AWK, GDScript, Perl, Elixir, F#, OCaml, Haskell,
+Gleam, Common Lisp, Scheme, Julia, Elm, PureScript, and Nim use separate
+language configurations over shared recovery logic. This coverage does not
+resolve names, select dialects, expand macros, validate indentation or types,
+parse regex literals, or interpret interpolation and heredoc bodies.
+
+Quoted strings stop at a newline. Unterminated configured block comments
+extend to end of input, while subsequent lines recover after unterminated
+ordinary strings. Bytes not covered by a configured lexical rule remain plain
+source and are always HTML-escaped by the renderer.

@@ -85,6 +85,8 @@ language adapters and Zine integration remain experimental work.
   coverage and the generator/evaluation boundary.
 - [Roadmap languages 25–42 compatibility](docs/compatibility/roadmap-25-42.md) defines the lexical
   and embedded-language boundaries for Java through Protocol Buffers.
+- [Roadmap languages 43–74 compatibility](docs/compatibility/roadmap-43-74.md) defines bounded
+  format and programming-language coverage from KDL through Nim.
 
 ## Development
 
@@ -131,6 +133,8 @@ Render source files as HTML fragments for manual inspection:
 ./build.sh render-jsdoc tests/corpus/jsdoc/complete.jsdoc > /tmp/jsdoc.html
 ./build.sh render-regex tests/corpus/regex/complete.regex > /tmp/regex.html
 ./build.sh render-proto tests/corpus/proto/complete.proto > /tmp/proto.html
+./build.sh render-kdl tests/corpus/kdl/complete.txt > /tmp/kdl.html
+./build.sh render-nim tests/corpus/nim/complete.txt > /tmp/nim.html
 ./build.sh render-ziggy tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
 ./build.sh render-ziggy-schema tests/corpus/ziggy-schema/complete.ziggy-schema > /tmp/schema.html
 ./build.sh render-scripty tests/corpus/scripty/complete.scripty > /tmp/scripty.html

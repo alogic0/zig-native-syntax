@@ -1,0 +1,1 @@
+sub run { my $value = "x\n<&>"; my $count = 42; my $enabled = true; } # comment

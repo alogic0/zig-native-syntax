@@ -1,0 +1,1 @@
+let run () = let value = "x\n<&>" in let count = 42 in let enabled = true // comment

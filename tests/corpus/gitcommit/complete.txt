@@ -1,0 +1,2 @@
+feat: render "x\n<&>" 42 true
+# comment

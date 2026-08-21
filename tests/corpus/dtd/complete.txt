@@ -1,0 +1,1 @@
+ELEMENT note (PCDATA) "x\n<&>" 42 true <!-- comment

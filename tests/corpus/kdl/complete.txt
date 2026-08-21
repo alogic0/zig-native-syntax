@@ -1,0 +1,1 @@
+node key="x\n<&>" count=42 enabled=true // comment

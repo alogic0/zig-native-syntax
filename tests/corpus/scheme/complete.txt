@@ -1,0 +1,1 @@
+(define (run) (let ((value "x\n<&>") (count 42) (enabled true)) value)) ; comment

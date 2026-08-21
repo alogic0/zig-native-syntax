@@ -1,0 +1,2 @@
+rule run
+  command = "x\n<&>" 42 true # comment

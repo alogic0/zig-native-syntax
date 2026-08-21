@@ -1,0 +1,5 @@
+# RPM Bash corpus
+if true; then
+  value="x\n<&>"
+  echo "$value" 42
+fi

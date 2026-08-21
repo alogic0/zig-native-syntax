@@ -1,0 +1,4 @@
+Host demo
+  HostName "x\n<&>"
+  Port 42
+  SetEnv enabled=true # comment

@@ -1,0 +1,3 @@
+Name = "x\n<&>"
+Version = 42
+true # comment

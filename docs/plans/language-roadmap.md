@@ -55,38 +55,38 @@ as programming languages.
 - [x] 40. JSDoc
 - [x] 41. Regular expressions
 - [x] 42. Protocol Buffers
-- [ ] 43. KDL
-- [ ] 44. Nix
-- [ ] 45. Fish
-- [ ] 46. Nushell
-- [ ] 47. AWK
-- [ ] 48. SSH config
-- [ ] 49. Git commit
-- [ ] 50. Git rebase
-- [ ] 51. Gettext PO
-- [ ] 52. reStructuredText
-- [ ] 53. LaTeX
-- [ ] 54. Typst
-- [ ] 55. Org Mode
-- [ ] 56. DTD
-- [ ] 57. E-mail
-- [ ] 58. Hurl
-- [ ] 59. Ninja
-- [ ] 60. RPM spec
-- [ ] 61. RPM Bash
-- [ ] 62. GDScript
-- [ ] 63. Perl
-- [ ] 64. Elixir
-- [ ] 65. F#
-- [ ] 66. OCaml
-- [ ] 67. Haskell
-- [ ] 68. Gleam
-- [ ] 69. Common Lisp
-- [ ] 70. Scheme
-- [ ] 71. Julia
-- [ ] 72. Elm
-- [ ] 73. PureScript
-- [ ] 74. Nim
+- [x] 43. KDL
+- [x] 44. Nix
+- [x] 45. Fish
+- [x] 46. Nushell
+- [x] 47. AWK
+- [x] 48. SSH config
+- [x] 49. Git commit
+- [x] 50. Git rebase
+- [x] 51. Gettext PO
+- [x] 52. reStructuredText
+- [x] 53. LaTeX
+- [x] 54. Typst
+- [x] 55. Org Mode
+- [x] 56. DTD
+- [x] 57. E-mail
+- [x] 58. Hurl
+- [x] 59. Ninja
+- [x] 60. RPM spec
+- [x] 61. RPM Bash
+- [x] 62. GDScript
+- [x] 63. Perl
+- [x] 64. Elixir
+- [x] 65. F#
+- [x] 66. OCaml
+- [x] 67. Haskell
+- [x] 68. Gleam
+- [x] 69. Common Lisp
+- [x] 70. Scheme
+- [x] 71. Julia
+- [x] 72. Elm
+- [x] 73. PureScript
+- [x] 74. Nim
 - [ ] 75. D
 - [ ] 76. V
 - [ ] 77. Odin

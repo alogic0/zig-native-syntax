@@ -376,6 +376,38 @@ pub fn build(b: *std.Build) void {
     const jsdoc_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "jsdoc", .display_name = "JSDoc", .sample_path = "source.jsdoc" });
     const regex_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "regex", .display_name = "Regular expression", .sample_path = "source.regex" });
     const proto_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "proto", .display_name = "Protocol Buffers", .sample_path = "source.proto" });
+    const kdl_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "kdl", .display_name = "KDL", .sample_path = "source.kdl" });
+    const nix_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nix", .display_name = "Nix", .sample_path = "source.nix" });
+    const fish_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "fish", .display_name = "Fish", .sample_path = "source.fish" });
+    const nu_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nu", .display_name = "Nushell", .sample_path = "source.nu" });
+    const awk_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "awk", .display_name = "AWK", .sample_path = "source.awk" });
+    const ssh_config_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "ssh-config", .file_stem = "ssh_config", .display_name = "SSH config", .sample_path = "config" });
+    const gitcommit_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "gitcommit", .display_name = "Git commit", .sample_path = "COMMIT_EDITMSG" });
+    const git_rebase_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "git-rebase", .file_stem = "git_rebase", .display_name = "Git rebase", .sample_path = "git-rebase-todo" });
+    const po_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "po", .display_name = "Gettext PO", .sample_path = "source.po" });
+    const rst_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "rst", .display_name = "reStructuredText", .sample_path = "source.rst" });
+    const latex_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "latex", .display_name = "LaTeX", .sample_path = "source.tex" });
+    const typst_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "typst", .display_name = "Typst", .sample_path = "source.typ" });
+    const org_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "org", .display_name = "Org Mode", .sample_path = "source.org" });
+    const dtd_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "dtd", .display_name = "DTD", .sample_path = "source.dtd" });
+    const mail_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "mail", .display_name = "E-mail", .sample_path = "source.eml" });
+    const hurl_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "hurl", .display_name = "Hurl", .sample_path = "source.hurl" });
+    const ninja_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "ninja", .display_name = "Ninja", .sample_path = "build.ninja" });
+    const rpmspec_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "rpmspec", .display_name = "RPM spec", .sample_path = "source.spec" });
+    const rpmbash_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "rpmbash", .display_name = "RPM Bash", .sample_path = "source.sh" });
+    const gdscript_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "gdscript", .display_name = "GDScript", .sample_path = "source.gd" });
+    const perl_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "perl", .display_name = "Perl", .sample_path = "source.pl" });
+    const elixir_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "elixir", .display_name = "Elixir", .sample_path = "source.ex" });
+    const fsharp_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "fsharp", .display_name = "F#", .sample_path = "source.fs" });
+    const ocaml_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "ocaml", .display_name = "OCaml", .sample_path = "source.ml" });
+    const haskell_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "haskell", .display_name = "Haskell", .sample_path = "source.hs" });
+    const gleam_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "gleam", .display_name = "Gleam", .sample_path = "source.gleam" });
+    const commonlisp_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "commonlisp", .display_name = "Common Lisp", .sample_path = "source.lisp" });
+    const scheme_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "scheme", .display_name = "Scheme", .sample_path = "source.scm" });
+    const julia_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "julia", .display_name = "Julia", .sample_path = "source.jl" });
+    const elm_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "elm", .display_name = "Elm", .sample_path = "source.elm" });
+    const purescript_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "purescript", .display_name = "PureScript", .sample_path = "source.purs" });
+    const nim_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nim", .display_name = "Nim", .sample_path = "source.nim" });
 
     const unit_tests = b.addTest(.{
         .root_module = native_syntax,
@@ -961,6 +993,10 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&cmake_runs.backend_test_run.step);
     test_step.dependOn(&cmake_runs.preview_test_run.step);
     inline for (.{ java_runs, c_sharp_runs, cpp_runs, go_runs, powershell_runs, php_runs, lua_runs, kotlin_runs, ruby_runs, swift_runs, assembly_runs, nasm_runs, objc_runs, vue_runs, astro_runs, jsdoc_runs, regex_runs, proto_runs }) |runs| {
+        test_step.dependOn(&runs.backend_test_run.step);
+        test_step.dependOn(&runs.preview_test_run.step);
+    }
+    inline for (.{ kdl_runs, nix_runs, fish_runs, nu_runs, awk_runs, ssh_config_runs, gitcommit_runs, git_rebase_runs, po_runs, rst_runs, latex_runs, typst_runs, org_runs, dtd_runs, mail_runs, hurl_runs, ninja_runs, rpmspec_runs, rpmbash_runs, gdscript_runs, perl_runs, elixir_runs, fsharp_runs, ocaml_runs, haskell_runs, gleam_runs, commonlisp_runs, scheme_runs, julia_runs, elm_runs, purescript_runs, nim_runs }) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }
