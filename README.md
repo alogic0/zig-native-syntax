@@ -11,7 +11,7 @@ other Zig projects.
 ## Status
 
 The project contains the initial classification API, source-preserving HTML renderer, Zig, Bash,
-Rust, JSON, Diff, TOML, Dockerfile, Python, SQL, C, JavaScript, and TypeScript backends, and optional Ziggy document, Ziggy Schema,
+Rust, JSON, Diff, TOML, Dockerfile, Python, SQL, C, JavaScript, TypeScript, and YAML backends, and optional Ziggy document, Ziggy Schema,
 Scripty, HTML, XML, CSS, composed SuperHTML, and parser-backed Markdown backends. Additional
 language adapters and Zine integration remain experimental work.
 
@@ -75,6 +75,8 @@ language adapters and Zine integration remain experimental work.
   coverage and regex, JSX, and template-expression boundaries.
 - [TypeScript highlighting compatibility](docs/compatibility/typescript.md) defines the shared
   JavaScript scanner boundary and TypeScript-specific lexical additions.
+- [YAML highlighting compatibility](docs/compatibility/yaml.md) defines line and block-scalar
+  recovery and the schema-resolution boundary.
 
 ## Development
 
@@ -99,6 +101,7 @@ Render source files as HTML fragments for manual inspection:
 ./build.sh render-c tests/corpus/c/complete.c > /tmp/c.html
 ./build.sh render-javascript tests/corpus/javascript/complete.js > /tmp/javascript.html
 ./build.sh render-typescript tests/corpus/typescript/complete.ts > /tmp/typescript.html
+./build.sh render-yaml tests/corpus/yaml/complete.yaml > /tmp/yaml.html
 ./build.sh render-ziggy tests/corpus/ziggy/complete.ziggy > /tmp/ziggy.html
 ./build.sh render-ziggy-schema tests/corpus/ziggy-schema/complete.ziggy-schema > /tmp/schema.html
 ./build.sh render-scripty tests/corpus/scripty/complete.scripty > /tmp/scripty.html

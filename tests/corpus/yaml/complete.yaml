@@ -1,0 +1,14 @@
+%YAML 1.2
+---
+defaults: &defaults
+  enabled: true
+  count: 1_024
+  escaped: "line\nquote=\" <&>"
+service:
+  <<: *defaults
+  image: !tag example/app
+  command: ["serve", '--port']
+  description: |-
+    first line <&>
+    second line
+...

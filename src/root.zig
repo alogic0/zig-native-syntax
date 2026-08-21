@@ -30,6 +30,7 @@ pub const languages = struct {
     pub const sql = @import("languages/sql.zig");
     pub const toml = @import("languages/toml.zig");
     pub const typescript = @import("languages/typescript.zig");
+    pub const yaml = @import("languages/yaml.zig");
     pub const zig = @import("languages/zig.zig");
 };
 

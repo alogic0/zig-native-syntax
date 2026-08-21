@@ -33,7 +33,7 @@ as programming languages.
 - [x] C
 - [x] JavaScript
 - [x] TypeScript
-- [ ] YAML
+- [x] YAML
 - [ ] HCL
 - [ ] Make
 - [ ] CMake
