@@ -285,7 +285,14 @@ const Tokenizer = struct {
         {
             tokenizer.index += 1;
         }
-        try tokenizer.capture(.number, start, tokenizer.index);
+        if (tokenizer.index < tokenizer.source.len and !isWordBoundary(tokenizer.source[tokenizer.index])) {
+            while (tokenizer.index < tokenizer.source.len and !isWordBoundary(tokenizer.source[tokenizer.index])) {
+                tokenizer.index += 1;
+            }
+            try tokenizer.capture(.word, start, tokenizer.index);
+        } else {
+            try tokenizer.capture(.number, start, tokenizer.index);
+        }
     }
 
     fn scanWord(tokenizer: *Tokenizer) ParseError!void {
@@ -891,6 +898,17 @@ test "Bash parser records assignments commands options and redirections" {
     try expectMonotonicTokens(&tree);
 }
 
+test "Bash tokenizer keeps digit-leading shell words intact" {
+    const source = "zine --host 127.0.0.1 --port 8080\n";
+    var tree = try parse(std.testing.allocator, source);
+    defer tree.deinit(std.testing.allocator);
+
+    try expectToken(&tree, .word, "127.0.0.1");
+    try expectToken(&tree, .number, "8080");
+    try expectNodeMain(&tree, .argument, "127.0.0.1");
+    try expectMonotonicTokens(&tree);
+}
+
 test "Bash parser records function definitions loop variables and body commands" {
     const source =
         \\function render { printf '%s' "$value"; }
@@ -942,6 +960,13 @@ test "Bash parser diagnoses unterminated quotes and substitutions" {
 fn expectNodeMain(tree: *const Tree, tag: NodeTag, expected: []const u8) !void {
     for (tree.nodes) |node| {
         if (node.tag == tag and std.mem.eql(u8, tree.tokenSlice(node.main_token), expected)) return;
+    }
+    return error.TestExpectedEqual;
+}
+
+fn expectToken(tree: *const Tree, tag: TokenTag, expected: []const u8) !void {
+    for (tree.tokens) |token| {
+        if (token.tag == tag and std.mem.eql(u8, token.slice(tree.source), expected)) return;
     }
     return error.TestExpectedEqual;
 }

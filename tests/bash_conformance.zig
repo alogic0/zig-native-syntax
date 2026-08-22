@@ -116,6 +116,18 @@ test "Bash parser separates reserved words builtins and assignment arguments" {
     try expectNoCapture(source, sink.captures(), "dist", .function);
 }
 
+test "Bash parser does not split digit-leading argument words" {
+    const source = "zine --host 127.0.0.1 --port 8080\n";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    try expectCapture(source, sink.captures(), "zine", .function);
+    try expectCapture(source, sink.captures(), "--host", .constant);
+    try expectCapture(source, sink.captures(), "8080", .number);
+    try expectNoCapture(source, sink.captures(), "127", .number);
+}
+
 test "Bash corpus covers heredocs and incomplete constructs" {
     const source = @embedFile("corpus/bash/complete.sh");
     var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
