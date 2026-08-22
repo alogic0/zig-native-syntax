@@ -1,10 +1,14 @@
 # Rust Highlighting Compatibility
 
 The dependency-free `rust` backend is available as
-`native_syntax.languages.rust`. It is a byte-oriented lexical scanner, not a
-Rust parser, macro expander, name resolver, or validator.
+`native_syntax.languages.rust`. It uses a byte-oriented tokenizer and a
+tolerant structural parser built on the shared syntax model:
 
-The scanner recognizes:
+```text
+source -> Rust tokens -> recovering syntax nodes -> highlighting captures
+```
+
+The tokenizer recognizes:
 
 - line comments, nested block comments, and documentation-comment overlap;
 - outer and inner attributes as source-preserving attribute regions;
@@ -17,6 +21,16 @@ The scanner recognizes:
 - booleans and primitive types;
 - ASCII identifiers, macro invocations, operators, and punctuation.
 
+The parser adds structural roles for:
+
+- function declarations and calls;
+- function parameters and `let` bindings;
+- struct and union fields plus member access;
+- struct, union, enum, trait, and type-alias names;
+- type references in parameters, fields, return types, aliases, and `impl`
+  headers;
+- module names, constants, statics, and enum variants.
+
 Raw strings support arbitrary hash counts. An incomplete raw or cooked string
 is classified through end of input. Nested block comments are tracked by depth
 and likewise extend through end of input when unterminated. These recovery
@@ -25,8 +39,13 @@ backend API.
 
 Attributes are classified as whole regions; their internal paths, literals,
 and meta-item grammar are not recursively classified. Macro bodies are scanned
-lexically without expansion. Identifier roles such as function, type,
-property, parameter, and binding require parser context and remain generic
-`variable` captures except for primitive types and macro calls. Non-ASCII
-identifier bytes remain safely escaped plain text. Edition-specific grammar
-and semantic validity are outside this backend's compatibility claim.
+lexically without expansion. The parser is intentionally shallow: it does not
+build expression trees, expand patterns, resolve names, distinguish every path
+role, validate generic arguments, or implement edition-specific grammar.
+Identifiers outside its documented structural positions remain generic
+`variable` captures. Non-ASCII identifier bytes remain safely represented as
+invalid or escaped source rather than being normalized.
+
+This is a highlighting parser, not a compiler-quality Rust parser, macro
+expander, name resolver, borrow checker, or validator. Full Rust conformance is
+outside the backend's ownership boundary.

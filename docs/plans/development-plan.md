@@ -65,8 +65,7 @@ Consumers own:
 | Markup and style adapters | HTML, XML, CSS | Maintained SuperHTML syntax APIs |
 | Composed adapter | SuperHTML | HTML structure plus nested Scripty classifications |
 | Parser-backed adapter | Markdown | Independently extracted `zig-markdown-parser` package |
-| Owned highlighting parser | Bash, JavaScript, TypeScript | Shared tokenizer and tolerant structural parser |
-| Compatibility scanners | Rust | Purpose-built lexical scanners after their supported subsets are documented |
+| Owned highlighting parser | Bash, Rust, JavaScript, TypeScript | Shared storage and tolerant language-specific parsers |
 | Demand-driven | Remaining Tree-sitter languages | Add according to measured consumer demand and suitable syntax APIs |
 
 Shell/Bash and Rust are prioritized among languages without existing project parsers because Zine's
@@ -519,6 +518,10 @@ is exposed through `native_syntax.languages.rust`. Shared conformance tests and 
 comments, nested block comments, documentation comments, attributes, identifiers, macros, keywords,
 numbers, character literals versus lifetimes, byte and raw strings, invalid bytes, and incomplete raw
 strings. The exact boundary is recorded in `docs/compatibility/rust.md`.
+
+Later follow-up migrated this backend to the shared syntax core. The tolerant parser retains the
+lexical coverage while adding nodes for declarations, parameters, bindings, fields, calls, members,
+type references, modules, constants, and enum variants.
 
 - Document the supported Rust lexical subset.
 - Cover comments, raw and byte strings, character literals versus lifetimes, numbers, attributes,

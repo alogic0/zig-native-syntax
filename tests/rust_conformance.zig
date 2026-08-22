@@ -46,7 +46,7 @@ test "Rust parser conforms to the shared backend contract" {
     });
 }
 
-test "Rust scanner distinguishes characters and lifetimes" {
+test "Rust tokenizer distinguishes characters and lifetimes" {
     const source = "fn borrow<'a>(x: &'a str) -> char { 'x' }";
     var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
     defer sink.deinit();

@@ -94,8 +94,9 @@ A deliberately incomplete structural parser may be owned here when it has a docu
 boundary, remains recovery-oriented, and is not presented as a validator. JavaScript and TypeScript
 use this model for declarations, bindings, parameters, calls, members, and selected type references.
 Bash uses it for commands, assignments, redirections, function definitions, arguments, and loop
-variables. If an owned parser grows toward language conformance or becomes useful to non-highlighting
-consumers, it should move to an independently versioned package.
+variables. Rust uses it for declarations, parameters, bindings, fields, calls, members, and selected
+type positions. If an owned parser grows toward language conformance or becomes useful to
+non-highlighting consumers, it should move to an independently versioned package.
 
 ## Source Preservation And Rendering
 

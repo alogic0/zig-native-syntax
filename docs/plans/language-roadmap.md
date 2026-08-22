@@ -20,8 +20,8 @@ The suffix on each entry records its implementation on `main`:
   language;
 - **lexical** uses tokens or a bounded scanner without a syntax tree.
 
-There are currently 4 parser-backed languages, 1 partially parser-backed
-composition, and 83 lexical backends. This classification describes the code
+There are currently 8 parser-backed languages, 1 partially parser-backed
+composition, and 79 lexical backends. This classification describes the code
 that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as lexical here.
@@ -35,8 +35,8 @@ listed as lexical here.
 - [x] 7. CSS — **lexical**
 - [x] 8. SuperHTML — **composed** (HTML tokenizer and parser-backed Scripty regions)
 - [x] 9. Markdown — **parser**
-- [x] 10. Bash — **lexical**
-- [x] 11. Rust — **lexical**
+- [x] 10. Bash — **parser**
+- [x] 11. Rust — **parser**
 - [x] 12. JSON — **lexical**
 - [x] 13. Diff/patch — **lexical**
 - [x] 14. TOML — **lexical**
@@ -44,8 +44,8 @@ listed as lexical here.
 - [x] 16. Python — **lexical**
 - [x] 17. SQL — **lexical**
 - [x] 18. C — **lexical**
-- [x] 19. JavaScript — **lexical**
-- [x] 20. TypeScript — **lexical**
+- [x] 19. JavaScript — **parser**
+- [x] 20. TypeScript — **parser**
 - [x] 21. YAML — **lexical**
 - [x] 22. HCL — **lexical**
 - [x] 23. Make — **lexical**

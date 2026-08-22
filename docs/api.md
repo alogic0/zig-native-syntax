@@ -124,9 +124,9 @@ provide a grammar or a parser generator.
 
 The source remains caller-owned; a finished tree owns only its token, node, and diagnostic slices.
 Language parsers remain responsible for grammar rules and must translate their nodes to stable
-highlighting scopes in an adapter. The repository's JavaScript/TypeScript parser demonstrates this
-pattern but remains internal because it is a highlighting parser rather than a public ECMAScript
-syntax API.
+highlighting scopes in an adapter. The repository's JavaScript/TypeScript, Bash, and Rust parsers
+demonstrate this pattern but remain internal because they are highlighting parsers rather than
+public language syntax APIs.
 
 ## Compose Embedded Languages
 

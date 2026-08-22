@@ -16,7 +16,7 @@ At the start of Phase 11, generated-site fixtures exercised these categories:
 - Zine-owned special handling: `console`;
 - remaining Tree-sitter coverage: Rust.
 
-Phase 11 added the Bash and Rust scanners and routed the Rust fixture natively.
+Phase 11 added the initial Bash and Rust scanners and routed the Rust fixture natively.
 The current generated-site fixtures therefore have no required Tree-sitter
 language. Phase 12 exercised the compatibility fallback with a deliberately
 unsupported language before removing the old backend.
@@ -29,7 +29,7 @@ Shell snippets are common throughout contributor-facing documentation even
 though the current generated-site fixtures do not contain a `sh` or `bash`
 fence. Shell/Bash therefore began as the first demand-informed compatibility
 scanner and later migrated to a parser-backed implementation. Rust followed
-because Rust is required by the rendering snapshot.
+the same migration path because it is required by the rendering snapshot.
 
 ## Final Migration Contract
 
