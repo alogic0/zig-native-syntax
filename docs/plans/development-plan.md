@@ -65,8 +65,9 @@ Consumers own:
 | Markup and style adapters | HTML, XML, CSS | Maintained SuperHTML syntax APIs |
 | Composed adapter | SuperHTML | HTML structure plus nested Scripty classifications |
 | Parser-backed adapter | Markdown | Independently extracted `zig-markdown-parser` package |
+| Owned highlighting parser | JavaScript, TypeScript | Shared tokenizer and tolerant structural parser |
 | Compatibility scanners | Shell/Bash, Rust | Purpose-built lexical scanners after their supported subsets are documented |
-| Deferred | JavaScript and remaining Tree-sitter languages | Add according to measured consumer demand and suitable syntax APIs |
+| Demand-driven | Remaining Tree-sitter languages | Add according to measured consumer demand and suitable syntax APIs |
 
 Shell/Bash and Rust are prioritized among languages without existing project parsers because Zine's
 current documentation and rendering fixtures exercise them. This priority does not imply a promise
@@ -528,6 +529,10 @@ bounded implementations are low-risk; JavaScript/TypeScript and YAML remain defe
 complexity is not justified by current evidence. The compatibility criteria are recorded in
 [Language Demand And Fallback Policy](../compatibility/language-demand.md), and the complete ordered
 checklist is maintained in the [Language Backend Roadmap](language-roadmap.md).
+
+Later follow-up replaced the JavaScript/TypeScript lexical implementation with the tolerant parser
+defined in [Zig-Style Parser Architecture Plan](zig-style-parser-plan.md). The historical priority
+decision above still describes the ordering used for the initial migration.
 
 - Rank candidates using real consumer demand, availability of maintained Zig syntax APIs, implementation
   complexity, binary-size cost, and security risk.

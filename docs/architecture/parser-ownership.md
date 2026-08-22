@@ -80,6 +80,22 @@ The first expected adapters are:
 An adapter may depend only on a stable, independently consumable syntax package. It must not
 introduce a dependency from this library back to one of its consumers.
 
+## Shared Parser Mechanics
+
+The public `syntax.Model` type supplies language-parameterized token, node, diagnostic, builder, and
+cursor storage. It standardizes checked 32-bit source offsets, explicit allocation ownership, bounded
+lookahead, and synchronization without standardizing a grammar. Language packages still define all
+token tags, node tags, grammar productions, and recovery decisions.
+
+Using this storage does not by itself make a backend parser-backed. A backend is parser-backed only
+when a language grammar produces syntax nodes that materially affect classification.
+
+A deliberately incomplete structural parser may be owned here when it has a documented highlighting
+boundary, remains recovery-oriented, and is not presented as a validator. JavaScript and TypeScript
+use the first such parser for declarations, bindings, parameters, calls, members, and selected type
+references. If that parser grows toward language conformance or becomes useful to non-highlighting
+consumers, it should move to an independently versioned package.
+
 ## Source Preservation And Rendering
 
 Existing parser renderers are not automatically suitable highlighting backends. They may reformat

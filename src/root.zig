@@ -19,10 +19,6 @@ pub const CaptureSink = backend.CaptureSink;
 pub const HighlightError = backend.HighlightError;
 pub const MetadataError = backend.MetadataError;
 
-pub const parsers = struct {
-    pub const javascript = @import("parsers/javascript.zig");
-};
-
 pub const languages = struct {
     pub const agda = @import("languages/agda.zig");
     pub const astro = @import("languages/astro.zig");

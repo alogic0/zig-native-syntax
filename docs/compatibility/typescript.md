@@ -1,12 +1,16 @@
 # TypeScript Highlighting Compatibility
 
-The dependency-free `typescript` backend reuses the JavaScript scanner and
-adds TypeScript declaration keywords and primitive type scopes. It recognizes
-interfaces, type aliases, enums, access and declaration modifiers, common type
-operators, and the shared JavaScript lexical constructs.
+The dependency-free `typescript` backend uses the JavaScript syntax package in TypeScript mode. In
+addition to the shared JavaScript tokens and nodes, it recognizes primitive type tokens, interfaces,
+type aliases, enums, declaration modifiers, and selected type references following annotations,
+`as`, `extends`, `implements`, and `satisfies`.
 
-The scanner does not parse generic nesting, type expressions, overloads,
-decorators, declaration merging, namespaces, JSX/TSX, or contextual identifier
-roles. User-defined type references remain generic identifiers except for the
-name immediately following a type-declaration keyword. All JavaScript regex,
-template-expression, and Unicode-identifier limitations also apply.
+Interface, type-alias, enum, and class names are classified from declaration nodes rather than from a
+"next identifier" scanner state. User-defined annotation references receive `type`; builtin
+references can compose `builtin` and `type`. The parser recovers partial structure from incomplete
+generic and function syntax without exposing diagnostics as highlighting failures.
+
+The parser does not implement complete generic nesting, conditional or mapped types, overload sets,
+decorators, declaration merging, namespaces, JSX/TSX, type checking, or symbol resolution. Complex
+type expressions can therefore leave identifiers with their lexical classification. All JavaScript
+regular-expression, template-expression, and Unicode-identifier limitations also apply.

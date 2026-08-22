@@ -1,5 +1,10 @@
 # Zig-Style Parser Architecture Plan
 
+## Status
+
+Implemented on 2026-08-22. The shared syntax core and the first JavaScript/TypeScript parser are in
+place, and both language backends now derive contextual scopes from syntax nodes.
+
 ## Goal
 
 Give native language backends a common Zig-style syntax pipeline without pretending that one
@@ -56,12 +61,12 @@ until a later expression-context tokenizer adds regular-expression literals.
 
 ## Commit Slices
 
-1. Document this architecture and migration policy.
-2. Add the shared syntax core with focused ownership, cursor, and recovery tests.
-3. Add the JavaScript/TypeScript tokenizer and structural parser with parser-level tests.
-4. Replace the two direct scanners with adapters over tokens and syntax nodes; update metadata and
+1. [x] Document this architecture and migration policy.
+2. [x] Add the shared syntax core with focused ownership, cursor, and recovery tests.
+3. [x] Add the JavaScript/TypeScript tokenizer and structural parser with parser-level tests.
+4. [x] Replace the two direct scanners with adapters over tokens and syntax nodes; update metadata and
    conformance expectations.
-5. Record compatibility boundaries and run the complete repository test gate.
+5. [x] Record compatibility boundaries and run the complete repository test gate.
 
 Every slice must compile and pass its focused tests before it is committed. The final slice must pass
 `./build.sh test` while leaving unrelated working-tree changes untouched.

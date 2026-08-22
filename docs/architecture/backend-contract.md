@@ -42,7 +42,8 @@ The shared highlighting error set contains:
 
 - allocation failure;
 - reversed or out-of-bounds backend captures;
-- a mismatch between the source length and the sink's configured source length.
+- a mismatch between the source length and the sink's configured source length;
+- source too large for a selected parser's checked offset representation.
 
 Malformed or incomplete language syntax is deliberately not a shared highlighting error. A backend
 uses its parser's recovery information or lexical tokens to emit the classifications it trusts, then

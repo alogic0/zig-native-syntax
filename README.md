@@ -10,10 +10,11 @@ other Zig projects.
 
 ## Status
 
-The project contains the initial classification API, source-preserving HTML renderer, Zig, Bash,
-Rust, JSON, Diff, TOML, Dockerfile, Python, SQL, C, JavaScript, TypeScript, and YAML backends, and optional Ziggy document, Ziggy Schema,
-Scripty, HTML, XML, CSS, composed SuperHTML, and parser-backed Markdown backends. Additional
-language adapters and Zine integration remain experimental work.
+The project contains the initial classification API, shared syntax storage, source-preserving HTML
+renderer, parser-backed Zig, JavaScript, and TypeScript backends, the complete bounded native
+language roadmap, and optional Ziggy document, Ziggy Schema, Scripty, HTML, XML, CSS, composed
+SuperHTML, and parser-backed Markdown backends. Additional parser migrations and Zine integration
+remain experimental work.
 
 ## Design constraints
 
@@ -33,6 +34,8 @@ language adapters and Zine integration remain experimental work.
   scopes and their stable CSS class names.
 - [Parser and tokenizer ownership](docs/architecture/parser-ownership.md) defines the boundary
   between language implementations, highlighting adapters, the shared renderer, and consumers.
+- [Zig-style parser architecture plan](docs/plans/zig-style-parser-plan.md) defines the shared syntax
+  storage and incremental migration policy for structural highlighting parsers.
 - [Optional backend selection](docs/architecture/backend-selection.md) defines how external parser
   adapters remain independently selectable without changing the core module.
 - [Embedded language composition](docs/architecture/composition.md) defines nested backend offset
@@ -71,10 +74,10 @@ language adapters and Zine integration remain experimental work.
   dialect boundary.
 - [C highlighting compatibility](docs/compatibility/c.md) defines lexical coverage and explains why
   highlighting does not own an Aro compiler pipeline.
-- [JavaScript highlighting compatibility](docs/compatibility/javascript.md) defines tokenizer-style
-  coverage and regex, JSX, and template-expression boundaries.
-- [TypeScript highlighting compatibility](docs/compatibility/typescript.md) defines the shared
-  JavaScript scanner boundary and TypeScript-specific lexical additions.
+- [JavaScript highlighting compatibility](docs/compatibility/javascript.md) defines structural
+  parser coverage and regex, JSX, and template-expression boundaries.
+- [TypeScript highlighting compatibility](docs/compatibility/typescript.md) defines the shared parser
+  boundary and TypeScript-specific syntax additions.
 - [YAML highlighting compatibility](docs/compatibility/yaml.md) defines line and block-scalar
   recovery and the schema-resolution boundary.
 - [HCL highlighting compatibility](docs/compatibility/hcl.md) defines expression, template, and

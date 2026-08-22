@@ -109,10 +109,24 @@ rules.
 - A sink must be initialized for the exact source length used in `Backend.highlight`.
 - Malformed language syntax is not a shared API error. Backends emit trusted partial captures and
   leave uncertain source unclassified.
-- Allocation failure, invalid backend ranges, and source-length mismatch are shared errors.
+- Allocation failure, invalid backend ranges, source-length mismatch, and sources too large for a
+  selected parser's offset representation are shared errors.
 
 See the [language backend contract](architecture/backend-contract.md) for the full responsibility and
 error boundary.
+
+## Shared Syntax Storage
+
+Parser packages can instantiate `native_syntax.syntax.Model` with their own token, node, and
+diagnostic tag enums. The model provides checked byte-offset storage, builders with explicit
+ownership transfer, token cursors with bounded lookahead, and recovery synchronization. It does not
+provide a grammar or a parser generator.
+
+The source remains caller-owned; a finished tree owns only its token, node, and diagnostic slices.
+Language parsers remain responsible for grammar rules and must translate their nodes to stable
+highlighting scopes in an adapter. The repository's JavaScript/TypeScript parser demonstrates this
+pattern but remains internal because it is a highlighting parser rather than a public ECMAScript
+syntax API.
 
 ## Compose Embedded Languages
 
