@@ -372,7 +372,7 @@ const Parser = struct {
 
         const arrow = parser.nextCode(close + 1);
         if (parser.tokenIs(arrow, "->")) {
-            const end = parser.findAnyText(arrow + 1, &.{ "{", ";", "where" });
+            const end = parser.findTypeBoundary(arrow + 1, &.{ "{", ";", "where" });
             try parser.addTypeReferences(arrow + 1, end);
         }
     }
@@ -380,14 +380,13 @@ const Parser = struct {
     fn parseParameters(parser: *Parser, first: syntax.TokenIndex, last: syntax.TokenIndex) ParseError!void {
         var segment_start = first;
         var index = first;
-        var depth: usize = 0;
+        var nesting: Nesting = .{};
         while (index <= last) : (index += 1) {
             const at_end = index == last;
-            if (!at_end) {
-                if (parser.tokenIsAny(index, &.{ "(", "[", "{" })) depth += 1;
-                if (parser.tokenIsAny(index, &.{ ")", "]", "}" }) and depth > 0) depth -= 1;
+            if (!at_end and !(nesting.isZero() and parser.tokenIs(index, ","))) {
+                nesting.update(parser.tokenText(index));
+                continue;
             }
-            if (!at_end and !(depth == 0 and parser.tokenIs(index, ","))) continue;
 
             const segment_end = index;
             const colon = parser.findTextBefore(segment_start, segment_end, ":");
@@ -483,7 +482,7 @@ const Parser = struct {
             if (depth != 0 or parser.tokenTag(index) != .identifier) continue;
             const colon = parser.nextCode(index + 1);
             if (!parser.tokenIs(colon, ":")) continue;
-            const end = parser.findAnyText(colon + 1, &.{ ",", "}" });
+            const end = parser.findTypeBoundary(colon + 1, &.{ ",", "}" });
             _ = try parser.builder.addNode(.field_declaration, index, end, index);
             try parser.addTypeReferences(colon + 1, end);
         }
@@ -620,6 +619,21 @@ const Parser = struct {
         return eof;
     }
 
+    fn findTypeBoundary(
+        parser: Parser,
+        first: syntax.TokenIndex,
+        boundaries: []const []const u8,
+    ) syntax.TokenIndex {
+        const eof = parser.eofIndex();
+        var nesting: Nesting = .{};
+        var index = first;
+        while (index < eof) : (index += 1) {
+            if (nesting.isZero() and parser.tokenIsAny(index, boundaries)) return index;
+            nesting.update(parser.tokenText(index));
+        }
+        return eof;
+    }
+
     fn nextCode(parser: Parser, first: syntax.TokenIndex) syntax.TokenIndex {
         var index = first;
         const eof = parser.eofIndex();
@@ -669,6 +683,40 @@ const Parser = struct {
 
     fn eofIndex(parser: Parser) syntax.TokenIndex {
         return @intCast(parser.builder.tokens.items.len - 1);
+    }
+};
+
+const Nesting = struct {
+    parens: usize = 0,
+    brackets: usize = 0,
+    braces: usize = 0,
+    angles: usize = 0,
+
+    fn isZero(nesting: Nesting) bool {
+        return nesting.parens == 0 and nesting.brackets == 0 and
+            nesting.braces == 0 and nesting.angles == 0;
+    }
+
+    fn update(nesting: *Nesting, text: []const u8) void {
+        for (text) |byte| switch (byte) {
+            '(' => nesting.parens += 1,
+            ')' => if (nesting.parens > 0) {
+                nesting.parens -= 1;
+            },
+            '[' => nesting.brackets += 1,
+            ']' => if (nesting.brackets > 0) {
+                nesting.brackets -= 1;
+            },
+            '{' => nesting.braces += 1,
+            '}' => if (nesting.braces > 0) {
+                nesting.braces -= 1;
+            },
+            '<' => nesting.angles += 1,
+            '>' => if (nesting.angles > 0) {
+                nesting.angles -= 1;
+            },
+            else => {},
+        };
     }
 };
 
@@ -788,6 +836,19 @@ test "Rust parser preserves partial syntax and deterministic diagnostics" {
     try std.testing.expectEqualSlices(Syntax.Token, first.tokens, second.tokens);
     try std.testing.expectEqualSlices(Syntax.Node, first.nodes, second.nodes);
     try std.testing.expectEqualSlices(Syntax.Diagnostic, first.diagnostics, second.diagnostics);
+}
+
+test "Rust parser keeps commas inside nested generic parameter types" {
+    const source = "fn collect(values: Result<Vec<u8>, Error>, limit: usize) {}";
+    var tree = try parse(std.testing.allocator, source);
+    defer tree.deinit(std.testing.allocator);
+
+    try expectNodeMain(&tree, .parameter, "values");
+    try expectNodeMain(&tree, .parameter, "limit");
+    try expectNodeMain(&tree, .type_reference, "Result");
+    try expectNodeMain(&tree, .type_reference, "Vec");
+    try expectNodeMain(&tree, .type_reference, "Error");
+    try tree.validate();
 }
 
 fn expectNodeMain(tree: *const Tree, tag: NodeTag, expected: []const u8) !void {
