@@ -33,6 +33,8 @@ language adapters and Zine integration remain experimental work.
   scopes and their stable CSS class names.
 - [Parser and tokenizer ownership](docs/architecture/parser-ownership.md) defines the boundary
   between language implementations, highlighting adapters, the shared renderer, and consumers.
+- [Applicative lexer evaluation](docs/architecture/applicative-lexer-evaluation.md) records the
+  Bash matcher experiment, its evidence, and why production adoption was declined.
 - [Optional backend selection](docs/architecture/backend-selection.md) defines how external parser
   adapters remain independently selectable without changing the core module.
 - [Embedded language composition](docs/architecture/composition.md) defines nested backend offset
