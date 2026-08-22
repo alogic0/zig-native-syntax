@@ -1,5 +1,7 @@
 const std = @import("std");
 const backend_api = @import("../backend.zig");
+const bash = @import("../parsers/bash.zig");
+
 const Backend = backend_api.Backend;
 const CaptureSink = backend_api.CaptureSink;
 const HighlightError = backend_api.HighlightError;
@@ -7,289 +9,179 @@ const HighlightError = backend_api.HighlightError;
 pub const backend: Backend = .init(.{
     .canonical_name = "bash",
     .display_name = "Bash",
-    .kind = .lexical,
+    .kind = .parser_backed,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {
-    var scanner: Scanner = .{ .source = source, .sink = sink };
-    defer scanner.pending_heredocs.deinit(sink.allocator);
-    try scanner.run();
+    var tree = bash.parse(sink.allocator, source) catch |err| switch (err) {
+        error.OutOfMemory => return error.OutOfMemory,
+        error.SourceTooLarge => return error.SourceTooLarge,
+        error.InvalidByteRange, error.InvalidTokenRange => unreachable,
+    };
+    defer tree.deinit(sink.allocator);
+
+    const roles = try sink.allocator.alloc(Roles, tree.tokens.len);
+    defer sink.allocator.free(roles);
+    @memset(roles, .{});
+
+    for (tree.nodes) |node| switch (node.tag) {
+        .root,
+        .simple_command,
+        .argument,
+        .redirection,
+        .redirection_target,
+        .function_definition,
+        => {},
+        .command_name => roles[node.main_token].command = true,
+        .option => roles[node.main_token].option = true,
+        .assignment => roles[node.main_token].assignment = true,
+        .function_name => roles[node.main_token].function_name = true,
+        .loop_variable => roles[node.main_token].loop_variable = true,
+    };
+
+    for (tree.tokens, roles) |token, role| {
+        try classifyToken(source, token, role, sink);
+    }
 }
 
-const Heredoc = struct {
-    delimiter: []const u8,
-    strip_tabs: bool,
+const Roles = packed struct {
+    command: bool = false,
+    option: bool = false,
+    assignment: bool = false,
+    function_name: bool = false,
+    loop_variable: bool = false,
 };
 
-const Scanner = struct {
+fn classifyToken(
     source: []const u8,
+    token: bash.Syntax.Token,
+    roles: Roles,
     sink: *CaptureSink,
-    index: usize = 0,
-    line_start: usize = 0,
-    pending_heredocs: std.ArrayList(Heredoc) = .empty,
-
-    fn run(scanner: *Scanner) HighlightError!void {
-        while (scanner.index < scanner.source.len) {
-            if (scanner.index == scanner.line_start and scanner.pending_heredocs.items.len > 0) {
-                try scanner.scanHeredocLine();
-                continue;
+) HighlightError!void {
+    const start: usize = token.start;
+    const end: usize = token.end;
+    switch (token.tag) {
+        .eof, .newline, .word => {},
+        .invalid => try sink.add(start, end, .invalid),
+        .number => try sink.add(start, end, .number),
+        .keyword => try sink.add(start, end, .keyword),
+        .comment => try sink.add(start, end, .comment),
+        .string => {
+            try sink.add(start, end, .string);
+            if (start + 1 < end and source[start] == '$' and source[start + 1] == '\'') {
+                try classifyEscapes(source, start + 2, end, sink);
             }
-
-            const byte = scanner.source[scanner.index];
-            switch (byte) {
-                '\n' => {
-                    scanner.index += 1;
-                    scanner.line_start = scanner.index;
-                },
-                '\'', '"' => try scanner.scanQuoted(byte, scanner.index),
-                '`' => try scanner.scanBackticks(scanner.index),
-                '$' => scanner.index = try scanner.scanDollar(scanner.index),
-                '\\' => {
-                    const end = @min(scanner.index + 2, scanner.source.len);
-                    try scanner.sink.add(scanner.index, end, .escape);
-                    scanner.index = end;
-                },
-                '#' => if (scanner.startsComment()) {
-                    const end = std.mem.indexOfScalarPos(u8, scanner.source, scanner.index, '\n') orelse scanner.source.len;
-                    try scanner.sink.add(scanner.index, end, .comment);
-                    scanner.index = end;
-                } else {
-                    scanner.index += 1;
-                },
-                '<' => if (scanner.index + 1 < scanner.source.len and
-                    scanner.source[scanner.index + 1] == '<')
-                {
-                    try scanner.scanHeredocStart();
-                } else {
-                    try scanner.scanOperator();
-                },
-                '|', '&', ';', '>', '(', ')' => try scanner.scanOperator(),
-                '[', ']', '{', '}' => {
-                    try scanner.sink.add(scanner.index, scanner.index + 1, .punctuation);
-                    scanner.index += 1;
-                },
-                else => if (std.ascii.isDigit(byte)) {
-                    const start = scanner.index;
-                    while (scanner.index < scanner.source.len and
-                        (std.ascii.isDigit(scanner.source[scanner.index]) or
-                            scanner.source[scanner.index] == '_'))
-                    {
-                        scanner.index += 1;
-                    }
-                    try scanner.sink.add(start, scanner.index, .number);
-                } else if (isIdentifierStart(byte)) {
-                    const start = scanner.index;
-                    scanner.index += 1;
-                    while (scanner.index < scanner.source.len and
-                        isIdentifierContinue(scanner.source[scanner.index]))
-                    {
-                        scanner.index += 1;
-                    }
-                    if (isKeyword(scanner.source[start..scanner.index])) {
-                        try scanner.sink.add(start, scanner.index, .keyword);
-                    }
-                } else {
-                    scanner.index += 1;
-                },
-            }
-        }
+        },
+        .expandable_string => try classifyExpandableString(source, start, end, sink),
+        .variable => try sink.add(start, end, .variable),
+        .command_substitution, .arithmetic_substitution => try sink.add(start, end, .embedded),
+        .escape => try sink.add(start, end, .escape),
+        .operator => try sink.add(start, end, .operator),
+        .punctuation => try sink.add(start, end, .punctuation),
+        .assignment => {},
+        .heredoc_label => try sink.add(start, end, .label),
+        .heredoc_body => try sink.add(start, end, .string),
     }
 
-    fn scanQuoted(scanner: *Scanner, quote: u8, start: usize) HighlightError!void {
-        var cursor = start + 1;
-        while (cursor < scanner.source.len) {
-            if (quote == '"' and scanner.source[cursor] == '\\') {
-                const end = @min(cursor + 2, scanner.source.len);
-                try scanner.sink.add(cursor, end, .escape);
-                cursor = end;
-                continue;
-            }
-            if (quote == '"' and scanner.source[cursor] == '$') {
-                cursor = try scanner.scanDollar(cursor);
-                continue;
-            }
-            if (quote == '"' and scanner.source[cursor] == '`') {
-                cursor = try scanner.captureBackticks(cursor);
-                continue;
-            }
-            cursor += 1;
-            if (scanner.source[cursor - 1] == quote) break;
-        }
-        try scanner.sink.add(start, cursor, .string);
-        scanner.index = cursor;
+    if (roles.command or roles.function_name) try sink.add(start, end, .function);
+    if (roles.command and bash.isBuiltin(source[start..end])) try sink.add(start, end, .builtin);
+    if (roles.option) try sink.add(start, end, .constant);
+    if (roles.loop_variable) try sink.add(start, end, .property);
+    if (roles.assignment) try classifyAssignment(source, start, end, sink);
+}
+
+fn classifyAssignment(
+    source: []const u8,
+    start: usize,
+    end: usize,
+    sink: *CaptureSink,
+) HighlightError!void {
+    const parts = bash.assignmentParts(source[start..end]) orelse return;
+    try sink.add(start, start + parts.name_end, .property);
+    try sink.add(start + parts.name_end, start + parts.operator_end, .operator);
+    const value = source[start + parts.operator_end .. end];
+    if (value.len > 0 and isDecimalNumber(value)) {
+        try sink.add(start + parts.operator_end, end, .number);
     }
+}
 
-    fn scanBackticks(scanner: *Scanner, start: usize) HighlightError!void {
-        scanner.index = try scanner.captureBackticks(start);
-    }
+fn classifyExpandableString(
+    source: []const u8,
+    start: usize,
+    end: usize,
+    sink: *CaptureSink,
+) HighlightError!void {
+    try sink.add(start, end, .string);
+    var index = start + if (start + 1 < end and source[start] == '$' and source[start + 1] == '"')
+        @as(usize, 2)
+    else
+        1;
 
-    fn captureBackticks(scanner: *Scanner, start: usize) HighlightError!usize {
-        var cursor = start + 1;
-        while (cursor < scanner.source.len) {
-            if (scanner.source[cursor] == '\\') {
-                cursor = @min(cursor + 2, scanner.source.len);
-                continue;
-            }
-            cursor += 1;
-            if (scanner.source[cursor - 1] == '`') break;
-        }
-        try scanner.sink.add(start, cursor, .embedded);
-        return cursor;
-    }
-
-    fn scanDollar(scanner: *Scanner, start: usize) HighlightError!usize {
-        if (start + 1 >= scanner.source.len) return start + 1;
-        const next = scanner.source[start + 1];
-
-        if (next == '\'' or next == '"') {
-            var cursor = start + 2;
-            while (cursor < scanner.source.len) {
-                if (scanner.source[cursor] == '\\') {
-                    const end = @min(cursor + 2, scanner.source.len);
-                    try scanner.sink.add(cursor, end, .escape);
-                    cursor = end;
-                    continue;
-                }
-                cursor += 1;
-                if (scanner.source[cursor - 1] == next) break;
-            }
-            try scanner.sink.add(start, cursor, .string);
-            return cursor;
-        }
-
-        if (next == '{') {
-            const end = findBalanced(scanner.source, start + 1, '{', '}');
-            try scanner.sink.add(start, end, .variable);
-            return end;
-        }
-        if (next == '(') {
-            const arithmetic = start + 2 < scanner.source.len and scanner.source[start + 2] == '(';
-            const end = if (arithmetic)
-                findArithmeticEnd(scanner.source, start + 3)
-            else
-                findBalanced(scanner.source, start + 1, '(', ')');
-            try scanner.sink.add(start, end, .embedded);
-            return end;
-        }
-        if (isIdentifierStart(next)) {
-            var end = start + 2;
-            while (end < scanner.source.len and isIdentifierContinue(scanner.source[end])) end += 1;
-            try scanner.sink.add(start, end, .variable);
-            return end;
-        }
-        if (std.ascii.isDigit(next) or std.mem.indexOfScalar(u8, "?*$#@!-_", next) != null) {
-            try scanner.sink.add(start, start + 2, .variable);
-            return start + 2;
-        }
-        return start + 1;
-    }
-
-    fn scanOperator(scanner: *Scanner) HighlightError!void {
-        const start = scanner.index;
-        const first = scanner.source[start];
-        scanner.index += 1;
-        if (scanner.index < scanner.source.len) {
-            const second = scanner.source[scanner.index];
-            if ((first == '|' and second == '|') or
-                (first == '&' and second == '&') or
-                (first == ';' and second == ';') or
-                (first == '>' and second == '>') or
-                (first == '<' and second == '<'))
-            {
-                scanner.index += 1;
-            }
-        }
-        try scanner.sink.add(start, scanner.index, .operator);
-    }
-
-    fn scanHeredocStart(scanner: *Scanner) HighlightError!void {
-        const operator_start = scanner.index;
-        scanner.index += 2;
-        if (scanner.index < scanner.source.len and scanner.source[scanner.index] == '<') {
-            scanner.index += 1;
-            try scanner.sink.add(operator_start, scanner.index, .operator);
-            return;
-        }
-
-        var strip_tabs = false;
-        if (scanner.index < scanner.source.len and scanner.source[scanner.index] == '-') {
-            strip_tabs = true;
-            scanner.index += 1;
-        }
-        try scanner.sink.add(operator_start, scanner.index, .operator);
-        while (scanner.index < scanner.source.len and
-            (scanner.source[scanner.index] == ' ' or scanner.source[scanner.index] == '\t'))
-        {
-            scanner.index += 1;
-        }
-        if (scanner.index >= scanner.source.len or scanner.source[scanner.index] == '\n') return;
-
-        const label_start = scanner.index;
-        var delimiter_start = label_start;
-        var delimiter_end: usize = undefined;
-        if (scanner.source[scanner.index] == '\'' or scanner.source[scanner.index] == '"') {
-            const quote = scanner.source[scanner.index];
-            delimiter_start += 1;
-            scanner.index += 1;
-            while (scanner.index < scanner.source.len and
-                scanner.source[scanner.index] != quote and
-                scanner.source[scanner.index] != '\n')
-            {
-                scanner.index += 1;
-            }
-            delimiter_end = scanner.index;
-            if (scanner.index < scanner.source.len and scanner.source[scanner.index] == quote) {
-                scanner.index += 1;
-            }
+    while (index < end) {
+        if (source[index] == '\\') {
+            const escape_end = @min(index + 2, end);
+            try sink.add(index, escape_end, .escape);
+            index = escape_end;
+        } else if (source[index] == '$') {
+            const expansion = dollarExpansion(source[0..end], index);
+            if (expansion.end > index + 1) try sink.add(index, expansion.end, expansion.scope);
+            index = expansion.end;
+        } else if (source[index] == '`') {
+            const substitution_end = backtickEnd(source[0..end], index);
+            try sink.add(index, substitution_end, .embedded);
+            index = substitution_end;
         } else {
-            while (scanner.index < scanner.source.len and
-                !std.ascii.isWhitespace(scanner.source[scanner.index]) and
-                std.mem.indexOfScalar(u8, ";|&<>()", scanner.source[scanner.index]) == null)
-            {
-                scanner.index += 1;
-            }
-            delimiter_end = scanner.index;
+            index += 1;
         }
-        if (delimiter_end == delimiter_start) return;
-        try scanner.sink.add(label_start, scanner.index, .label);
-        try scanner.pending_heredocs.append(scanner.sink.allocator, .{
-            .delimiter = scanner.source[delimiter_start..delimiter_end],
-            .strip_tabs = strip_tabs,
-        });
     }
+}
 
-    fn scanHeredocLine(scanner: *Scanner) HighlightError!void {
-        const heredoc = scanner.pending_heredocs.items[0];
-        const content_end = std.mem.indexOfScalarPos(u8, scanner.source, scanner.index, '\n') orelse scanner.source.len;
-        var comparison_start = scanner.index;
-        if (heredoc.strip_tabs) {
-            while (comparison_start < content_end and scanner.source[comparison_start] == '\t') {
-                comparison_start += 1;
-            }
-        }
-        const comparison_end = if (content_end > comparison_start and
-            scanner.source[content_end - 1] == '\r') content_end - 1 else content_end;
-        const line_end = if (content_end < scanner.source.len) content_end + 1 else content_end;
-
-        if (std.mem.eql(u8, scanner.source[comparison_start..comparison_end], heredoc.delimiter)) {
-            try scanner.sink.add(comparison_start, comparison_end, .label);
-            _ = scanner.pending_heredocs.orderedRemove(0);
+fn classifyEscapes(
+    source: []const u8,
+    first: usize,
+    end: usize,
+    sink: *CaptureSink,
+) HighlightError!void {
+    var index = first;
+    while (index < end) {
+        if (source[index] == '\\') {
+            const escape_end = @min(index + 2, end);
+            try sink.add(index, escape_end, .escape);
+            index = escape_end;
         } else {
-            try scanner.sink.add(scanner.index, line_end, .string);
+            index += 1;
         }
-        scanner.index = line_end;
-        scanner.line_start = line_end;
     }
+}
 
-    fn startsComment(scanner: Scanner) bool {
-        if (scanner.index == scanner.line_start) return true;
-        const previous = scanner.source[scanner.index - 1];
-        return std.ascii.isWhitespace(previous) or
-            std.mem.indexOfScalar(u8, ";|&(){}", previous) != null;
-    }
+const Expansion = struct {
+    end: usize,
+    scope: @import("../scope.zig").Scope,
 };
 
-fn findBalanced(source: []const u8, open_index: usize, open: u8, close: u8) usize {
+fn dollarExpansion(source: []const u8, start: usize) Expansion {
+    if (start + 1 >= source.len) return .{ .end = start + 1, .scope = .variable };
+    const next = source[start + 1];
+    if (next == '{') return .{ .end = balancedEnd(source, start + 1, '{', '}'), .scope = .variable };
+    if (next == '(') {
+        const arithmetic = start + 2 < source.len and source[start + 2] == '(';
+        return .{
+            .end = if (arithmetic) arithmeticEnd(source, start + 3) else balancedEnd(source, start + 1, '(', ')'),
+            .scope = .embedded,
+        };
+    }
+    if (isIdentifierStart(next)) {
+        var end = start + 2;
+        while (end < source.len and isIdentifierContinue(source[end])) end += 1;
+        return .{ .end = end, .scope = .variable };
+    }
+    if (std.ascii.isDigit(next) or std.mem.indexOfScalar(u8, "?*$#@!-_", next) != null) {
+        return .{ .end = start + 2, .scope = .variable };
+    }
+    return .{ .end = start + 1, .scope = .variable };
+}
+
+fn balancedEnd(source: []const u8, open_index: usize, open: u8, close: u8) usize {
     var depth: usize = 1;
     var cursor = open_index + 1;
     while (cursor < source.len) : (cursor += 1) {
@@ -306,17 +198,27 @@ fn findBalanced(source: []const u8, open_index: usize, open: u8, close: u8) usiz
     return source.len;
 }
 
-fn findArithmeticEnd(source: []const u8, start: usize) usize {
+fn arithmeticEnd(source: []const u8, start: usize) usize {
     var depth: usize = 1;
     var cursor = start;
     while (cursor < source.len) : (cursor += 1) {
         if (source[cursor] == '(') depth += 1;
         if (source[cursor] == ')') {
-            if (depth == 1 and cursor + 1 < source.len and source[cursor + 1] == ')') {
-                return cursor + 2;
-            }
+            if (depth == 1 and cursor + 1 < source.len and source[cursor + 1] == ')') return cursor + 2;
             depth -= 1;
         }
+    }
+    return source.len;
+}
+
+fn backtickEnd(source: []const u8, start: usize) usize {
+    var cursor = start + 1;
+    while (cursor < source.len) : (cursor += 1) {
+        if (source[cursor] == '\\') {
+            cursor = @min(cursor + 1, source.len);
+            continue;
+        }
+        if (source[cursor] == '`') return cursor + 1;
     }
     return source.len;
 }
@@ -329,14 +231,9 @@ fn isIdentifierContinue(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or byte == '_';
 }
 
-fn isKeyword(word: []const u8) bool {
-    const keywords = [_][]const u8{
-        "if",     "then", "else",   "elif", "fi",   "for", "while",
-        "until",  "do",   "done",   "case", "esac", "in",  "function",
-        "select", "time", "coproc",
-    };
-    for (keywords) |keyword| {
-        if (std.mem.eql(u8, word, keyword)) return true;
+fn isDecimalNumber(value: []const u8) bool {
+    for (value) |byte| {
+        if (!std.ascii.isDigit(byte) and byte != '_') return false;
     }
-    return false;
+    return true;
 }

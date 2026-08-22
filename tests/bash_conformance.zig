@@ -6,10 +6,10 @@ const backend = syntax.languages.bash.backend;
 
 test "Bash backend metadata is stable" {
     try std.testing.expectEqualStrings("bash", backend.info.canonical_name);
-    try std.testing.expectEqual(syntax.BackendKind.lexical, backend.info.kind);
+    try std.testing.expectEqual(syntax.BackendKind.parser_backed, backend.info.kind);
 }
 
-test "Bash scanner conforms to the shared backend contract" {
+test "Bash parser conforms to the shared backend contract" {
     const invalid_utf8 = [_]u8{ 'i', 'f', ' ', 0xff, ';', ' ', 'f', 'i' };
     try conformance.expectConforms(backend, .{
         .valid = .{
@@ -59,6 +59,63 @@ test "Bash classifications retain source ranges" {
     try expectCapture(source, sink.captures(), "${item}", .variable);
 }
 
+test "Bash command roles follow the Tree-sitter highlighting query" {
+    const source =
+        \\zine --version
+        \\./build.sh -Doptimize=fast
+        \\mkdir my-site && cd my-site
+        \\OUTPUT=dist zine release --output=dist
+        \\function render { printf '%s\\n' "$OUTPUT"; }
+        \\publish() { diff -ru old-output new-output; }
+        \\if [[ -n "$OUTPUT" ]]; then [ -f output ] && echo ready; fi
+        \\>trace.log prepare-guide --version
+        \\zine >output.log --drafts
+    ;
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    try expectCapture(source, sink.captures(), "zine", .function);
+    try expectCapture(source, sink.captures(), "./build.sh", .function);
+    try expectCapture(source, sink.captures(), "mkdir", .function);
+    try expectCapture(source, sink.captures(), "cd", .function);
+    try expectCapture(source, sink.captures(), "cd", .builtin);
+    try expectCapture(source, sink.captures(), "--version", .constant);
+    try expectCapture(source, sink.captures(), "-Doptimize=fast", .constant);
+    try expectCapture(source, sink.captures(), "--output=dist", .constant);
+    try expectCapture(source, sink.captures(), "OUTPUT", .property);
+    try expectCapture(source, sink.captures(), "=", .operator);
+    try expectCapture(source, sink.captures(), "render", .function);
+    try expectCapture(source, sink.captures(), "publish", .function);
+    try expectCapture(source, sink.captures(), "printf", .function);
+    try expectCapture(source, sink.captures(), "printf", .builtin);
+    try expectCapture(source, sink.captures(), "diff", .function);
+    try expectCapture(source, sink.captures(), "prepare-guide", .function);
+    try expectCapture(source, sink.captures(), "[", .function);
+    try expectCapture(source, sink.captures(), "[", .builtin);
+    try expectNoCapture(source, sink.captures(), "dist", .function);
+    try expectNoCapture(source, sink.captures(), "my-site", .function);
+    try expectNoCapture(source, sink.captures(), "-n", .function);
+    try expectNoCapture(source, sink.captures(), "trace.log", .function);
+    try expectNoCapture(source, sink.captures(), "output.log", .function);
+}
+
+test "Bash parser separates reserved words builtins and assignment arguments" {
+    const source = "export OUTPUT=dist; ! false\n";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    try expectCapture(source, sink.captures(), "export", .function);
+    try expectCapture(source, sink.captures(), "export", .builtin);
+    try expectCapture(source, sink.captures(), "OUTPUT", .property);
+    try expectCapture(source, sink.captures(), "=", .operator);
+    try expectCapture(source, sink.captures(), "!", .keyword);
+    try expectCapture(source, sink.captures(), "false", .function);
+    try expectCapture(source, sink.captures(), "false", .builtin);
+    try expectNoCapture(source, sink.captures(), "dist", .function);
+}
+
 test "Bash corpus covers heredocs and incomplete constructs" {
     const source = @embedFile("corpus/bash/complete.sh");
     var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
@@ -82,4 +139,16 @@ fn expectCapture(
             std.mem.eql(u8, try capture.span.slice(source), text)) return;
     }
     return error.TestExpectedEqual;
+}
+
+fn expectNoCapture(
+    source: []const u8,
+    captures: []const syntax.Capture,
+    text: []const u8,
+    scope: syntax.Scope,
+) !void {
+    for (captures) |capture| {
+        if (capture.scope == scope and
+            std.mem.eql(u8, try capture.span.slice(source), text)) return error.TestUnexpectedResult;
+    }
 }
