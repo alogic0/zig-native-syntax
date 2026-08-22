@@ -3,7 +3,9 @@
 ## Status
 
 Implemented on 2026-08-22. The shared syntax core and the first JavaScript/TypeScript parser are in
-place, and both language backends now derive contextual scopes from syntax nodes.
+place, and both language backends now derive contextual scopes from syntax nodes. Bash subsequently
+migrated to the same architecture for commands, assignments, redirections, function definitions,
+arguments, and loop variables.
 
 ## Goal
 

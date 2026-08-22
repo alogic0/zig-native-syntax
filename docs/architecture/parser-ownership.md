@@ -92,8 +92,9 @@ when a language grammar produces syntax nodes that materially affect classificat
 
 A deliberately incomplete structural parser may be owned here when it has a documented highlighting
 boundary, remains recovery-oriented, and is not presented as a validator. JavaScript and TypeScript
-use the first such parser for declarations, bindings, parameters, calls, members, and selected type
-references. If that parser grows toward language conformance or becomes useful to non-highlighting
+use this model for declarations, bindings, parameters, calls, members, and selected type references.
+Bash uses it for commands, assignments, redirections, function definitions, arguments, and loop
+variables. If an owned parser grows toward language conformance or becomes useful to non-highlighting
 consumers, it should move to an independently versioned package.
 
 ## Source Preservation And Rendering

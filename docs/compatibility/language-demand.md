@@ -27,8 +27,9 @@ source-highlighting language requests. Deliberately invalid labels such as
 
 Shell snippets are common throughout contributor-facing documentation even
 though the current generated-site fixtures do not contain a `sh` or `bash`
-fence. Shell/Bash is therefore the first demand-informed compatibility scanner,
-followed by Rust because Rust is required by the rendering snapshot.
+fence. Shell/Bash therefore began as the first demand-informed compatibility
+scanner and later migrated to a parser-backed implementation. Rust followed
+because Rust is required by the rendering snapshot.
 
 ## Final Migration Contract
 
@@ -46,8 +47,8 @@ fail.
 Disabling syntax highlighting continues to emit safely escaped plain text.
 
 The package exposes canonical backend names only. Zine owns aliases, including
-`shell` and `sh` for the future canonical `bash` backend. Adding a backend does
-not imply full language conformance: each owned scanner documents the lexical
+`shell` and `sh` for the canonical `bash` backend. Adding a backend does
+not imply full language conformance: each owned backend documents the syntax
 subset it recognizes and leaves all other bytes unclassified.
 
 ## Removal Evidence

@@ -11,7 +11,7 @@ other Zig projects.
 ## Status
 
 The project contains the initial classification API, shared syntax storage, source-preserving HTML
-renderer, parser-backed Zig, JavaScript, and TypeScript backends, the complete bounded native
+renderer, parser-backed Zig, Bash, JavaScript, and TypeScript backends, the complete bounded native
 language roadmap, and optional Ziggy document, Ziggy Schema, Scripty, HTML, XML, CSS, composed
 SuperHTML, and parser-backed Markdown backends. Additional parser migrations and Zine integration
 remain experimental work.
@@ -56,8 +56,8 @@ remain experimental work.
   parser boundary, classifications, and deferred composition behavior.
 - [Language demand and fallback policy](docs/compatibility/language-demand.md) records the audited
   Zine language labels, migration requirements, and unsupported-language behavior.
-- [Bash highlighting compatibility](docs/compatibility/bash.md) defines the owned shell lexical
-  subset and the constructs intentionally left as plain text.
+- [Bash highlighting compatibility](docs/compatibility/bash.md) defines the owned structural parser,
+  recovery boundary, and constructs intentionally left lexical or plain.
 - [Rust highlighting compatibility](docs/compatibility/rust.md) defines the owned Rust lexical
   subset, recovery rules, and grammar-dependent limitations.
 - [JSON highlighting compatibility](docs/compatibility/json.md) defines the source-offset scanner,
