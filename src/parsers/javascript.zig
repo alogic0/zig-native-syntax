@@ -609,7 +609,7 @@ test "JavaScript parser records declarations parameters calls and members" {
     try expectNodeMain(&tree, .call_expression, "run");
     try expectNodeMain(&tree, .variable_binding, "answer");
     try std.testing.expectEqual(@as(usize, 0), tree.diagnostics.len);
-    try expectMonotonicTokens(&tree);
+    try tree.validate();
 }
 
 test "TypeScript parser records declarations and type references" {
@@ -625,7 +625,7 @@ test "TypeScript parser records declarations and type references" {
     try expectNodeMain(&tree, .type_alias_declaration, "UserList");
     try expectNodeMain(&tree, .type_reference, "UserList");
     try std.testing.expectEqual(@as(usize, 0), tree.diagnostics.len);
-    try expectMonotonicTokens(&tree);
+    try tree.validate();
 }
 
 test "parser returns partial structure and diagnostics for incomplete source" {
@@ -637,7 +637,19 @@ test "parser returns partial structure and diagnostics for incomplete source" {
     try expectNodeMain(&tree, .parameter, "value");
     try expectNodeMain(&tree, .member_expression, "run");
     try std.testing.expect(tree.diagnostics.len >= 2);
-    try expectMonotonicTokens(&tree);
+    try tree.validate();
+}
+
+test "JavaScript parser output is deterministic" {
+    const source = "function broken(value { service.run(`unfinished";
+    var first = try parse(std.testing.allocator, source, .javascript);
+    defer first.deinit(std.testing.allocator);
+    var second = try parse(std.testing.allocator, source, .javascript);
+    defer second.deinit(std.testing.allocator);
+
+    try std.testing.expectEqualSlices(Syntax.Token, first.tokens, second.tokens);
+    try std.testing.expectEqualSlices(Syntax.Node, first.nodes, second.nodes);
+    try std.testing.expectEqualSlices(Syntax.Diagnostic, first.diagnostics, second.diagnostics);
 }
 
 fn expectNodeMain(tree: *const Tree, tag: NodeTag, expected: []const u8) !void {
@@ -645,14 +657,4 @@ fn expectNodeMain(tree: *const Tree, tag: NodeTag, expected: []const u8) !void {
         if (node.tag == tag and std.mem.eql(u8, tree.tokenSlice(node.main_token), expected)) return;
     }
     return error.TestExpectedEqual;
-}
-
-fn expectMonotonicTokens(tree: *const Tree) !void {
-    var previous_end: syntax.ByteOffset = 0;
-    for (tree.tokens) |token| {
-        try std.testing.expect(token.start >= previous_end);
-        try std.testing.expect(token.end >= token.start);
-        try std.testing.expect(token.end <= tree.source.len);
-        previous_end = token.end;
-    }
 }

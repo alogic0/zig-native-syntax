@@ -9,11 +9,14 @@ pub const ByteOffset = u32;
 pub const TokenIndex = u32;
 pub const NodeIndex = u32;
 
-pub const BuildError = error{
+pub const ValidationError = error{
     SourceTooLarge,
     InvalidByteRange,
     InvalidTokenRange,
-} || std.mem.Allocator.Error;
+    UnorderedTokenRange,
+};
+
+pub const BuildError = ValidationError || std.mem.Allocator.Error;
 
 /// Instantiates syntax storage for one language's token, node, and diagnostic
 /// tag enums. Grammar and recovery behavior intentionally remain outside this
@@ -64,6 +67,37 @@ pub fn Model(
             pub fn tokenSlice(tree: Tree, token_index: TokenIndex) []const u8 {
                 return tree.tokens[token_index].slice(tree.source);
             }
+
+            /// Verifies the storage invariants expected by every parser and
+            /// highlighting adapter. Gaps between tokens are allowed because
+            /// trivia need not be stored, but token ranges may not overlap or
+            /// move backwards.
+            pub fn validate(tree: Tree) ValidationError!void {
+                if (tree.source.len > std.math.maxInt(ByteOffset)) return error.SourceTooLarge;
+
+                var previous_end: ByteOffset = 0;
+                for (tree.tokens) |token| {
+                    if (token.start > token.end or token.end > tree.source.len) {
+                        return error.InvalidByteRange;
+                    }
+                    if (token.start < previous_end) return error.UnorderedTokenRange;
+                    previous_end = token.end;
+                }
+
+                for (tree.nodes) |node| {
+                    if (node.first_token >= node.last_token or
+                        node.last_token > tree.tokens.len or
+                        node.main_token < node.first_token or
+                        node.main_token >= node.last_token)
+                    {
+                        return error.InvalidTokenRange;
+                    }
+                }
+
+                for (tree.diagnostics) |diagnostic| {
+                    if (diagnostic.offset > tree.source.len) return error.InvalidByteRange;
+                }
+            }
         };
 
         pub const Builder = struct {
@@ -95,6 +129,10 @@ pub fn Model(
                 end: usize,
             ) BuildError!TokenIndex {
                 if (start > end or end > builder.source_len) return error.InvalidByteRange;
+                if (builder.tokens.items.len > 0) {
+                    const previous = builder.tokens.items[builder.tokens.items.len - 1];
+                    if (start < previous.end) return error.UnorderedTokenRange;
+                }
                 if (builder.tokens.items.len >= std.math.maxInt(TokenIndex)) return error.SourceTooLarge;
 
                 const token_index: TokenIndex = @intCast(builder.tokens.items.len);
@@ -154,12 +192,15 @@ pub fn Model(
                 errdefer builder.allocator.free(nodes);
                 const diagnostics = try builder.diagnostics.toOwnedSlice(builder.allocator);
 
-                return .{
+                var tree: Tree = .{
                     .source = source,
                     .tokens = tokens,
                     .nodes = nodes,
                     .diagnostics = diagnostics,
                 };
+                errdefer tree.deinit(builder.allocator);
+                try tree.validate();
+                return tree;
             }
         };
 
@@ -270,6 +311,54 @@ test "syntax builder rejects invalid source and token ranges" {
 
     try std.testing.expectError(error.InvalidByteRange, builder.addToken(.identifier, 2, 4));
     _ = try builder.addToken(.identifier, 0, 3);
+    try std.testing.expectError(error.UnorderedTokenRange, builder.addToken(.identifier, 2, 3));
     try std.testing.expectError(error.InvalidTokenRange, builder.addNode(.root, 0, 1, 1));
     try std.testing.expectError(error.InvalidByteRange, builder.addDiagnostic(.expected_identifier, 4));
+}
+
+test "syntax tree validation rejects corrupt externally constructed storage" {
+    const TokenTag = enum { identifier };
+    const NodeTag = enum { root };
+    const DiagnosticTag = enum { expected_identifier };
+    const Syntax = Model(TokenTag, NodeTag, DiagnosticTag);
+    const source = "one two";
+
+    const unordered_tokens = [_]Syntax.Token{
+        .{ .tag = .identifier, .start = 4, .end = 7 },
+        .{ .tag = .identifier, .start = 0, .end = 3 },
+    };
+    const unordered: Syntax.Tree = .{
+        .source = source,
+        .tokens = @constCast(&unordered_tokens),
+        .nodes = @constCast(&.{}),
+        .diagnostics = @constCast(&.{}),
+    };
+    try std.testing.expectError(error.UnorderedTokenRange, unordered.validate());
+
+    const tokens = [_]Syntax.Token{.{ .tag = .identifier, .start = 0, .end = 3 }};
+    const invalid_nodes = [_]Syntax.Node{.{
+        .tag = .root,
+        .first_token = 0,
+        .last_token = 1,
+        .main_token = 1,
+    }};
+    const invalid_node: Syntax.Tree = .{
+        .source = source,
+        .tokens = @constCast(&tokens),
+        .nodes = @constCast(&invalid_nodes),
+        .diagnostics = @constCast(&.{}),
+    };
+    try std.testing.expectError(error.InvalidTokenRange, invalid_node.validate());
+
+    const invalid_diagnostics = [_]Syntax.Diagnostic{.{
+        .tag = .expected_identifier,
+        .offset = source.len + 1,
+    }};
+    const invalid_diagnostic: Syntax.Tree = .{
+        .source = source,
+        .tokens = @constCast(&tokens),
+        .nodes = @constCast(&.{}),
+        .diagnostics = @constCast(&invalid_diagnostics),
+    };
+    try std.testing.expectError(error.InvalidByteRange, invalid_diagnostic.validate());
 }

@@ -24,7 +24,7 @@ pub fn highlightLanguage(
     var tree = javascript.parse(sink.allocator, source, mode) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         error.SourceTooLarge => return error.SourceTooLarge,
-        error.InvalidByteRange, error.InvalidTokenRange => unreachable,
+        error.InvalidByteRange, error.InvalidTokenRange, error.UnorderedTokenRange => unreachable,
     };
     defer tree.deinit(sink.allocator);
 

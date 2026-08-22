@@ -895,7 +895,7 @@ test "Bash parser records assignments commands options and redirections" {
     try expectNodeMain(&tree, .redirection_target, "output.log");
     try expectNodeSpan(&tree, .simple_command, "OUTPUT=dist zine --output=dist >output.log");
     try std.testing.expectEqual(@as(usize, 0), tree.diagnostics.len);
-    try expectMonotonicTokens(&tree);
+    try tree.validate();
 }
 
 test "Bash tokenizer keeps digit-leading shell words intact" {
@@ -906,7 +906,7 @@ test "Bash tokenizer keeps digit-leading shell words intact" {
     try expectToken(&tree, .word, "127.0.0.1");
     try expectToken(&tree, .number, "8080");
     try expectNodeMain(&tree, .argument, "127.0.0.1");
-    try expectMonotonicTokens(&tree);
+    try tree.validate();
 }
 
 test "Bash parser records function definitions loop variables and body commands" {
@@ -925,6 +925,7 @@ test "Bash parser records function definitions loop variables and body commands"
     try expectNodeMain(&tree, .command_name, "diff");
     try expectNodeMain(&tree, .command_name, "echo");
     try std.testing.expectEqual(@as(usize, 0), tree.diagnostics.len);
+    try tree.validate();
 }
 
 test "Bash parser preserves partial syntax and diagnoses incomplete constructs" {
@@ -935,7 +936,7 @@ test "Bash parser preserves partial syntax and diagnoses incomplete constructs" 
     try expectNodeMain(&tree, .command_name, "cat");
     try expectNodeMain(&tree, .redirection_target, "EOF");
     try std.testing.expect(tree.diagnostics.len > 0);
-    try expectMonotonicTokens(&tree);
+    try tree.validate();
 }
 
 test "Bash parser diagnoses unterminated quotes and substitutions" {
@@ -953,8 +954,20 @@ test "Bash parser diagnoses unterminated quotes and substitutions" {
         defer tree.deinit(std.testing.allocator);
         try expectDiagnostic(&tree, case.diagnostic);
         try expectNodeMain(&tree, .command_name, "echo");
-        try expectMonotonicTokens(&tree);
+        try tree.validate();
     }
+}
+
+test "Bash parser output is deterministic" {
+    const source = "cat <<EOF\nbody\necho \"$HOME";
+    var first = try parse(std.testing.allocator, source);
+    defer first.deinit(std.testing.allocator);
+    var second = try parse(std.testing.allocator, source);
+    defer second.deinit(std.testing.allocator);
+
+    try std.testing.expectEqualSlices(Syntax.Token, first.tokens, second.tokens);
+    try std.testing.expectEqualSlices(Syntax.Node, first.nodes, second.nodes);
+    try std.testing.expectEqualSlices(Syntax.Diagnostic, first.diagnostics, second.diagnostics);
 }
 
 fn expectNodeMain(tree: *const Tree, tag: NodeTag, expected: []const u8) !void {
@@ -969,16 +982,6 @@ fn expectToken(tree: *const Tree, tag: TokenTag, expected: []const u8) !void {
         if (token.tag == tag and std.mem.eql(u8, token.slice(tree.source), expected)) return;
     }
     return error.TestExpectedEqual;
-}
-
-fn expectMonotonicTokens(tree: *const Tree) !void {
-    var previous_end: syntax.ByteOffset = 0;
-    for (tree.tokens) |token| {
-        try std.testing.expect(token.start >= previous_end);
-        try std.testing.expect(token.end >= token.start);
-        try std.testing.expect(token.end <= tree.source.len);
-        previous_end = token.end;
-    }
 }
 
 fn expectNodeSpan(tree: *const Tree, tag: NodeTag, expected: []const u8) !void {

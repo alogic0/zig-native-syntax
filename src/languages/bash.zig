@@ -16,7 +16,7 @@ fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {
     var tree = bash.parse(sink.allocator, source) catch |err| switch (err) {
         error.OutOfMemory => return error.OutOfMemory,
         error.SourceTooLarge => return error.SourceTooLarge,
-        error.InvalidByteRange, error.InvalidTokenRange => unreachable,
+        error.InvalidByteRange, error.InvalidTokenRange, error.UnorderedTokenRange => unreachable,
     };
     defer tree.deinit(sink.allocator);
 
