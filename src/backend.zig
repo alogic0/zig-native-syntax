@@ -11,6 +11,7 @@ pub const MetadataError = error{
 
 pub const HighlightError = Allocator.Error || capture.ValidationError || error{
     SourceLengthMismatch,
+    SourceTooLarge,
 };
 
 pub const BackendKind = enum {
