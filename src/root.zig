@@ -7,6 +7,7 @@ const backend = @import("backend.zig");
 
 pub const html = @import("html.zig");
 pub const composition = @import("composition.zig");
+pub const syntax = @import("syntax.zig");
 pub const Scope = @import("scope.zig").Scope;
 pub const Span = capture.Span;
 pub const Capture = capture.Capture;
