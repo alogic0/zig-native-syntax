@@ -505,6 +505,12 @@ pub fn build(b: *std.Build) void {
         .optimize = .ReleaseFast,
         .imports = &.{.{ .name = "native_syntax", .module = benchmark_native_syntax }},
     });
+    const rust_lexical_baseline = b.createModule(.{
+        .root_source_file = b.path("tools/baselines/rust_lexical.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+        .imports = &.{.{ .name = "native_syntax", .module = benchmark_native_syntax }},
+    });
     const syntax_core_benchmark = b.addExecutable(.{
         .name = "benchmark-syntax-core",
         .root_module = b.createModule(.{
@@ -515,6 +521,7 @@ pub fn build(b: *std.Build) void {
                 .{ .name = "native_syntax", .module = benchmark_native_syntax },
                 .{ .name = "bash_lexical", .module = bash_lexical_baseline },
                 .{ .name = "javascript_lexical", .module = javascript_lexical_baseline },
+                .{ .name = "rust_lexical", .module = rust_lexical_baseline },
             },
         }),
     });

@@ -2,6 +2,7 @@ const std = @import("std");
 const syntax = @import("native_syntax");
 const bash_lexical = @import("bash_lexical");
 const javascript_lexical = @import("javascript_lexical");
+const rust_lexical = @import("rust_lexical");
 
 const default_iterations: usize = 1_000;
 
@@ -28,6 +29,12 @@ pub fn main(init: std.process.Init) !void {
         .path = "tests/corpus/javascript/complete.js",
         .lexical = javascript_lexical.backend,
         .structural = syntax.languages.javascript.backend,
+    }, iterations);
+    try benchmarkCase(init, stdout, .{
+        .name = "Rust",
+        .path = "tests/corpus/rust/complete.rs",
+        .lexical = rust_lexical.backend,
+        .structural = syntax.languages.rust.backend,
     }, iterations);
     try stdout.flush();
 }

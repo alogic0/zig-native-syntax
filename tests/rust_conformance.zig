@@ -6,10 +6,10 @@ const backend = syntax.languages.rust.backend;
 
 test "Rust backend metadata is stable" {
     try std.testing.expectEqualStrings("rust", backend.info.canonical_name);
-    try std.testing.expectEqual(syntax.BackendKind.lexical, backend.info.kind);
+    try std.testing.expectEqual(syntax.BackendKind.parser_backed, backend.info.kind);
 }
 
-test "Rust scanner conforms to the shared backend contract" {
+test "Rust parser conforms to the shared backend contract" {
     const invalid_utf8 = [_]u8{ 'f', 'n', ' ', 0xff, '(', ')', ' ', '{', '}' };
     try conformance.expectConforms(backend, .{
         .valid = .{
@@ -33,7 +33,7 @@ test "Rust scanner conforms to the shared backend contract" {
         },
         .multiline = .{
             .source = "/* outer\n /* nested */\n end */\nfn done() {}\n",
-            .required_scopes = &.{ .comment, .keyword, .variable },
+            .required_scopes = &.{ .comment, .keyword, .function },
         },
         .escapable = .{
             .source = "const HTML: &str = r#\"<tag title='x'>&\\\"\"#;",
@@ -68,6 +68,24 @@ test "Rust corpus covers nested comments and string forms" {
     try expectCapture(source, sink.captures(), "br##\"byte raw <&>\"##", .string);
     try expectCapture(source, sink.captures(), "b'Z'", .string);
     try expectCapture(source, sink.captures(), "vec!", .macro);
+}
+
+test "Rust parser classifies structural identifier roles" {
+    const source =
+        \\mod model { struct Entry { value: u64 } }
+        \\fn render(entry: Entry) { let count = entry.value; consume(count); }
+    ;
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    try expectCapture(source, sink.captures(), "model", .namespace);
+    try expectCapture(source, sink.captures(), "Entry", .type);
+    try expectCapture(source, sink.captures(), "value", .property);
+    try expectCapture(source, sink.captures(), "render", .function);
+    try expectCapture(source, sink.captures(), "entry", .parameter);
+    try expectCapture(source, sink.captures(), "count", .variable);
+    try expectCapture(source, sink.captures(), "consume", .function);
 }
 
 fn expectCapture(
