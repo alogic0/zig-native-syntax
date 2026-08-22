@@ -488,6 +488,44 @@ pub fn build(b: *std.Build) void {
     });
     const run_bash_conformance_tests = b.addRunArtifact(bash_conformance_tests);
 
+    const benchmark_native_syntax = b.createModule(.{
+        .root_source_file = b.path("src/root.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    const bash_lexical_baseline = b.createModule(.{
+        .root_source_file = b.path("tools/baselines/bash_lexical.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+        .imports = &.{.{ .name = "native_syntax", .module = benchmark_native_syntax }},
+    });
+    const javascript_lexical_baseline = b.createModule(.{
+        .root_source_file = b.path("tools/baselines/javascript_lexical.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+        .imports = &.{.{ .name = "native_syntax", .module = benchmark_native_syntax }},
+    });
+    const syntax_core_benchmark = b.addExecutable(.{
+        .name = "benchmark-syntax-core",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/syntax_core_benchmark.zig"),
+            .target = target,
+            .optimize = .ReleaseFast,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = benchmark_native_syntax },
+                .{ .name = "bash_lexical", .module = bash_lexical_baseline },
+                .{ .name = "javascript_lexical", .module = javascript_lexical_baseline },
+            },
+        }),
+    });
+    const run_syntax_core_benchmark = b.addRunArtifact(syntax_core_benchmark);
+    run_syntax_core_benchmark.addPassthruArgs();
+    const syntax_core_benchmark_step = b.step(
+        "benchmark-syntax-core",
+        "Compare structural backends with their former lexical scanners",
+    );
+    syntax_core_benchmark_step.dependOn(&run_syntax_core_benchmark.step);
+
     const rust_conformance_tests = b.addTest(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("tests/rust_conformance.zig"),
