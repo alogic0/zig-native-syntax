@@ -16,6 +16,15 @@ A span is valid for a source when:
 start <= end <= source.len
 ```
 
+When the complete source is valid UTF-8, both offsets must also be UTF-8 code-point boundaries.
+`validateCaptures` checks ordinary ranges for the complete capture set first, then checks the source
+once and reports `MisalignedUtf8Boundary` for a split code point. Backends and the HTML renderer call
+this shared validation path. They reject misaligned captures rather than moving or merging them.
+
+When the source is not valid UTF-8, captures retain arbitrary-byte behavior. This lets tolerant
+backends classify malformed bytes and lets the renderer preserve them without imposing Unicode
+semantics on byte input.
+
 Construction rejects reversed ranges. Validation against the source length rejects out-of-bounds
 ranges before any slice operation. The implementation does not compute `start + length`, avoiding
 offset-overflow ambiguity.
@@ -47,8 +56,9 @@ Allowing overlap is necessary for composable classifications. For example, the s
 
 ## Error Policy
 
-Reversed and out-of-bounds ranges are backend or integration errors, not malformed-language errors.
-They are reported before rendering. Invalid or incomplete source remains representable because a
+Reversed, out-of-bounds, and valid-source UTF-8-boundary violations are backend or integration
+errors, not malformed-language errors. Ordinary range errors take precedence over boundary errors
+and are reported before rendering. Invalid or incomplete source remains representable because a
 backend can classify only the regions it understands and leave all other bytes unclassified.
 
 ## Compatibility

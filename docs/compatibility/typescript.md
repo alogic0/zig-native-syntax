@@ -14,3 +14,5 @@ The parser does not implement complete generic nesting, conditional or mapped ty
 decorators, declaration merging, namespaces, JSX/TSX, type checking, or symbol resolution. Complex
 type expressions can therefore leave identifiers with their lexical classification. All JavaScript
 regular-expression, template-expression, and Unicode-identifier limitations also apply.
+Unsupported valid Unicode scalars therefore remain unclassified, while malformed or truncated
+UTF-8 bytes remain invalid.

@@ -113,7 +113,7 @@ const Tokenizer = struct {
                 '`' => try tokenizer.scanBackticks(),
                 '$' => try tokenizer.scanDollar(),
                 '\\' => {
-                    const end = @min(tokenizer.index + 2, tokenizer.source.len);
+                    const end = escapeEnd(tokenizer.source, tokenizer.index, tokenizer.source.len);
                     try tokenizer.capture(.escape, tokenizer.index, end);
                     tokenizer.index = end;
                 },
@@ -144,7 +144,11 @@ const Tokenizer = struct {
                 '{', '}' => try tokenizer.captureByte(.punctuation),
                 '0'...'9' => try tokenizer.scanNumber(),
                 else => if (byte >= 0x80) {
-                    try tokenizer.captureByte(.invalid);
+                    if (validUtf8SequenceLength(tokenizer.source[tokenizer.index..])) |len| {
+                        tokenizer.index += len;
+                    } else {
+                        try tokenizer.captureByte(.invalid);
+                    }
                 } else {
                     try tokenizer.scanWord();
                 },
@@ -409,6 +413,20 @@ const Tokenizer = struct {
             std.mem.indexOfScalar(u8, ";|&(){}", previous) != null;
     }
 };
+
+fn validUtf8SequenceLength(source: []const u8) ?usize {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return null;
+    if (len > source.len) return null;
+    _ = std.unicode.utf8Decode(source[0..len]) catch return null;
+    return len;
+}
+
+fn escapeEnd(source: []const u8, start: usize, limit: usize) usize {
+    const escaped_start = start + 1;
+    if (escaped_start >= limit) return limit;
+    const len = validUtf8SequenceLength(source[escaped_start..limit]) orelse 1;
+    return escaped_start + len;
+}
 
 const WordRole = enum {
     command,

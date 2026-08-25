@@ -58,6 +58,25 @@ test "Rust tokenizer distinguishes characters and lifetimes" {
     try expectCapture(source, sink.captures(), "char", .type);
 }
 
+test "Rust classifies each unsupported Unicode scalar as one invalid capture" {
+    const source = "├東";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    try std.testing.expectEqual(@as(usize, 2), sink.captures().len);
+    try std.testing.expectEqualStrings(
+        "├",
+        try sink.captures()[0].span.slice(source),
+    );
+    try std.testing.expectEqual(syntax.Scope.invalid, sink.captures()[0].scope);
+    try std.testing.expectEqualStrings(
+        "東",
+        try sink.captures()[1].span.slice(source),
+    );
+    try std.testing.expectEqual(syntax.Scope.invalid, sink.captures()[1].scope);
+}
+
 test "Rust corpus covers nested comments and string forms" {
     const source = @embedFile("corpus/rust/complete.rs");
     var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);

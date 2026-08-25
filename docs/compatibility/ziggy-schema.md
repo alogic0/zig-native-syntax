@@ -11,3 +11,5 @@ the shared HTML renderer can still produce escaped, readable output.
 
 Like the document adapter, the schema adapter temporarily creates sentinel-terminated source for
 Ziggy while all reported ranges continue to refer to the caller's original bytes.
+Unsupported valid Unicode scalars emitted byte-by-byte as invalid by the external tokenizer remain
+unclassified so captures stay on UTF-8 boundaries. Invalid UTF-8 input retains byte captures.

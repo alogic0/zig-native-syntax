@@ -1,3 +1,4 @@
+const std = @import("std");
 const backend_api = @import("../backend.zig");
 const rust = @import("../parsers/rust.zig");
 
@@ -113,13 +114,27 @@ fn classifyEscapes(
     var index = start;
     while (index < end) {
         if (source[index] == '\\') {
-            const escape_end = @min(index + 2, end);
+            const escape_end = escapeEnd(source, index, end);
             try sink.add(index, escape_end, .escape);
             index = escape_end;
         } else {
             index += 1;
         }
     }
+}
+
+fn escapeEnd(source: []const u8, start: usize, limit: usize) usize {
+    const escaped_start = start + 1;
+    if (escaped_start >= limit) return limit;
+    const len = validUtf8SequenceLength(source[escaped_start..limit]) orelse 1;
+    return escaped_start + len;
+}
+
+fn validUtf8SequenceLength(source: []const u8) ?usize {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return null;
+    if (len > source.len) return null;
+    _ = std.unicode.utf8Decode(source[0..len]) catch return null;
+    return len;
 }
 
 fn isRawString(text: []const u8) bool {

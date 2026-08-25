@@ -18,3 +18,5 @@ interpolation expressions, parse JSX, recognize Unicode identifiers, resolve bin
 or distinguish every method and property declaration form. Slash tokens remain operators because
 reliable regex/division disambiguation requires fuller expression context. Unterminated quoted
 strings stop at a newline; block comments and template strings extend through end of input.
+Unsupported valid Unicode scalars remain unclassified until Unicode identifier support is added;
+malformed or truncated UTF-8 bytes remain invalid.

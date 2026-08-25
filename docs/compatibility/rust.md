@@ -43,8 +43,9 @@ lexically without expansion. The parser is intentionally shallow: it does not
 build expression trees, expand patterns, resolve names, distinguish every path
 role, validate generic arguments, or implement edition-specific grammar.
 Identifiers outside its documented structural positions remain generic
-`variable` captures. Non-ASCII identifier bytes remain safely represented as
-invalid or escaped source rather than being normalized.
+`variable` captures. Each unsupported valid non-ASCII scalar is preserved as one
+`invalid` capture rather than splitting its UTF-8 bytes. Malformed or truncated
+UTF-8 remains byte-oriented invalid input.
 
 This is a highlighting parser, not a compiler-quality Rust parser, macro
 expander, name resolver, borrow checker, or validator. Full Rust conformance is

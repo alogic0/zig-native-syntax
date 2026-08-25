@@ -129,6 +129,12 @@ const Tokenizer = struct {
                 '+', '-', '*', '/', '%', '=', '!', '<', '>', '&', '|', '^', '~', '?', '@' => try tokenizer.scanOperator(),
                 else => if (isIdentifierStart(byte)) {
                     try tokenizer.scanIdentifier();
+                } else if (byte >= 0x80) {
+                    if (validUtf8SequenceLength(tokenizer.source[tokenizer.index..])) |len| {
+                        tokenizer.index += len;
+                    } else {
+                        try tokenizer.captureByte(.invalid);
+                    }
                 } else {
                     try tokenizer.captureByte(.invalid);
                 },
@@ -270,6 +276,13 @@ const Tokenizer = struct {
         _ = try tokenizer.builder.addToken(tag, start, tokenizer.index);
     }
 };
+
+fn validUtf8SequenceLength(source: []const u8) ?usize {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return null;
+    if (len > source.len) return null;
+    _ = std.unicode.utf8Decode(source[0..len]) catch return null;
+    return len;
+}
 
 const Parser = struct {
     source: []const u8,
@@ -526,8 +539,13 @@ fn isTrivia(tag: TokenTag) bool {
 }
 
 fn escapeEnd(source: []const u8, start: usize) usize {
-    var end = @min(start + 2, source.len);
-    if (start + 1 >= source.len) return end;
+    const escaped_start = start + 1;
+    if (escaped_start >= source.len) return source.len;
+    if (source[escaped_start] >= 0x80) {
+        return escaped_start + (validUtf8SequenceLength(source[escaped_start..]) orelse 1);
+    }
+
+    var end = escaped_start + 1;
     const digits: usize = switch (source[start + 1]) {
         'x' => 2,
         'u' => 4,

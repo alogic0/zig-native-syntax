@@ -21,6 +21,8 @@ pub const Suite = struct {
 
 pub fn expectConforms(backend: syntax.Backend, suite: Suite) !void {
     try expectCase(backend, .{ .source = "" });
+    try expectCase(backend, .{ .source = "├── Builds Docker image" });
+    try expectCase(backend, .{ .source = "\"\\├\"" });
     try expectCase(backend, suite.valid);
     try expectCase(backend, suite.malformed);
 
@@ -64,6 +66,9 @@ fn expectCase(backend: syntax.Backend, case: Case) !void {
         std.testing.allocator,
         &output.writer,
     );
+    if (std.unicode.utf8ValidateSlice(case.source)) {
+        try std.testing.expect(std.unicode.utf8ValidateSlice(output.written()));
+    }
 
     const recovered = try html_recovery.recoverSource(
         std.testing.allocator,

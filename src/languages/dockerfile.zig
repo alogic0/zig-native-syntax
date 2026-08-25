@@ -1,4 +1,5 @@
 const std = @import("std");
+const utf8 = @import("../utf8.zig");
 const backend_api = @import("../backend.zig");
 const Backend = backend_api.Backend;
 const CaptureSink = backend_api.CaptureSink;
@@ -54,7 +55,7 @@ fn scanLine(source: []const u8, line_start: usize, line_end: usize, sink: *Captu
             cursor += 1;
         },
         '\\' => {
-            const end = @min(cursor + 2, line_end);
+            const end = utf8.escapedSequenceEnd(source, cursor, line_end);
             try sink.add(cursor, end, .escape);
             cursor = end;
         },
@@ -100,7 +101,7 @@ fn scanString(source: []const u8, start: usize, line_end: usize, sink: *CaptureS
     var cursor = start + 1;
     while (cursor < line_end) {
         if (quote == '"' and source[cursor] == '\\') {
-            const end = @min(cursor + 2, line_end);
+            const end = utf8.escapedSequenceEnd(source, cursor, line_end);
             try sink.add(cursor, end, .escape);
             cursor = end;
             continue;

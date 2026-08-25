@@ -184,7 +184,7 @@ fn classifyAstContext(
     sink: *CaptureSink,
 ) HighlightError!void {
     for (1..tree.nodes.len) |node_index_usize| {
-        const node: std.zig.Ast.Node.Index = @enumFromInt(node_index_usize);
+        const node: std.zig.Ast.Node.Index = @fromBackingInt(@intCast(node_index_usize));
         const tag = tree.nodeTag(node);
 
         switch (tag) {
@@ -363,7 +363,10 @@ fn classifyEscapes(
     while (index < end) : (index += 1) {
         if (source[index] != '\\') continue;
 
-        var escape_end = @min(index + 2, end);
+        var escape_end = if (index + 1 < end and source[index + 1] >= 0x80)
+            index + 1 + (validUtf8SequenceLength(source[index + 1 .. end]) orelse 1)
+        else
+            @min(index + 2, end);
         if (index + 1 < end and source[index + 1] == 'x') {
             escape_end = @min(index + 4, end);
         } else if (index + 2 < end and
@@ -380,6 +383,13 @@ fn classifyEscapes(
         try sink.add(index, escape_end, .escape);
         index = escape_end - 1;
     }
+}
+
+fn validUtf8SequenceLength(source: []const u8) ?usize {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return null;
+    if (len > source.len) return null;
+    _ = std.unicode.utf8Decode(source[0..len]) catch return null;
+    return len;
 }
 
 fn hasCapture(

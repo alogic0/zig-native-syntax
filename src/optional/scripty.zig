@@ -89,12 +89,28 @@ fn classifyLexical(source: []const u8, sink: *core.CaptureSink) core.HighlightEr
                 identifier_context = .other;
             },
             else => {
-                try sink.add(index, index + 1, .invalid);
-                index += 1;
+                if (source[index] >= 0x80) {
+                    if (validUtf8SequenceLength(source[index..])) |len| {
+                        index += len;
+                    } else {
+                        try sink.add(index, index + 1, .invalid);
+                        index += 1;
+                    }
+                } else {
+                    try sink.add(index, index + 1, .invalid);
+                    index += 1;
+                }
                 identifier_context = .other;
             },
         }
     }
+}
+
+fn validUtf8SequenceLength(source: []const u8) ?usize {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return null;
+    if (len > source.len) return null;
+    _ = std.unicode.utf8Decode(source[0..len]) catch return null;
+    return len;
 }
 
 fn classifyString(
@@ -106,8 +122,10 @@ fn classifyString(
     var index = start + 1;
     while (index < source.len) {
         if (source[index] == '\\' and index + 1 < source.len) {
-            try sink.add(index, index + 2, .escape);
-            index += 2;
+            const escape_end = index + 1 +
+                (validUtf8SequenceLength(source[index + 1 ..]) orelse 1);
+            try sink.add(index, escape_end, .escape);
+            index = escape_end;
             continue;
         }
         if (source[index] == quote) {

@@ -148,8 +148,13 @@ const Scanner = struct {
     }
 };
 fn escapeEnd(source: []const u8, start: usize) usize {
-    var end = @min(start + 2, source.len);
-    if (start + 1 >= source.len) return end;
+    const escaped_start = start + 1;
+    if (escaped_start >= source.len) return source.len;
+    if (source[escaped_start] >= 0x80) {
+        return escaped_start + (validUtf8SequenceLength(source[escaped_start..]) orelse 1);
+    }
+
+    var end = escaped_start + 1;
     const digits: usize = switch (source[start + 1]) {
         'x' => 2,
         'u' => 4,
@@ -159,6 +164,12 @@ fn escapeEnd(source: []const u8, start: usize) usize {
     var count: usize = 0;
     while (end < source.len and count < digits and std.ascii.isHex(source[end])) : (count += 1) end += 1;
     return end;
+}
+fn validUtf8SequenceLength(source: []const u8) ?usize {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return null;
+    if (len > source.len) return null;
+    _ = std.unicode.utf8Decode(source[0..len]) catch return null;
+    return len;
 }
 fn nextByte(source: []const u8, start: usize) ?u8 {
     var i = start;

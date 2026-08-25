@@ -59,6 +59,24 @@ test "Bash classifications retain source ranges" {
     try expectCapture(source, sink.captures(), "${item}", .variable);
 }
 
+test "Bash leaves valid box-drawing scalars intact and unclassified" {
+    const source = "├── Builds Docker image";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    const prefix_end = "├──".len;
+    for (sink.captures()) |capture| {
+        try std.testing.expect(capture.span.start >= prefix_end);
+    }
+
+    var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+    try syntax.html.render(source, sink.captures(), std.testing.allocator, &output.writer);
+    try std.testing.expect(std.unicode.utf8ValidateSlice(output.written()));
+    try std.testing.expect(std.mem.startsWith(u8, output.written(), "├── "));
+}
+
 test "Bash command roles follow the Tree-sitter highlighting query" {
     const source =
         \\zine --version

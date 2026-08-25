@@ -1,4 +1,5 @@
 const std = @import("std");
+const utf8 = @import("../utf8.zig");
 const backend_api = @import("../backend.zig");
 const Backend = backend_api.Backend;
 const CaptureSink = backend_api.CaptureSink;
@@ -135,7 +136,10 @@ const Scanner = struct {
 };
 
 fn jsonEscapeEnd(source: []const u8, start: usize) usize {
-    var end = @min(start + 2, source.len);
+    if (start + 1 >= source.len or source[start + 1] >= 0x80) {
+        return utf8.escapedSequenceEnd(source, start, source.len);
+    }
+    var end = start + 2;
     if (end < source.len and source[start + 1] == 'u') {
         var digits: u3 = 0;
         while (end < source.len and digits < 4 and std.ascii.isHex(source[end])) {

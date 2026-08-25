@@ -1,4 +1,5 @@
 const std = @import("std");
+const utf8 = @import("../utf8.zig");
 const backend_api = @import("../backend.zig");
 const Backend = backend_api.Backend;
 const CaptureSink = backend_api.CaptureSink;
@@ -88,7 +89,11 @@ const Scanner = struct {
                 break;
             }
             if (scope == .string and scanner.source[cursor] == '\\') {
-                const end = @min(cursor + 2, scanner.source.len);
+                const end = utf8.escapedSequenceEnd(
+                    scanner.source,
+                    cursor,
+                    scanner.source.len,
+                );
                 try scanner.sink.add(cursor, end, .escape);
                 cursor = end;
                 continue;

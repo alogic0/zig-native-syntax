@@ -22,3 +22,5 @@ The backend covers global and member paths, chained calls, quoted strings and es
 floating-point literals, booleans, structural punctuation, truncated expressions, invalid bytes,
 and lexical recovery after parser errors. It is a highlighter rather than a validator, and it does
 not expose Scripty parser diagnostics through the shared API.
+Unsupported valid Unicode scalars remain unclassified; malformed or truncated UTF-8 bytes retain
+the scanner's one-byte invalid behavior.

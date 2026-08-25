@@ -74,7 +74,7 @@ const Scanner = struct {
         var cursor = quote_index + if (triple) @as(usize, 3) else 1;
         while (cursor < scanner.source.len) {
             if (!prefix.raw and scanner.source[cursor] == '\\') {
-                const end = @min(cursor + 2, scanner.source.len);
+                const end = escapeEnd(scanner.source, cursor);
                 try scanner.sink.add(cursor, end, .escape);
                 cursor = end;
                 continue;
@@ -155,6 +155,20 @@ const Scanner = struct {
         }
     }
 };
+
+fn escapeEnd(source: []const u8, start: usize) usize {
+    const escaped_start = start + 1;
+    if (escaped_start >= source.len) return source.len;
+    const len = validUtf8SequenceLength(source[escaped_start..]) orelse 1;
+    return escaped_start + len;
+}
+
+fn validUtf8SequenceLength(source: []const u8) ?usize {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return null;
+    if (len > source.len) return null;
+    _ = std.unicode.utf8Decode(source[0..len]) catch return null;
+    return len;
+}
 
 const StringPrefix = struct { length: usize, raw: bool };
 

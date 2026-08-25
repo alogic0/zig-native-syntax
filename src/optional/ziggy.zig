@@ -1,3 +1,4 @@
+const std = @import("std");
 const core = @import("native_syntax");
 const ziggy = @import("ziggy");
 
@@ -15,15 +16,18 @@ fn highlight(source: []const u8, sink: *core.CaptureSink) core.HighlightError!vo
 
     var tokenizer: ziggy.Tokenizer = .init(.none);
     var current = tokenizer.next(terminated, false);
+    const valid_utf8 = std.unicode.utf8ValidateSlice(source);
 
     while (current.tag != .eof) {
         const next = tokenizer.next(terminated, false);
-        try classifyToken(current, next.tag, sink);
+        try classifyToken(source, valid_utf8, current, next.tag, sink);
         current = next;
     }
 }
 
 fn classifyToken(
+    source: []const u8,
+    valid_utf8: bool,
     token: ziggy.Tokenizer.Token,
     next_tag: ziggy.Tokenizer.Token.Tag,
     sink: *core.CaptureSink,
@@ -33,7 +37,11 @@ fn classifyToken(
 
     switch (token.tag) {
         .eof => {},
-        .invalid => try sink.add(start, end, .invalid),
+        .invalid => if (!valid_utf8 or
+            (isUtf8Boundary(source, start) and isUtf8Boundary(source, end)))
+        {
+            try sink.add(start, end, .invalid);
+        },
         .identifier => try sink.add(
             start,
             end,
@@ -52,4 +60,9 @@ fn classifyToken(
         .comma, .colon, .rp, .dotlb, .lb, .rb, .lsb, .rsb => try sink.add(start, end, .punctuation),
         .eod => try sink.add(start, end, .special),
     }
+}
+
+fn isUtf8Boundary(source: []const u8, offset: usize) bool {
+    if (offset > source.len) return false;
+    return offset == source.len or source[offset] & 0xc0 != 0x80;
 }

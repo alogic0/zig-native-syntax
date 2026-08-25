@@ -42,6 +42,7 @@ The shared highlighting error set contains:
 
 - allocation failure;
 - reversed or out-of-bounds backend captures;
+- `MisalignedUtf8Boundary` when a capture splits a code point in valid UTF-8 source;
 - a mismatch between the source length and the sink's configured source length;
 - source too large for a selected parser's checked offset representation.
 
@@ -51,6 +52,11 @@ leaves uncertain bytes unclassified. The renderer later emits those gaps as esca
 
 An adapter must translate parser-specific diagnostics into partial classification behavior. Parser
 errors must not leak into the shared API merely because an input snippet is incomplete.
+
+After a backend returns, `Backend.highlight` calls the shared `validateCaptures` helper. It checks all
+ordinary ranges first. If the complete source is valid UTF-8, it then requires every capture start
+and end to be a code-point boundary. Invalid UTF-8 input retains arbitrary-byte captures. The same
+helper protects callers that construct captures directly before HTML rendering.
 
 ## Optional Backends
 

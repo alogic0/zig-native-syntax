@@ -34,9 +34,11 @@ invalid UTF-8. Property tests verify that stripping generated spans and decoding
 recovers the original bytes exactly.
 
 Before allocating capture events or writing output, the renderer validates the entire capture set.
-Range errors therefore take precedence over allocation and writer failures, and invalid backend
-output cannot leave partially rendered HTML. Allocation and writer failures are propagated after all
-temporary renderer allocations are released.
+Range errors therefore take precedence over UTF-8-boundary, allocation, and writer failures. For
+valid UTF-8 source, a capture that splits a code point fails with `MisalignedUtf8Boundary`; invalid
+UTF-8 source retains arbitrary-byte capture behavior. Invalid backend output cannot leave partially
+rendered HTML. Allocation and writer failures are propagated after all temporary renderer
+allocations are released.
 
 ## Classify Source
 
@@ -86,6 +88,9 @@ outlive the sink. The caller then frees that slice with the same allocator.
 - Source is borrowed and is never copied by the core API.
 - Spans use half-open byte ranges `[start, end)`.
 - The sink rejects reversed and out-of-bounds ranges before storing them.
+- `validateCaptures` requires capture starts and ends to be code-point boundaries when the complete
+  source is valid UTF-8. Backends and the HTML renderer both enforce this contract.
+- Invalid UTF-8 source retains arbitrary-byte capture behavior.
 - Empty captures are accepted but not stored.
 - Identical, nested, and crossing captures are valid.
 - Captures retain insertion order until the future renderer normalizes them.
@@ -107,10 +112,12 @@ rules.
 - `Backend.init` validates constant metadata at compile time.
 - Canonical names describe package capabilities; consumers own aliases.
 - A sink must be initialized for the exact source length used in `Backend.highlight`.
+- After classification, `Backend.highlight` validates the complete capture set, including UTF-8
+  boundaries for valid UTF-8 source.
 - Malformed language syntax is not a shared API error. Backends emit trusted partial captures and
   leave uncertain source unclassified.
-- Allocation failure, invalid backend ranges, source-length mismatch, and sources too large for a
-  selected parser's offset representation are shared errors.
+- Allocation failure, invalid backend ranges or UTF-8 boundaries, source-length mismatch, and
+  sources too large for a selected parser's offset representation are shared errors.
 
 See the [language backend contract](architecture/backend-contract.md) for the full responsibility and
 error boundary.

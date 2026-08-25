@@ -1,4 +1,5 @@
 const std = @import("std");
+const utf8 = @import("../utf8.zig");
 const api = @import("../backend.zig");
 const Scope = @import("../scope.zig").Scope;
 
@@ -88,7 +89,7 @@ fn scanQuoted(source: []const u8, start: usize, end: usize, sink: *api.CaptureSi
     var cursor = start + 1;
     while (cursor < end) {
         if (source[cursor] == '\\') {
-            const escape_end = @min(cursor + 2, end);
+            const escape_end = utf8.escapedSequenceEnd(source, cursor, end);
             try sink.add(cursor, escape_end, .escape);
             cursor = escape_end;
         } else {

@@ -11,3 +11,5 @@ syntax highlighting.
 
 The tokenizer requires sentinel-terminated input, so the adapter temporarily copies borrowed source
 using the capture sink's allocator. Captures still refer to ranges in the caller's original bytes.
+Unsupported valid Unicode scalars emitted byte-by-byte as invalid by the external tokenizer remain
+unclassified so captures stay on UTF-8 boundaries. Invalid UTF-8 input retains byte captures.

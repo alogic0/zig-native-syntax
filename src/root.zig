@@ -12,6 +12,7 @@ pub const Scope = @import("scope.zig").Scope;
 pub const Span = capture.Span;
 pub const Capture = capture.Capture;
 pub const ValidationError = capture.ValidationError;
+pub const validateCaptures = capture.validateCaptures;
 pub const Backend = backend.Backend;
 pub const BackendInfo = backend.BackendInfo;
 pub const BackendKind = backend.BackendKind;

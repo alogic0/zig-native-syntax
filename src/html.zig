@@ -70,10 +70,9 @@ pub fn render(
     defer events.deinit(allocator);
 
     // Validate the complete backend result before allocation or output. This
-    // gives range errors deterministic precedence over resource failures.
-    for (captures) |item| {
-        try item.validate(source.len);
-    }
+    // gives range and boundary errors deterministic precedence over resource
+    // failures.
+    try capture.validateCaptures(source, captures);
 
     for (captures) |item| {
         if (item.span.isEmpty()) continue;
@@ -276,6 +275,47 @@ test "capture validation precedes allocation and output" {
         render("abc", &captures, std.testing.failing_allocator, &output.writer),
     );
     try std.testing.expectEqual(@as(usize, 0), output.written().len);
+}
+
+test "classified renderer enforces UTF-8 capture boundaries" {
+    const source = "├";
+    const split_scalar = [_]Capture{try .init(0, 1, .invalid)};
+    var output: Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+
+    try std.testing.expectError(
+        error.MisalignedUtf8Boundary,
+        render(source, &split_scalar, std.testing.allocator, &output.writer),
+    );
+    try std.testing.expectEqual(@as(usize, 0), output.written().len);
+}
+
+test "classified renderer accepts a complete UTF-8 scalar capture" {
+    const source = "├";
+    const whole_scalar = [_]Capture{try .init(0, source.len, .invalid)};
+    var output: Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+
+    try render(source, &whole_scalar, std.testing.allocator, &output.writer);
+    try std.testing.expectEqualStrings(
+        "<span class=\"syntax-invalid\">├</span>",
+        output.written(),
+    );
+}
+
+test "classified renderer preserves arbitrary captures for invalid UTF-8" {
+    const source = [_]u8{ 0xff, '<' };
+    const captures = [_]Capture{try .init(0, 1, .invalid)};
+    const prefix = "<span class=\"syntax-invalid\">";
+    const suffix = "</span>&lt;";
+    var output: Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+
+    try render(&source, &captures, std.testing.allocator, &output.writer);
+    try std.testing.expectEqual(prefix.len + 1 + suffix.len, output.written().len);
+    try std.testing.expectEqualStrings(prefix, output.written()[0..prefix.len]);
+    try std.testing.expectEqual(@as(u8, 0xff), output.written()[prefix.len]);
+    try std.testing.expectEqualStrings(suffix, output.written()[prefix.len + 1 ..]);
 }
 
 test "plain and classified renderers propagate writer failure" {

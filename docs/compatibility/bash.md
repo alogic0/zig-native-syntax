@@ -44,6 +44,8 @@ delimiter expansion, or account for command wrappers such as `sudo`, `env`, and 
 classifying later words. Complex dynamic heredoc delimiters and grammar outside the documented
 subset can remain plain or receive conservative lexical scopes. Unterminated quotes, substitutions,
 and heredocs extend to end of input and remain safely escaped rather than failing highlighting.
+Unsupported valid Unicode scalars outside recognized tokens remain unclassified. Malformed or
+truncated UTF-8 remains byte-oriented invalid input.
 
 References:
 

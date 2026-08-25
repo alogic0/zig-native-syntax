@@ -4,7 +4,30 @@ const Scope = @import("scope.zig").Scope;
 pub const ValidationError = error{
     ReversedRange,
     RangeOutOfBounds,
+    MisalignedUtf8Boundary,
 };
+
+/// Validates capture ranges and, for valid UTF-8 source, code-point alignment.
+///
+/// Range errors are checked for the complete capture set before UTF-8 is
+/// inspected. Invalid UTF-8 source retains the byte-oriented capture behavior
+/// used for malformed input.
+pub fn validateCaptures(source: []const u8, captures: []const Capture) ValidationError!void {
+    for (captures) |item| try item.validate(source.len);
+
+    if (!std.unicode.utf8ValidateSlice(source)) return;
+    for (captures) |item| {
+        if (!isUtf8Boundary(source, item.span.start) or
+            !isUtf8Boundary(source, item.span.end))
+        {
+            return error.MisalignedUtf8Boundary;
+        }
+    }
+}
+
+fn isUtf8Boundary(source: []const u8, offset: usize) bool {
+    return offset == source.len or source[offset] & 0xc0 != 0x80;
+}
 
 /// A half-open byte range `[start, end)` in borrowed source text.
 pub const Span = struct {
@@ -141,4 +164,40 @@ test "capture validation permits overlapping ranges" {
     try outer.validate(7);
     try crossing.validate(7);
     try std.testing.expectEqual(Span.Relation.overlaps_before, outer.span.relationTo(crossing.span));
+}
+
+test "capture sets require UTF-8 boundaries only for valid UTF-8 source" {
+    const source = "a├─b";
+    const whole_scalar = [_]Capture{try .init(1, 4, .invalid)};
+    try validateCaptures(source, &whole_scalar);
+
+    const split_scalar = [_]Capture{try .init(1, 2, .invalid)};
+    try std.testing.expectError(
+        error.MisalignedUtf8Boundary,
+        validateCaptures(source, &split_scalar),
+    );
+
+    const invalid_utf8 = [_]u8{ 0xff, 0x80 };
+    const arbitrary_bytes = [_]Capture{try .init(0, 1, .invalid)};
+    try validateCaptures(&invalid_utf8, &arbitrary_bytes);
+}
+
+test "capture range errors precede UTF-8 boundary errors" {
+    const reversed = [_]Capture{
+        try .init(1, 2, .invalid),
+        .{ .span = .{ .start = 5, .end = 4 }, .scope = .invalid },
+    };
+    try std.testing.expectError(
+        error.ReversedRange,
+        validateCaptures("├", &reversed),
+    );
+
+    const out_of_bounds = [_]Capture{
+        try .init(1, 2, .invalid),
+        .{ .span = .{ .start = 0, .end = 4 }, .scope = .invalid },
+    };
+    try std.testing.expectError(
+        error.RangeOutOfBounds,
+        validateCaptures("├", &out_of_bounds),
+    );
 }

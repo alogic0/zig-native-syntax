@@ -109,7 +109,7 @@ const Tokenizer = struct {
                     _ = try tokenizer.builder.addToken(.punctuation, start, tokenizer.index);
                 } else {
                     const start = tokenizer.index;
-                    tokenizer.index += 1;
+                    tokenizer.index += validUtf8SequenceLength(tokenizer.source[start..]) orelse 1;
                     _ = try tokenizer.builder.addToken(.invalid, start, tokenizer.index);
                 },
             }
@@ -757,6 +757,13 @@ fn cookedStringEnd(source: []const u8, start: usize) StringEnd {
 
 fn utf8SequenceLength(byte: u8) usize {
     return if (byte < 0x80) 1 else if (byte < 0xe0) 2 else if (byte < 0xf0) 3 else 4;
+}
+
+fn validUtf8SequenceLength(source: []const u8) ?usize {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return null;
+    if (len > source.len) return null;
+    _ = std.unicode.utf8Decode(source[0..len]) catch return null;
+    return len;
 }
 
 fn isIdentifierStart(byte: u8) bool {

@@ -127,6 +127,7 @@ pub const Backend = struct {
             return error.SourceLengthMismatch;
         }
         try backend.highlight_fn(source, sink);
+        try capture.validateCaptures(source, sink.captures());
     }
 };
 
@@ -215,4 +216,25 @@ test "backend rejects a sink for different source bytes" {
         test_backend.highlight("four", &sink),
     );
     try std.testing.expectEqual(@as(usize, 0), sink.captures().len);
+}
+
+fn highlightMisalignedBackend(_: []const u8, sink: *CaptureSink) HighlightError!void {
+    try sink.add(0, 1, .invalid);
+}
+
+const misaligned_backend: Backend = .init(.{
+    .canonical_name = "misaligned",
+    .display_name = "Misaligned",
+    .kind = .lexical,
+}, highlightMisalignedBackend);
+
+test "backend rejects captures that split valid UTF-8" {
+    const source = "├";
+    var sink: CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+
+    try std.testing.expectError(
+        error.MisalignedUtf8Boundary,
+        misaligned_backend.highlight(source, &sink),
+    );
 }
