@@ -10,6 +10,7 @@ pub const backend: Backend = .init(.{
     .canonical_name = "bash",
     .display_name = "Bash",
     .kind = .parser_backed,
+    .support_level = .verified_structural,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {

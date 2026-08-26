@@ -16,6 +16,7 @@ pub const validateCaptures = capture.validateCaptures;
 pub const Backend = backend.Backend;
 pub const BackendInfo = backend.BackendInfo;
 pub const BackendKind = backend.BackendKind;
+pub const SupportLevel = backend.SupportLevel;
 pub const CaptureSink = backend.CaptureSink;
 pub const HighlightError = backend.HighlightError;
 pub const MetadataError = backend.MetadataError;

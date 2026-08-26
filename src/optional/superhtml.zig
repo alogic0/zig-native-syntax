@@ -9,6 +9,7 @@ pub const backend: core.Backend = .init(.{
     .canonical_name = "superhtml",
     .display_name = "SuperHTML",
     .kind = .composed,
+    .support_level = .verified_structural,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *core.CaptureSink) core.HighlightError!void {

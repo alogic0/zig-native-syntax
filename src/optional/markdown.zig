@@ -5,6 +5,7 @@ pub const backend: core.Backend = .init(.{
     .canonical_name = "markdown",
     .display_name = "Markdown",
     .kind = .parser_backed,
+    .support_level = .verified_structural,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *core.CaptureSink) core.HighlightError!void {

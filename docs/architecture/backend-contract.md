@@ -15,7 +15,14 @@ Each backend declares:
 
 - a canonical lowercase name containing letters, digits, and internal hyphens;
 - a human-readable display name;
-- whether it is lexical, parser-backed, or composed from nested backends.
+- whether it is lexical, parser-backed, or composed from nested backends;
+- an independent support level: experimental, verified lexical, or verified structural.
+
+`BackendKind` describes the implementation mechanism. `SupportLevel` describes the confidence a
+consumer can place in its highlighting behavior. A maintained tokenizer can be verified lexical,
+while consuming a parser does not automatically make a backend verified. New backends default to
+experimental until their expected classifications, recovery, source preservation, and representative
+corpus behavior have been reviewed.
 
 Canonical names identify package capabilities. They are not filename extensions, Markdown fence
 aliases, CSS classes, or HTML content. A consumer such as Zine owns mappings from its accepted aliases

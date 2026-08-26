@@ -23,11 +23,13 @@ remain experimental work.
 - Continue highlighting valid regions around malformed or incomplete input.
 - Keep language backends selectable so consumers only compile the languages they use.
 - Adapt existing native tokenizers and parsers where suitable instead of duplicating them.
+- Keep implementation kind separate from quality: new backends remain experimental until a
+  consumer deliberately promotes verified lexical or structural behavior.
 
 ## Architecture
 
 - [Language backend contract](docs/architecture/backend-contract.md) defines backend metadata,
-  capture reporting, errors, and optional registration.
+  support levels, capture reporting, errors, and optional registration.
 - [Capture and range model](docs/architecture/capture-model.md) defines source offsets, validation,
   overlap, and memory ownership.
 - [Classification model](docs/architecture/classification-model.md) defines the language-neutral

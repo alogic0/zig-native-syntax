@@ -8,6 +8,7 @@ pub const backend: Backend = .init(.{
     .canonical_name = "diff",
     .display_name = "Diff",
     .kind = .lexical,
+    .support_level = .verified_lexical,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {

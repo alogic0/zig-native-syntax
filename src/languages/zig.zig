@@ -9,6 +9,7 @@ pub const backend: Backend = .init(.{
     .canonical_name = "zig",
     .display_name = "Zig",
     .kind = .parser_backed,
+    .support_level = .verified_structural,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {

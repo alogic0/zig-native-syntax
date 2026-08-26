@@ -20,10 +20,22 @@ pub const BackendKind = enum {
     composed,
 };
 
+/// Consumer-facing confidence in a backend's highlighting behavior.
+///
+/// This is deliberately separate from `BackendKind`: a maintained tokenizer
+/// can provide verified lexical highlighting, while merely consuming a parser
+/// does not by itself establish a quality guarantee.
+pub const SupportLevel = enum {
+    experimental,
+    verified_lexical,
+    verified_structural,
+};
+
 pub const BackendInfo = struct {
     canonical_name: []const u8,
     display_name: []const u8,
     kind: BackendKind,
+    support_level: SupportLevel = .experimental,
 
     pub fn validate(info: BackendInfo) MetadataError!void {
         if (!isCanonicalName(info.canonical_name)) {
@@ -159,6 +171,24 @@ test "backend metadata uses canonical names rather than aliases" {
         .display_name = "",
         .kind = .parser_backed,
     }).validate());
+}
+
+test "backend support level is independent from implementation kind" {
+    const lexical = BackendInfo{
+        .canonical_name = "json",
+        .display_name = "JSON",
+        .kind = .lexical,
+        .support_level = .verified_lexical,
+    };
+    const structural = BackendInfo{
+        .canonical_name = "zig",
+        .display_name = "Zig",
+        .kind = .parser_backed,
+        .support_level = .verified_structural,
+    };
+
+    try lexical.validate();
+    try structural.validate();
 }
 
 test "capture sink validates and owns its allocation" {

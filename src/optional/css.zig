@@ -6,6 +6,7 @@ pub const backend: core.Backend = .init(.{
     .canonical_name = "css",
     .display_name = "CSS",
     .kind = .lexical,
+    .support_level = .verified_lexical,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *core.CaptureSink) core.HighlightError!void {

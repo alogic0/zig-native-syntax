@@ -61,6 +61,7 @@ const example_backend: syntax.Backend = .init(.{
     .canonical_name = "example",
     .display_name = "Example",
     .kind = .lexical,
+    .support_level = .experimental,
 }, classifyExample);
 ```
 
@@ -111,6 +112,9 @@ rules.
 
 - `Backend.init` validates constant metadata at compile time.
 - Canonical names describe package capabilities; consumers own aliases.
+- `BackendKind` records whether implementation is lexical, parser-backed, or composed.
+- `SupportLevel` separately records whether behavior is experimental, verified lexical, or verified
+  structural. Consumers can use it to build a quality-gated registry.
 - A sink must be initialized for the exact source length used in `Backend.highlight`.
 - After classification, `Backend.highlight` validates the complete capture set, including UTF-8
   boundaries for valid UTF-8 source.
