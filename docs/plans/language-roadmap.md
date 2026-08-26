@@ -30,14 +30,14 @@ These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
 input, and deterministic-output contract. There are currently 9 parser-backed
-languages, 1 partially parser-backed composition, 4 tokenizer adapters, 15
+languages, 2 partially parser-backed compositions, 4 tokenizer adapters, 14
 dedicated scanners, and 59 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-quality-first viewer registry promotes 10 backends as **verified structural**
+quality-first viewer registry promotes 11 backends as **verified structural**
 and 7 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -58,7 +58,7 @@ the backend actually understands.
 - [x] 12. JSON — **dedicated scanner** — *verified lexical*
 - [x] 13. Diff/patch — **dedicated scanner** — *verified lexical*
 - [x] 14. TOML — **dedicated scanner** — *verified lexical*
-- [x] 15. Dockerfile — **dedicated scanner**
+- [x] 15. Dockerfile — **composed** (Dockerfile scanner with parser-backed Bash and lexical JSON regions) — *verified structural*
 - [x] 16. Python — **dedicated scanner**
 - [x] 17. SQL — **dedicated scanner**
 - [x] 18. C — **dedicated scanner**

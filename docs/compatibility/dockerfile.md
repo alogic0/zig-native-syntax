@@ -1,12 +1,15 @@
 # Dockerfile Highlighting Compatibility
 
-The dependency-free `dockerfile` backend is a line-oriented lexical scanner.
-It recognizes parser directives, standard instructions case-insensitively,
-instruction flags, shell-style variables, quoted strings and escapes,
-JSON-array punctuation, common operators, and numeric port-like tokens.
+The dependency-free `dockerfile` backend is a composed highlighter. It
+recognizes parser directives, standard instructions case-insensitively,
+instruction flags, continuations, variables, and common argument tokens.
+Shell-form `RUN` and `HEALTHCHECK CMD` regions delegate to the verified Bash
+parser, while JSON instruction forms delegate to the verified JSON scanner.
+Standard `RUN` heredoc bodies remain part of their Bash region.
 
-The scanner does not parse embedded shell commands, JSON command validity,
-BuildKit mount grammar, heredoc bodies, variable expansion semantics, build
-stages, or instruction-specific argument rules. Comments are recognized only
-as Dockerfile comment lines after indentation. Incomplete quotes and variables
-are bounded by the current line so later instructions continue highlighting.
+The backend does not validate BuildKit mount grammar, variable expansion
+semantics, build stages, or instruction-specific argument rules. It recognizes
+one standard heredoc delimiter per `RUN` instruction; unusual compound heredoc
+forms remain source-preserving but may not receive complete nested roles.
+Comments are recognized as Dockerfile comments only when they begin a logical
+instruction line.
