@@ -37,7 +37,7 @@ the code that runs, not only backend metadata: Ziggy currently declares itself
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-quality-first viewer registry promotes 12 backends as **verified structural**
+quality-first viewer registry promotes 13 backends as **verified structural**
 and 10 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -66,7 +66,7 @@ the backend actually understands.
 - [x] 20. TypeScript — **parser** (shared JavaScript/TypeScript parser) — *verified structural*
 - [x] 21. YAML — **dedicated scanner** — *verified lexical*
 - [x] 22. HCL — **dedicated scanner** — *verified lexical*
-- [x] 23. Make — **dedicated scanner**
+- [x] 23. Make — **composed** (Make scanner with parser-backed Bash recipes) — *verified structural*
 - [x] 24. CMake — **configured scanner**
 - [x] 25. Java — **configured scanner**
 - [x] 26. C# — **configured scanner**
