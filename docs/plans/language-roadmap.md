@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 quality-first viewer registry promotes 13 backends as **verified structural**
-and 10 as **verified lexical**. Every entry without a verification marker
+and 11 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -67,7 +67,7 @@ the backend actually understands.
 - [x] 21. YAML — **dedicated scanner** — *verified lexical*
 - [x] 22. HCL — **dedicated scanner** — *verified lexical*
 - [x] 23. Make — **composed** (Make scanner with parser-backed Bash recipes) — *verified structural*
-- [x] 24. CMake — **configured scanner**
+- [x] 24. CMake — **configured scanner** — *verified lexical*
 - [x] 25. Java — **configured scanner**
 - [x] 26. C# — **configured scanner**
 - [x] 27. C++ — **configured scanner**
