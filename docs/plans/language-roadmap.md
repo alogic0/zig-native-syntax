@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 quality-first viewer registry promotes 13 backends as **verified structural**
-and 11 as **verified lexical**. Every entry without a verification marker
+and 12 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -86,7 +86,7 @@ the backend actually understands.
 - [x] 40. JSDoc — **dedicated scanner**
 - [x] 41. Regular expressions — **dedicated scanner**
 - [x] 42. Protocol Buffers — **configured scanner**
-- [x] 43. KDL — **configured scanner**
+- [x] 43. KDL — **dedicated scanner** — *verified lexical*
 - [x] 44. Nix — **configured scanner**
 - [x] 45. Fish — **configured scanner**
 - [x] 46. Nushell — **configured scanner**
