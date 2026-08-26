@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 quality-first viewer registry promotes 13 backends as **verified structural**
-and 13 as **verified lexical**. Every entry without a verification marker
+and 14 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -92,7 +92,7 @@ the backend actually understands.
 - [x] 46. Nushell — **configured scanner**
 - [x] 47. AWK — **configured scanner**
 - [x] 48. SSH config — **dedicated scanner** — *verified lexical*
-- [x] 49. Git commit — **configured scanner**
+- [x] 49. Git commit — **dedicated scanner** — *verified lexical*
 - [x] 50. Git rebase — **configured scanner**
 - [x] 51. Gettext PO — **configured scanner**
 - [x] 52. reStructuredText — **configured scanner**
