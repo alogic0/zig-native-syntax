@@ -1,2 +1,5 @@
-pick 42 feat "x\n<&>" true
-# comment
+pick a1b2c3d render native syntax
+reword b2c3d4e document highlighting
+exec echo "checking <&>"
+label verified
+# Rebase commands
