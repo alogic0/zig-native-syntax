@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: native-demo
+  labels:
+    app: viewer
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: viewer
+          image: "example/viewer:latest"
+          ports: [{ containerPort: 8080 }]
