@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 quality-first viewer registry promotes 10 backends as **verified structural**
-and 6 as **verified lexical**. Every entry without a verification marker
+and 7 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -57,7 +57,7 @@ the backend actually understands.
 - [x] 11. Rust — **parser** (owned tolerant parser) — *verified structural*
 - [x] 12. JSON — **dedicated scanner** — *verified lexical*
 - [x] 13. Diff/patch — **dedicated scanner** — *verified lexical*
-- [x] 14. TOML — **dedicated scanner**
+- [x] 14. TOML — **dedicated scanner** — *verified lexical*
 - [x] 15. Dockerfile — **dedicated scanner**
 - [x] 16. Python — **dedicated scanner**
 - [x] 17. SQL — **dedicated scanner**
