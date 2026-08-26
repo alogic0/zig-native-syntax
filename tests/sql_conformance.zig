@@ -6,6 +6,47 @@ const backend = syntax.languages.sql.backend;
 test "SQL backend metadata is stable" {
     try std.testing.expectEqualStrings("sql", backend.info.canonical_name);
     try std.testing.expectEqual(syntax.BackendKind.lexical, backend.info.kind);
+    try std.testing.expectEqual(syntax.SupportLevel.verified_lexical, backend.info.support_level);
+}
+
+test "SQL scanner distinguishes dialect-neutral lexical roles" {
+    const source = "SELECT count(\"user_id\") FROM audit WHERE enabled = true AND id > :minimum AND owner = $1;";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    try expectCapture(source, sink.captures(), "SELECT", .keyword);
+    try expectCapture(source, sink.captures(), "count", .function);
+    try expectCapture(source, sink.captures(), "\"user_id\"", .property);
+    try expectCapture(source, sink.captures(), "true", .boolean);
+    try expectCapture(source, sink.captures(), ":minimum", .parameter);
+    try expectCapture(source, sink.captures(), "$1", .parameter);
+}
+
+test "SQL representative query corpora retain lexical roles" {
+    for ([_][]const u8{
+        @embedFile("corpus/sql/complete.sql"),
+        @embedFile("corpus/sql/migration.sql"),
+    }) |source| {
+        var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+        defer sink.deinit();
+        try backend.highlight(source, &sink);
+        try std.testing.expect(hasScope(sink.captures(), .keyword));
+        try std.testing.expect(hasScope(sink.captures(), .string));
+        try std.testing.expect(hasScope(sink.captures(), .punctuation));
+    }
+}
+
+fn expectCapture(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
+    for (captures) |capture| {
+        if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
+    }
+    return error.TestExpectedEqual;
+}
+
+fn hasScope(captures: []const syntax.Capture, expected: syntax.Scope) bool {
+    for (captures) |capture| if (capture.scope == expected) return true;
+    return false;
 }
 
 test "SQL scanner conforms to the shared backend contract" {
