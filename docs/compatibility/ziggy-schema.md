@@ -1,8 +1,9 @@
 # Ziggy Schema Highlighting Compatibility
 
-The optional `native_syntax_ziggy_schema` module is enabled independently with
-`-Dbackend-ziggy-schema=true`. It uses the tokenizer from the pinned Ziggy package for resilient
-lexical captures and its recovering schema AST for declaration and field context.
+The external `native_syntax_ziggy_schema` module is enabled by default and can be excluded
+independently with `-Dbackend-ziggy-schema=false`. It uses the tokenizer from the pinned Ziggy
+package for resilient lexical captures and its recovering schema AST for declaration and field
+context.
 
 The adapter classifies struct and union keywords, root and type sigils, builtin and named types,
 type declarations, field names, documentation comments, operators, punctuation, and invalid bytes.

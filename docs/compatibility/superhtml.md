@@ -19,8 +19,8 @@ The fork publishes dependency-free syntax modules for this integration:
 The dependency is configured with `tokenizers_only = true`, so loading these modules does not
 configure the SuperHTML CLI, LSP, VM, semantic AST, Scripty, Tracy, or generated language registry.
 Its source is fetched with the package so clean consumers can discover public modules on their first
-build, but it is configured only when at least one of `backend-html`, `backend-xml`, `backend-css`,
-or `backend-superhtml` is enabled.
+build. The four adapters are enabled by default; the dependency is omitted only when all of
+`backend-html`, `backend-xml`, `backend-css`, and `backend-superhtml` resolve to false.
 
 ## Upgrade Contract
 

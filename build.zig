@@ -8,46 +8,51 @@ pub fn build(b: *std.Build) void {
         "backend-dummy",
         "Enable the test-only optional backend used to verify dependency selection",
     ) orelse false;
+    const enable_external_backends = b.option(
+        bool,
+        "external-backends",
+        "Enable all external syntax backends unless individually overridden",
+    ) orelse true;
     const enable_ziggy_backend = b.option(
         bool,
         "backend-ziggy",
-        "Enable the optional Ziggy document backend",
-    ) orelse false;
+        "Enable the external Ziggy document backend",
+    ) orelse enable_external_backends;
     const enable_ziggy_schema_backend = b.option(
         bool,
         "backend-ziggy-schema",
-        "Enable the optional Ziggy Schema backend",
-    ) orelse false;
+        "Enable the external Ziggy Schema backend",
+    ) orelse enable_external_backends;
     const enable_scripty_backend = b.option(
         bool,
         "backend-scripty",
-        "Enable the optional Scripty backend",
-    ) orelse false;
+        "Enable the external Scripty backend",
+    ) orelse enable_external_backends;
     const enable_html_backend = b.option(
         bool,
         "backend-html",
-        "Enable the optional HTML backend",
-    ) orelse false;
+        "Enable the external HTML backend",
+    ) orelse enable_external_backends;
     const enable_xml_backend = b.option(
         bool,
         "backend-xml",
-        "Enable the optional XML backend",
-    ) orelse false;
+        "Enable the external XML backend",
+    ) orelse enable_external_backends;
     const enable_css_backend = b.option(
         bool,
         "backend-css",
-        "Enable the optional CSS backend",
-    ) orelse false;
+        "Enable the external CSS backend",
+    ) orelse enable_external_backends;
     const enable_superhtml_backend = b.option(
         bool,
         "backend-superhtml",
-        "Enable the optional composed SuperHTML backend",
-    ) orelse false;
+        "Enable the external composed SuperHTML backend",
+    ) orelse enable_external_backends;
     const enable_markdown_backend = b.option(
         bool,
         "backend-markdown",
-        "Enable the optional Markdown backend",
-    ) orelse false;
+        "Enable the external Markdown backend",
+    ) orelse enable_external_backends;
     const ziggy_dependency = if (enable_ziggy_backend or enable_ziggy_schema_backend)
         b.dependency("ziggy", .{
             .target = target,

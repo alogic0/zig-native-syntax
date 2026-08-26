@@ -6,9 +6,11 @@
 capture model, renderer, and backends implemented only with Zig's standard library. A backend that
 uses an external parser is exposed as a separate module such as `native_syntax_ziggy`.
 
-Each external backend has a matching build option, such as `backend-ziggy`. The package build calls
-`dependency` and creates that backend module only when the option is enabled. Disabled parser
-packages are not configured, compiled, or linked by the core-only graph.
+External backends are enabled by default. `external-backends=false` disables the complete external
+set, while each backend has a matching option such as `backend-ziggy` that can explicitly override
+the aggregate default. The package build calls `dependency` and creates a backend module only when
+its resolved option is enabled. Disabled parser packages are not configured, compiled, or linked by
+the core-only graph.
 
 The external packages are eager manifest dependencies even though their modules remain optional.
 With the pinned Zig version, a dependency build that discovers a missing nested lazy dependency can
@@ -29,12 +31,13 @@ fields of `native_syntax.languages`.
 
 ## Consumer Configuration
 
-A core-only consumer configures the package normally and imports only its core module:
+A core-only consumer disables the external group and imports only its core module:
 
 ```zig
 const syntax_dependency = b.dependency("zig_native_syntax", .{
     .target = target,
     .optimize = optimize,
+    .@"external-backends" = false,
 });
 consumer.root_module.addImport(
     "native_syntax",
@@ -42,13 +45,13 @@ consumer.root_module.addImport(
 );
 ```
 
-An optional backend is enabled on the dependency and imported separately:
+The default configuration exposes every external backend module. Consumers still import only the
+modules they use:
 
 ```zig
 const syntax_dependency = b.dependency("zig_native_syntax", .{
     .target = target,
     .optimize = optimize,
-    .@"backend-ziggy" = true,
 });
 consumer.root_module.addImport(
     "native_syntax",
@@ -60,29 +63,41 @@ consumer.root_module.addImport(
 );
 ```
 
-Requesting an optional module without enabling its matching option is a build-configuration error.
-This fails at build time rather than silently selecting a fallback parser.
+To select only Ziggy, first disable the group and then override that backend:
 
-The Ziggy document and schema backends are the first supported external adapters using this
-mechanism. Their shared pinned package is configured only when selected. `-Dbackend-ziggy=true` exposes
-`native_syntax_ziggy`, while `-Dbackend-ziggy-schema=true` independently exposes
-`native_syntax_ziggy_schema`. Enabling both options configures the same Ziggy package once.
+```zig
+const syntax_dependency = b.dependency("zig_native_syntax", .{
+    .target = target,
+    .optimize = optimize,
+    .@"external-backends" = false,
+    .@"backend-ziggy" = true,
+});
+```
 
-The independently pinned Scripty package is likewise configured only when selected.
-`-Dbackend-scripty=true` exposes
-`native_syntax_scripty` without enabling or configuring either Ziggy backend.
+Conversely, `.@"backend-ziggy" = false` excludes Ziggy from the default set. Requesting a module
+whose resolved option is disabled is a build-configuration error; it fails at build time rather than
+silently selecting a fallback parser.
 
-Markdown follows the same boundary. `-Dbackend-markdown=true` configures the independently
-pinned `zig-markdown-parser` package and exposes `native_syntax_markdown`. The core module and
-disabled backend graph do not import or compile the parser. Consumers remain responsible for aliases
-such as `md`, `smd`, or `supermd`.
+The Ziggy document and schema backends share one pinned package. Either can be excluded independently
+with `-Dbackend-ziggy=false` or `-Dbackend-ziggy-schema=false`; enabling both configures the same Ziggy
+package once.
+
+The independently pinned Scripty package is likewise controlled by `backend-scripty`. Composed
+SuperHTML also consumes Scripty internally, so excluding the standalone Scripty backend does not
+remove the dependency while `backend-superhtml` remains enabled.
+
+Markdown follows the same boundary. `-Dbackend-markdown=false` excludes the independently pinned
+`zig-markdown-parser` package and `native_syntax_markdown` module. The core module and disabled
+backend graph do not import or compile the parser. Consumers remain responsible for aliases such as
+`md`, `smd`, or `supermd`.
 
 ## Phase 4 Proof
 
 The test-only `backend-dummy` option still exercises lazy selection with a local package. Its build
 script rejects configuration unless the parent passes an explicit opt-in value. Consequently:
 
-- `./build.sh test` proves the core graph succeeds without configuring the dummy dependency;
+- `./build.sh test` verifies the core and complete default external set;
+- `./build.sh test -Dexternal-backends=false` verifies the dependency-free core configuration;
 - `./build.sh test -Dbackend-dummy=true` proves the enabled module imports and calls the dependency;
 - `tests/core_only.zig` verifies the optional backend does not leak into the core namespace;
 - `tests/optional_dummy.zig` verifies the separately imported backend satisfies the public contract.

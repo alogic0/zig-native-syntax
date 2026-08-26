@@ -188,17 +188,16 @@ The backend copies the borrowed source into temporary sentinel-terminated storag
 Zig syntax APIs; captures still contain offsets into the caller's original source. Contextual scopes
 overlap lexical scopes intentionally and are normalized by the shared HTML renderer.
 
-## Optional Parser Backends
+## External Parser Backends
 
 The Ziggy document and Ziggy Schema adapters are separate modules backed by the same pinned
-Ziggy package. Consumers enable and import only the modules they use:
+Ziggy package. External backends are available by default; consumers import only the modules they
+use:
 
 ```zig
 const syntax_dependency = b.dependency("zig_native_syntax", .{
     .target = target,
     .optimize = optimize,
-    .@"backend-ziggy" = true,
-    .@"backend-ziggy-schema" = true,
 });
 
 consumer.root_module.addImport(
@@ -216,11 +215,16 @@ lexical classification. The schema adapter combines those resilient token captur
 AST context for declared types and fields. See the [Ziggy](compatibility/ziggy.md) and
 [Ziggy Schema](compatibility/ziggy-schema.md) compatibility notes for their exact boundaries.
 
-Scripty is independently enabled with `.@"backend-scripty" = true` and imported from the
+Use `.@"external-backends" = false` for a dependency-free core configuration. Individual options
+override that aggregate value, so a core-only configuration can add just Ziggy with
+`.@"backend-ziggy" = true`, while a default configuration can exclude it with
+`.@"backend-ziggy" = false`.
+
+Scripty is imported from the
 `native_syntax_scripty` module. It combines public parser context with bounded lexical recovery; see
 the [Scripty compatibility note](compatibility/scripty.md) for the tokenizer API boundary.
 
-Markdown is enabled with `.@"backend-markdown" = true` and imported from the
+Markdown is imported from the
 `native_syntax_markdown` module. It maps the standalone Markdown parser's immutable nodes and source
 spans to markup scopes. The package exposes only the canonical name `markdown`; filename and fence
 aliases remain consumer policy. See the

@@ -1,10 +1,11 @@
 # Scripty Highlighting Compatibility
 
-The optional `native_syntax_scripty` module is enabled with `-Dbackend-scripty=true`. It uses the
-public parser from the pinned Scripty fork for semantic path and call locations. That revision fixes
-parser EOF handling for completed calls followed by trailing whitespace. A small, recovery-oriented
-scanner classifies strings, escapes, numbers, booleans, punctuation, and invalid bytes even after the
-parser stops at an error.
+The external `native_syntax_scripty` module is enabled by default and can be excluded as a standalone
+backend with `-Dbackend-scripty=false`. Composed SuperHTML still consumes Scripty internally while
+`backend-superhtml` is enabled. The adapter uses the public parser from the pinned Scripty fork for
+semantic path and call locations. That revision fixes parser EOF handling for completed calls
+followed by trailing whitespace. A small, recovery-oriented scanner classifies strings, escapes,
+numbers, booleans, punctuation, and invalid bytes even after the parser stops at an error.
 
 Scripty currently keeps its tokenizer private. The preferred upstream improvement is to add this
 single public declaration to its root module:

@@ -107,6 +107,10 @@ The project currently tracks the Zig version used by Zine:
 ./build.sh test
 ```
 
+The default test graph includes every external backend. Use
+`./build.sh test -Dexternal-backends=false` to verify the dependency-free core, or set an individual
+`-Dbackend-*=false` option to exclude one adapter from the default set.
+
 Render source files as HTML fragments for manual inspection:
 
 ```sh

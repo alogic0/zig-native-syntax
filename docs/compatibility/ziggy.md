@@ -1,7 +1,8 @@
 # Ziggy Highlighting Compatibility
 
-The optional `native_syntax_ziggy` module adapts the tokenizer from the pinned Ziggy package. It is
-enabled with `-Dbackend-ziggy=true`; disabled builds do not configure or compile Ziggy.
+The external `native_syntax_ziggy` module adapts the tokenizer from the pinned Ziggy package. It is
+enabled by default and can be excluded with `-Dbackend-ziggy=false`. A core-only build can select it
+with `-Dexternal-backends=false -Dbackend-ziggy=true`.
 
 The adapter classifies comments, strings and multiline byte lines, integer and floating-point
 numbers, booleans, nulls, enum values, union constructors, field names, operators, and punctuation.

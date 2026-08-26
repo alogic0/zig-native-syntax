@@ -1,7 +1,7 @@
 # Markdown Highlighting Compatibility
 
-The optional `native_syntax_markdown` module is enabled with
-`-Dbackend-markdown=true`. It uses the independently pinned
+The external `native_syntax_markdown` module is enabled by default and can be excluded with
+`-Dbackend-markdown=false`. It uses the independently pinned
 `zig-markdown-parser` package through its public immutable document traversal
 API. The parser reports half-open byte spans into the caller's original source;
 the adapter converts those spans into captures without rendering or rewriting
