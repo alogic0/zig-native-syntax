@@ -122,5 +122,6 @@ test "span preserves source offsets" {
 test "language aliases are package-owned" {
     try std.testing.expectEqualStrings("bash", canonicalLanguageName("shell"));
     try std.testing.expectEqualStrings("python", canonicalLanguageName("PY"));
+    try std.testing.expectEqualStrings("cpp", canonicalLanguageName("c++"));
     try std.testing.expectEqualStrings("unknown", canonicalLanguageName("unknown"));
 }

@@ -13,6 +13,7 @@ pub const Config = struct {
     quotes: []const u8 = "\"'",
     preprocessor: bool = false,
     case_insensitive: bool = false,
+    classify_identifiers: bool = true,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -135,15 +136,17 @@ const Scanner = struct {
         self.index += 1;
         while (self.index < self.source.len and isIdentifierContinue(self.source[self.index])) self.index += 1;
         const word = self.source[start..self.index];
-        const scope: Scope = if (contains(self.config.keywords, word, self.config.case_insensitive)) .keyword else if (contains(self.config.types, word, self.config.case_insensitive)) .type else if (contains(self.config.booleans, word, self.config.case_insensitive)) .boolean else if (contains(self.config.constants, word, self.config.case_insensitive)) .constant else if (self.after_dot) .property else blk: {
+        const scope: ?Scope = if (contains(self.config.keywords, word, self.config.case_insensitive)) .keyword else if (contains(self.config.types, word, self.config.case_insensitive)) .type else if (contains(self.config.booleans, word, self.config.case_insensitive)) .boolean else if (contains(self.config.constants, word, self.config.case_insensitive)) .constant else if (!self.config.classify_identifiers) null else if (self.after_dot) .property else blk: {
             const next = nextByte(self.source, self.index);
             if (next == '(') break :blk .function;
             if (next == '=') break :blk .property;
             if (next == ':') break :blk .label;
             break :blk .variable;
         };
-        try self.sink.add(start, self.index, scope);
-        if (scope == .type) try self.sink.add(start, self.index, .builtin);
+        if (scope) |resolved| {
+            try self.sink.add(start, self.index, resolved);
+            if (resolved == .type) try self.sink.add(start, self.index, .builtin);
+        }
         self.after_dot = false;
     }
 };

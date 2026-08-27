@@ -4,10 +4,11 @@ These dependency-free backends are bounded lexical scanners. They classify
 source without validating programs, expanding macros, resolving names, or
 evaluating embedded languages.
 
-- `java`, `c-sharp`, `cpp`, `go`, `kotlin`, `swift`, and `objc` recognize their
+- `java`, `c-sharp`, `go`, `kotlin`, `swift`, and `objc` recognize their
   documented keyword and primitive-type sets, comments, attributes,
   identifiers, calls, numbers, strings and escapes, operators, and punctuation.
-  C++ and Objective-C also classify line-leading preprocessor directives.
+  Objective-C also classifies line-leading preprocessor directives.
+- `cpp` has a separate parser-backed compatibility contract in `cpp.md`.
 - `powershell`, `php`, and `ruby` recognize language keywords, comments,
   variables where prefixed, calls, values, and quoted literals. PowerShell
   here-strings, PHP heredocs, and Ruby percent literals and heredocs remain
