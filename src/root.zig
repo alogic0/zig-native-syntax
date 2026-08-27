@@ -4,6 +4,7 @@ const std = @import("std");
 
 const capture = @import("capture.zig");
 const backend = @import("backend.zig");
+const backend_registry = @import("backend_registry.zig");
 
 pub const html = @import("html.zig");
 pub const composition = @import("composition.zig");
@@ -20,6 +21,9 @@ pub const SupportLevel = backend.SupportLevel;
 pub const CaptureSink = backend.CaptureSink;
 pub const HighlightError = backend.HighlightError;
 pub const MetadataError = backend.MetadataError;
+pub const Alias = backend_registry.Alias;
+pub const aliases = backend_registry.aliases;
+pub const collectVerifiedBackends = backend_registry.collectVerified;
 
 pub const languages = struct {
     pub const agda = @import("languages/agda.zig");
@@ -104,9 +108,19 @@ pub const languages = struct {
     pub const zig = @import("languages/zig.zig");
 };
 
+pub fn canonicalLanguageName(name: []const u8) []const u8 {
+    return backend_registry.canonicalName(name);
+}
+
 test "span preserves source offsets" {
     const source = "const answer = 42;";
     const span: Span = try .init(0, 5);
 
     try std.testing.expectEqualStrings("const", try span.slice(source));
+}
+
+test "language aliases are package-owned" {
+    try std.testing.expectEqualStrings("bash", canonicalLanguageName("shell"));
+    try std.testing.expectEqualStrings("python", canonicalLanguageName("PY"));
+    try std.testing.expectEqualStrings("unknown", canonicalLanguageName("unknown"));
 }

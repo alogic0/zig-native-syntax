@@ -1019,9 +1019,49 @@ pub fn build(b: *std.Build) void {
         };
     } else null;
 
+    const registry_options = b.addOptions();
+    registry_options.addOption(bool, "ziggy", enable_ziggy_backend);
+    registry_options.addOption(bool, "ziggy_schema", enable_ziggy_schema_backend);
+    registry_options.addOption(bool, "scripty", enable_scripty_backend);
+    registry_options.addOption(bool, "html", enable_html_backend);
+    registry_options.addOption(bool, "xml", enable_xml_backend);
+    registry_options.addOption(bool, "css", enable_css_backend);
+    registry_options.addOption(bool, "superhtml", enable_superhtml_backend);
+    registry_options.addOption(bool, "markdown", enable_markdown_backend);
+
+    const configured_registry = b.addModule("native_syntax_registry", .{
+        .root_source_file = b.path("src/configured_registry.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+    });
+    configured_registry.addOptions("registry_options", registry_options);
+    if (enable_ziggy_backend) configured_registry.addImport("native_syntax_ziggy", b.modules.get("native_syntax_ziggy").?);
+    if (enable_ziggy_schema_backend) configured_registry.addImport("native_syntax_ziggy_schema", b.modules.get("native_syntax_ziggy_schema").?);
+    if (enable_scripty_backend) configured_registry.addImport("native_syntax_scripty", b.modules.get("native_syntax_scripty").?);
+    if (enable_html_backend) configured_registry.addImport("native_syntax_html", b.modules.get("native_syntax_html").?);
+    if (enable_xml_backend) configured_registry.addImport("native_syntax_xml", b.modules.get("native_syntax_xml").?);
+    if (enable_css_backend) configured_registry.addImport("native_syntax_css", b.modules.get("native_syntax_css").?);
+    if (enable_superhtml_backend) configured_registry.addImport("native_syntax_superhtml", b.modules.get("native_syntax_superhtml").?);
+    if (enable_markdown_backend) configured_registry.addImport("native_syntax_markdown", b.modules.get("native_syntax_markdown").?);
+
+    const configured_registry_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/configured_registry.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "native_syntax_registry", .module = configured_registry },
+            },
+        }),
+    });
+    const run_configured_registry_tests = b.addRunArtifact(configured_registry_tests);
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
+    test_step.dependOn(&run_configured_registry_tests.step);
     test_step.dependOn(&run_html_property_tests.step);
     test_step.dependOn(&run_zig_corpus_tests.step);
     test_step.dependOn(&run_zig_conformance_tests.step);

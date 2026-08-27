@@ -25,6 +25,8 @@ remain experimental work.
 - Adapt existing native tokenizers and parsers where suitable instead of duplicating them.
 - Keep implementation kind separate from quality: new backends remain experimental until a
   consumer deliberately promotes verified lexical or structural behavior.
+- Generate the enabled verified-backend registry and common aliases in the package so consumers do
+  not maintain parallel allowlists.
 
 ## Architecture
 

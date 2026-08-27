@@ -46,9 +46,9 @@ fail.
 
 Disabling syntax highlighting continues to emit safely escaped plain text.
 
-The package exposes canonical backend names only. Zine owns aliases, including
-`shell` and `sh` for the canonical `bash` backend. Adding a backend does
-not imply full language conformance: each owned backend documents the syntax
+Backend metadata uses canonical names, while the configured package registry owns common aliases,
+including `shell` and `sh` for the canonical `bash` backend. Adding a backend does not imply full
+language conformance: each owned backend documents the syntax
 subset it recognizes and leaves all other bytes unclassified.
 
 ## Removal Evidence

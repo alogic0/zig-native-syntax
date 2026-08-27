@@ -29,10 +29,9 @@ reported as a highlighting error.
 The backend does not recursively highlight raw HTML. It marks the region as
 embedded so a future composed backend can delegate it to the HTML adapter.
 Likewise, fenced code is one `markup_code` region: resolving its info string and
-running another language backend is deferred because aliases and enabled
-backends are consumer-owned policy.
+running another language backend is deferred to the caller, which can use the
+package's configured registry.
 
 The module's canonical name is `markdown`. Aliases such as `md`, `smd`, and
-`supermd` are deliberately not part of the package API. SuperMD directives and
-page semantics remain owned by Zine and are not interpreted by this source
-highlighter.
+`supermd` are resolved by the configured registry. SuperMD directives and page
+semantics remain owned by Zine and are not interpreted by this source highlighter.

@@ -24,9 +24,9 @@ while consuming a parser does not automatically make a backend verified. New bac
 experimental until their expected classifications, recovery, source preservation, and representative
 corpus behavior have been reviewed.
 
-Canonical names identify package capabilities. They are not filename extensions, Markdown fence
-aliases, CSS classes, or HTML content. A consumer such as Zine owns mappings from its accepted aliases
-to enabled backends.
+Canonical names identify package capabilities. The package also owns a deliberately narrow alias
+table for common filename and Markdown-fence labels. Aliases resolve only through the configured
+registry and never change backend metadata, CSS classes, or rendered HTML.
 
 `Backend.init` validates constant metadata at compile time. Runtime metadata can be checked with
 `BackendInfo.validate` before it is used to construct a registry.
@@ -65,14 +65,15 @@ ordinary ranges first. If the complete source is valid UTF-8, it then requires e
 and end to be a code-point boundary. Invalid UTF-8 input retains arbitrary-byte captures. The same
 helper protects callers that construct captures directly before HTML rendering.
 
-## Optional Backends
+## Configured Registry
 
-The core package does not maintain a global runtime registry. Backend modules export descriptors, and
-consumers or a future configured module choose which descriptors to include. Consequently:
+The package exposes `native_syntax_registry` alongside the dependency-free core module. It reflects
+all core `languages` declarations whose `SupportLevel` is verified, then adds the external backends
+enabled by build options. Consequently:
 
 - core use requires only Zig's standard library;
 - an unused external parser backend need not be imported or compiled;
-- consumer aliases do not expand the core API;
+- aliases and quality filtering have one package-owned implementation;
 - adding a backend does not require a central exhaustive language enum.
 
 External parser adapters use the separate-module and lazy-dependency mechanism defined in

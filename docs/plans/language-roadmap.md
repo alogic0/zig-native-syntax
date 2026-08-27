@@ -8,8 +8,8 @@ unchecked item starts, confirm concrete consumer demand and document both its
 lexical foundation and whether syntax structure affects classification.
 
 Checked entries have a backend today. Markdown includes inline Markdown, while
-consumer-owned aliases and file-type mappings do not require separate
-backends. Formats and embedded syntaxes are included because Zine accepts them
+package-owned aliases and file-type mappings do not require separate backends.
+Formats and embedded syntaxes are included because Zine accepts them
 as source-highlighting labels even when developer surveys do not classify them
 as programming languages.
 
@@ -37,7 +37,7 @@ the code that runs, not only backend metadata: Ziggy currently declares itself
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-quality-first viewer registry promotes 14 backends as **verified structural**
+configured package registry exposes 14 backends as **verified structural**
 and 16 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
