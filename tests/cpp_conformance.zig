@@ -17,6 +17,18 @@ test "C++ metadata and contextual roles are stable" {
     try expectCapture(source, sink.captures(), "render", .function);
     try expectCapture(source, sink.captures(), "item", .parameter);
     try expectCapture(source, sink.captures(), "value", .property);
+
+    const calls = "class Widget {}; Widget(); ZigLLVMCreateTargetMachine();";
+    var call_sink: s.CaptureSink = .init(std.testing.allocator, calls.len);
+    defer call_sink.deinit();
+    try backend.highlight(calls, &call_sink);
+    try expectCapture(calls, call_sink.captures(), "Widget", .constructor);
+    try expectCapture(calls, call_sink.captures(), "ZigLLVMCreateTargetMachine", .function);
+    try expectNoCapture(calls, call_sink.captures(), "ZigLLVMCreateTargetMachine", .constructor);
+}
+
+fn expectNoCapture(source: []const u8, captures: []const s.Capture, text: []const u8, scope: s.Scope) !void {
+    for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return error.TestUnexpectedResult;
 }
 
 test "C++ backend conforms" {

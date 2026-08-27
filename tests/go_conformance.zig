@@ -13,6 +13,15 @@ test "Go backend is structural" {
     try expect(source, sink.captures(), "add", .function);
     try expect(source, sink.captures(), "lhs", .parameter);
     try expect(source, sink.captures(), "helper", .function);
+
+    const method = "func (value Item) Render(input string) string { return input }";
+    var method_sink: s.CaptureSink = .init(std.testing.allocator, method.len);
+    defer method_sink.deinit();
+    try backend.highlight(method, &method_sink);
+    try expect(method, method_sink.captures(), "value", .parameter);
+    try expect(method, method_sink.captures(), "Item", .type);
+    try expect(method, method_sink.captures(), "Render", .function);
+    try expect(method, method_sink.captures(), "input", .parameter);
 }
 test "Go backend conforms" {
     try h.expect(s.languages.go.backend, @embedFile("corpus/go/complete.go"), &.{ .keyword, .type, .string, .escape, .number, .boolean, .comment, .function }, "var x = \"<&>\\\"'\" // comment");

@@ -12,10 +12,12 @@ pub const Config = struct {
     variable_declarations: []const []const u8 = &.{},
     capitalized_types: bool = true,
     capitalized_calls_are_constructors: bool = false,
+    function_receiver_before_name: bool = false,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
     var parser: Parser = .{ .source = source, .sink = sink, .config = config };
+    defer parser.deinit();
     try parser.run();
 }
 
@@ -26,9 +28,15 @@ const Parser = struct {
     index: usize = 0,
     paren_depth: usize = 0,
     parameter_depth: ?usize = null,
+    receiver_depth: ?usize = null,
     expected: ?Scope = null,
     declaration: bool = false,
     pending_function: bool = false,
+    known_types: std.ArrayList([]const u8) = .empty,
+
+    fn deinit(parser: *Parser) void {
+        parser.known_types.deinit(parser.sink.allocator);
+    }
 
     fn run(parser: *Parser) api.HighlightError!void {
         while (parser.index < parser.source.len) switch (parser.source[parser.index]) {
@@ -44,13 +52,16 @@ const Parser = struct {
             '\'', '"', '`' => parser.skipString(parser.source[parser.index]),
             '(' => {
                 parser.paren_depth += 1;
-                if (parser.pending_function) {
+                if (parser.config.function_receiver_before_name and parser.expected == .function) {
+                    parser.receiver_depth = parser.paren_depth;
+                } else if (parser.pending_function) {
                     parser.parameter_depth = parser.paren_depth;
                     parser.pending_function = false;
                 }
                 parser.index += 1;
             },
             ')' => {
+                if (parser.receiver_depth == parser.paren_depth) parser.receiver_depth = null;
                 if (parser.parameter_depth == parser.paren_depth) parser.parameter_depth = null;
                 parser.paren_depth -|= 1;
                 parser.index += 1;
@@ -94,8 +105,10 @@ const Parser = struct {
         const word = parser.source[start..parser.index];
         const next = nextNonSpace(parser.source, parser.index);
 
-        if (parser.expected) |scope| {
+        if (parser.expected != null and parser.receiver_depth == null) {
+            const scope = parser.expected.?;
             try parser.sink.add(start, parser.index, scope);
+            if (scope == .type) try parser.rememberType(word);
             parser.pending_function = scope == .function;
             parser.declaration = scope == .type or scope == .variable;
             parser.expected = null;
@@ -131,7 +144,7 @@ const Parser = struct {
         } else if (nextNamespaceOperator(parser.source, parser.index)) {
             try parser.sink.add(start, parser.index, .namespace);
         } else if (next == '(') {
-            const constructor = parser.config.capitalized_calls_are_constructors and std.ascii.isUpper(word[0]);
+            const constructor = parser.config.capitalized_calls_are_constructors and parser.isKnownType(word);
             try parser.sink.add(start, parser.index, if (constructor) .constructor else .function);
             parser.pending_function = parser.declaration or constructor;
             parser.declaration = false;
@@ -140,6 +153,8 @@ const Parser = struct {
         } else if (parser.config.capitalized_types and std.ascii.isUpper(word[0]) and next != '=' and next != ',' and next != ';') {
             try parser.sink.add(start, parser.index, .type);
             parser.declaration = true;
+        } else if (parser.receiver_depth != null) {
+            try parser.sink.add(start, parser.index, .parameter);
         } else if (parser.parameter_depth != null) {
             try parser.sink.add(start, parser.index, .parameter);
         } else if (parser.declaration) {
@@ -148,6 +163,15 @@ const Parser = struct {
         } else {
             try parser.sink.add(start, parser.index, .variable);
         }
+    }
+
+    fn rememberType(parser: *Parser, word: []const u8) api.HighlightError!void {
+        if (!parser.isKnownType(word)) try parser.known_types.append(parser.sink.allocator, word);
+    }
+
+    fn isKnownType(parser: Parser, word: []const u8) bool {
+        for (parser.known_types.items) |known| if (std.mem.eql(u8, known, word)) return true;
+        return false;
     }
 };
 
