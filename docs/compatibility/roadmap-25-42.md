@@ -8,10 +8,11 @@ evaluating embedded languages.
   documented keyword and primitive-type sets, comments, attributes,
   identifiers, calls, numbers, strings and escapes, operators, and punctuation.
   C++ and Objective-C also classify line-leading preprocessor directives.
-- `powershell`, `php`, `lua`, and `ruby` recognize language keywords, comments,
+- `powershell`, `php`, and `ruby` recognize language keywords, comments,
   variables where prefixed, calls, values, and quoted literals. PowerShell
-  here-strings, PHP heredocs, Lua long strings beyond `--[[` comments, and Ruby
-  percent literals and heredocs remain plain or receive only lexical scopes.
+  here-strings, PHP heredocs, and Ruby percent literals and heredocs remain
+  plain or receive only lexical scopes.
+- `lua` has a separate parser-backed compatibility contract in `lua.md`.
 - `asm` and `nasm` recognize common mnemonics, registers and size names,
   labels, comments, numbers, strings, operators, and punctuation. They do not
   select an instruction set or validate operands and directives.
