@@ -14,6 +14,7 @@ pub const Config = struct {
     preprocessor: bool = false,
     case_insensitive: bool = false,
     classify_identifiers: bool = true,
+    identifier_dash: bool = true,
     at_scope: Scope = .attribute,
 };
 
@@ -109,7 +110,7 @@ const Scanner = struct {
             self.index += 1;
             while (self.index < self.source.len and self.source[self.index] != '}') self.index += 1;
             if (self.index < self.source.len) self.index += 1;
-        } else while (self.index < self.source.len and isIdentifierContinue(self.source[self.index])) self.index += 1;
+        } else while (self.index < self.source.len and self.isIdentifierContinue(self.source[self.index])) self.index += 1;
         const word = self.source[start..self.index];
         const scope: Scope = if (wordEqual(word, "$true", true) or wordEqual(word, "$false", true)) .boolean else if (wordEqual(word, "$null", true)) .constant else .variable;
         try self.sink.add(start, self.index, scope);
@@ -118,7 +119,7 @@ const Scanner = struct {
         const start = self.index;
         self.index += 1;
         if (self.config.at_scope == .variable and self.index < self.source.len and self.source[self.index] == '@') self.index += 1;
-        while (self.index < self.source.len and isIdentifierContinue(self.source[self.index])) self.index += 1;
+        while (self.index < self.source.len and self.isIdentifierContinue(self.source[self.index])) self.index += 1;
         try self.sink.add(start, self.index, self.config.at_scope);
     }
     fn scanOperator(self: *Scanner) api.HighlightError!void {
@@ -136,7 +137,7 @@ const Scanner = struct {
     fn scanWord(self: *Scanner) api.HighlightError!void {
         const start = self.index;
         self.index += 1;
-        while (self.index < self.source.len and isIdentifierContinue(self.source[self.index])) self.index += 1;
+        while (self.index < self.source.len and self.isIdentifierContinue(self.source[self.index])) self.index += 1;
         const word = self.source[start..self.index];
         const scope: ?Scope = if (contains(self.config.keywords, word, self.config.case_insensitive)) .keyword else if (contains(self.config.types, word, self.config.case_insensitive)) .type else if (contains(self.config.booleans, word, self.config.case_insensitive)) .boolean else if (contains(self.config.constants, word, self.config.case_insensitive)) .constant else if (!self.config.classify_identifiers) null else if (self.after_dot) .property else blk: {
             const next = nextByte(self.source, self.index);
@@ -150,6 +151,10 @@ const Scanner = struct {
             if (resolved == .type) try self.sink.add(start, self.index, .builtin);
         }
         self.after_dot = false;
+    }
+
+    fn isIdentifierContinue(self: Scanner, byte: u8) bool {
+        return std.ascii.isAlphanumeric(byte) or byte == '_' or (self.config.identifier_dash and byte == '-');
     }
 };
 fn escapeEnd(source: []const u8, start: usize) usize {
@@ -183,9 +188,6 @@ fn nextByte(source: []const u8, start: usize) ?u8 {
 }
 fn isIdentifierStart(byte: u8) bool {
     return std.ascii.isAlphabetic(byte) or byte == '_';
-}
-fn isIdentifierContinue(byte: u8) bool {
-    return std.ascii.isAlphanumeric(byte) or byte == '_' or byte == '-';
 }
 fn wordEqual(a: []const u8, b: []const u8, insensitive: bool) bool {
     return if (insensitive) std.ascii.eqlIgnoreCase(a, b) else std.mem.eql(u8, a, b);
