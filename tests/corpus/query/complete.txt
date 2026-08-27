@@ -1,6 +1,6 @@
 (function_definition
   name: (identifier) @function
-  (#match? @function "^x\\n"))
+  parameters: (parameters (identifier) @parameter)
+  (#match? @function "^x\\n"))+
 (ERROR) @invalid
-42 true
 ; comment
