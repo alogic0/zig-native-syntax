@@ -1,2 +1,8 @@
-Subject: "x\n<&>" 42 true
-> comment
+From: Viewer <viewer@example.test>
+To: User <user@example.test>
+Subject: Build complete
+
+See https://example.test/build/42.
+> previous message
+-- 
+Viewer
