@@ -15,6 +15,7 @@ pub const aliases = [_]Alias{
     .{ .alias = "docker", .canonical = "dockerfile" },
     .{ .alias = "yml", .canonical = "yaml" },
     .{ .alias = "py", .canonical = "python" },
+    .{ .alias = "python3", .canonical = "python" },
     .{ .alias = "terraform", .canonical = "hcl" },
     .{ .alias = "makefile", .canonical = "make" },
     .{ .alias = "sshconfig", .canonical = "ssh-config" },
