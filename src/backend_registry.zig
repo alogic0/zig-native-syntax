@@ -30,6 +30,8 @@ pub const aliases = [_]Alias{
     .{ .alias = "f95", .canonical = "fortran" },
     .{ .alias = "assembly", .canonical = "asm" },
     .{ .alias = "gas", .canonical = "asm" },
+    .{ .alias = "ps1", .canonical = "powershell" },
+    .{ .alias = "pwsh", .canonical = "powershell" },
     .{ .alias = "md", .canonical = "markdown" },
     .{ .alias = "smd", .canonical = "markdown" },
     .{ .alias = "supermd", .canonical = "markdown" },

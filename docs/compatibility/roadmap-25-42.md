@@ -9,10 +9,12 @@ evaluating embedded languages.
   identifiers, calls, numbers, strings and escapes, operators, and punctuation.
   Objective-C also classifies line-leading preprocessor directives.
 - `cpp` has a separate parser-backed compatibility contract in `cpp.md`.
-- `powershell`, `php`, and `ruby` recognize language keywords, comments,
+- `php` and `ruby` recognize language keywords, comments,
   variables where prefixed, calls, values, and quoted literals. PowerShell
   here-strings, PHP heredocs, and Ruby percent literals and heredocs remain
   plain or receive only lexical scopes.
+- `powershell` has a separate parser-backed compatibility contract in
+  `powershell.md`.
 - `lua` has a separate parser-backed compatibility contract in `lua.md`.
 - `asm` and `nasm` recognize common mnemonics, registers and size names,
   labels, comments, numbers, strings, operators, and punctuation. They do not
