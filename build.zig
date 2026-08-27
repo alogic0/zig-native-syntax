@@ -424,6 +424,7 @@ pub fn build(b: *std.Build) void {
     const fortran_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "fortran", .display_name = "Fortran", .sample_path = "source.f90" });
     const pdll_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "pdll", .display_name = "PDLL", .sample_path = "source.pdll" });
     const batch_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "batch", .display_name = "Windows Batch", .sample_path = "source.bat" });
+    const starlark_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "starlark", .display_name = "Starlark", .sample_path = "source.bzl" });
     const openscad_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "openscad", .display_name = "OpenSCAD", .sample_path = "source.scad" });
     const nickel_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nickel", .display_name = "Nickel", .sample_path = "source.ncl" });
     const hare_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "hare", .display_name = "Hare", .sample_path = "source.ha" });
@@ -1109,7 +1110,7 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }
-    inline for (.{ d_runs, v_runs, odin_runs, c3_runs, systemverilog_runs, llvm_runs, mlir_runs, tablegen_runs, fortran_runs, pdll_runs, batch_runs, openscad_runs, nickel_runs, hare_runs }) |runs| {
+    inline for (.{ d_runs, v_runs, odin_runs, c3_runs, systemverilog_runs, llvm_runs, mlir_runs, tablegen_runs, fortran_runs, pdll_runs, batch_runs, starlark_runs, openscad_runs, nickel_runs, hare_runs }) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }

@@ -35,6 +35,8 @@ pub const aliases = [_]Alias{
     .{ .alias = "rb", .canonical = "ruby" },
     .{ .alias = "bat", .canonical = "batch" },
     .{ .alias = "cmd", .canonical = "batch" },
+    .{ .alias = "bazel", .canonical = "starlark" },
+    .{ .alias = "bzl", .canonical = "starlark" },
     .{ .alias = "md", .canonical = "markdown" },
     .{ .alias = "smd", .canonical = "markdown" },
     .{ .alias = "supermd", .canonical = "markdown" },

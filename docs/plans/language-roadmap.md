@@ -29,7 +29,7 @@ The suffix on each entry records its implementation depth on `main`:
 These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
-input, and deterministic-output contract. There are currently 20 parser-backed
+input, and deterministic-output contract. There are currently 21 parser-backed
 languages, 4 partially parser-backed compositions, 4 tokenizer adapters, 14
 dedicated scanners, and 51 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
@@ -37,7 +37,7 @@ the code that runs, not only backend metadata: Ziggy currently declares itself
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 31 backends as **verified structural**
+configured package registry exposes 32 backends as **verified structural**
 and 28 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -137,3 +137,4 @@ the backend actually understands.
 - [x] 91. Fortran — **configured scanner** — *verified lexical*
 - [x] 92. PDLL — **parser** (owned tolerant declaration parser) — *verified structural*
 - [x] 93. Windows Batch — **dedicated scanner** — *verified lexical*
+- [x] 94. Starlark/Bazel — **parser** (owned tolerant declaration parser) — *verified structural*
