@@ -69,6 +69,7 @@ pub const languages = struct {
     pub const elm = @import("languages/elm.zig");
     pub const fish = @import("languages/fish.zig");
     pub const fsharp = @import("languages/fsharp.zig");
+    pub const fortran = @import("languages/fortran.zig");
     pub const gdscript = @import("languages/gdscript.zig");
     pub const git_rebase = @import("languages/git_rebase.zig");
     pub const gitcommit = @import("languages/gitcommit.zig");
