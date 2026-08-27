@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 configured package registry exposes 16 backends as **verified structural**
-and 21 as **verified lexical**. Every entry without a verification marker
+and 22 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -101,7 +101,7 @@ the backend actually understands.
 - [x] 55. Org Mode — **dedicated scanner** — *verified lexical*
 - [x] 56. DTD — **configured scanner**
 - [x] 57. E-mail — **configured scanner**
-- [x] 58. Hurl — **configured scanner**
+- [x] 58. Hurl — **dedicated scanner** — *verified lexical*
 - [x] 59. Ninja — **dedicated scanner** — *verified lexical*
 - [x] 60. RPM spec — **configured scanner**
 - [x] 61. RPM Bash — **parser** (delegates to the Bash backend) — *verified structural*
