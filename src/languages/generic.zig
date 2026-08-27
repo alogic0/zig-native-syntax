@@ -15,7 +15,7 @@ pub const Config = struct {
     case_insensitive: bool = false,
     classify_identifiers: bool = true,
     identifier_dash: bool = true,
-    at_scope: Scope = .attribute,
+    at_scope: ?Scope = .attribute,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -120,7 +120,7 @@ const Scanner = struct {
         self.index += 1;
         if (self.config.at_scope == .variable and self.index < self.source.len and self.source[self.index] == '@') self.index += 1;
         while (self.index < self.source.len and self.isIdentifierContinue(self.source[self.index])) self.index += 1;
-        try self.sink.add(start, self.index, self.config.at_scope);
+        if (self.config.at_scope) |scope| try self.sink.add(start, self.index, scope);
     }
     fn scanOperator(self: *Scanner) api.HighlightError!void {
         const start = self.index;
