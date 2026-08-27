@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 configured package registry exposes 15 backends as **verified structural**
-and 17 as **verified lexical**. Every entry without a verification marker
+and 18 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -83,7 +83,7 @@ the backend actually understands.
 - [x] 37. Objective-C — **configured scanner**
 - [x] 38. Vue — **dedicated scanner** (shared component-markup scanner)
 - [x] 39. Astro — **dedicated scanner** (shared component-markup scanner)
-- [x] 40. JSDoc — **dedicated scanner**
+- [x] 40. JSDoc — **dedicated scanner** — *verified lexical*
 - [x] 41. Regular expressions — **dedicated scanner** — *verified lexical*
 - [x] 42. Protocol Buffers — **configured scanner**
 - [x] 43. KDL — **dedicated scanner** — *verified lexical*

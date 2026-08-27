@@ -1,0 +1,6 @@
+/**
+ * Render {@link Component} children.
+ * @template T
+ * @param {Array<{name: string, value: T}>} [items=[]] rows to render
+ * @returns {Promise<string>} serialized `HTML`
+ */

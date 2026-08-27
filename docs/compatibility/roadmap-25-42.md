@@ -20,8 +20,8 @@ evaluating embedded languages.
   attribute values, Vue interpolation regions, and Astro frontmatter. Script,
   style, frontmatter, and expression bodies remain embedded text rather than
   being recursively parsed.
-- `jsdoc` recognizes documentation text, `@` tags, brace-delimited type text,
-  and backtick code spans. It does not validate tag grammar or type syntax.
+- `jsdoc` has a separate verified lexical compatibility contract in
+  `jsdoc.md`.
 - `regex` has a separate verified lexical compatibility contract in
   `regex.md`.
 - `proto` recognizes Protocol Buffers declarations, scalar types, comments,
