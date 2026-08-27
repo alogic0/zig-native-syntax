@@ -24,9 +24,7 @@ evaluating embedded languages.
   `jsdoc.md`.
 - `regex` has a separate verified lexical compatibility contract in
   `regex.md`.
-- `proto` recognizes Protocol Buffers declarations, scalar types, comments,
-  fields, values, strings and escapes, operators, and punctuation. It does not
-  resolve imports, options, field types, or service signatures.
+- `proto` has a separate parser-backed compatibility contract in `proto.md`.
 
 Quoted strings in the shared lexical scanners stop at a newline. Unterminated
 block comments and component comments extend to end of input. These recovery

@@ -37,7 +37,7 @@ the code that runs, not only backend metadata: Ziggy currently declares itself
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 15 backends as **verified structural**
+configured package registry exposes 16 backends as **verified structural**
 and 18 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -85,7 +85,7 @@ the backend actually understands.
 - [x] 39. Astro — **dedicated scanner** (shared component-markup scanner)
 - [x] 40. JSDoc — **dedicated scanner** — *verified lexical*
 - [x] 41. Regular expressions — **dedicated scanner** — *verified lexical*
-- [x] 42. Protocol Buffers — **configured scanner**
+- [x] 42. Protocol Buffers — **parser** (owned tolerant declaration parser) — *verified structural*
 - [x] 43. KDL — **dedicated scanner** — *verified lexical*
 - [x] 44. Nix — **configured scanner**
 - [x] 45. Fish — **configured scanner**

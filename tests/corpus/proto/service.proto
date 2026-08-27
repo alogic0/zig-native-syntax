@@ -1,0 +1,15 @@
+package viewer.api;
+
+enum Format {
+  FORMAT_UNSPECIFIED = 0;
+  HTML = 1;
+}
+
+message RenderRequest {
+  string markdown = 1;
+  optional Format format = 2;
+}
+
+service Renderer {
+  rpc Render(RenderRequest) returns (RenderRequest);
+}
