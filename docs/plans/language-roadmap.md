@@ -29,15 +29,15 @@ The suffix on each entry records its implementation depth on `main`:
 These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
-input, and deterministic-output contract. There are currently 12 parser-backed
+input, and deterministic-output contract. There are currently 13 parser-backed
 languages, 4 partially parser-backed compositions, 4 tokenizer adapters, 12
-dedicated scanners, and 59 configured scanners. This classification describes
+dedicated scanners, and 58 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 23 backends as **verified structural**
+configured package registry exposes 24 backends as **verified structural**
 and 25 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -71,7 +71,7 @@ the backend actually understands.
 - [x] 25. Java — **configured scanner**
 - [x] 26. C# — **configured scanner**
 - [x] 27. C++ — **parser** (shared tolerant C-like declaration parser) — *verified structural*
-- [x] 28. Go — **configured scanner**
+- [x] 28. Go — **parser** (shared tolerant C-like declaration parser) — *verified structural*
 - [x] 29. PowerShell — **configured scanner**
 - [x] 30. PHP — **configured scanner**
 - [x] 31. Lua — **parser** (owned tolerant parser) — *verified structural*

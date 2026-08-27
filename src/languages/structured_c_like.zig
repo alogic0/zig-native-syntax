@@ -139,6 +139,8 @@ const Parser = struct {
         } else if (parser.config.capitalized_types and std.ascii.isUpper(word[0]) and next != '=' and next != ',' and next != ';') {
             try parser.sink.add(start, parser.index, .type);
             parser.declaration = true;
+        } else if (parser.parameter_depth != null) {
+            try parser.sink.add(start, parser.index, .parameter);
         } else if (parser.declaration) {
             try parser.sink.add(start, parser.index, if (parser.parameter_depth != null) .parameter else .variable);
             parser.declaration = next == ',';
