@@ -22,9 +22,8 @@ evaluating embedded languages.
   being recursively parsed.
 - `jsdoc` recognizes documentation text, `@` tags, brace-delimited type text,
   and backtick code spans. It does not validate tag grammar or type syntax.
-- `regex` recognizes escapes, character classes, anchors, wildcard atoms,
-  grouping punctuation, alternation, and quantifier operators. It deliberately
-  does not select a regex dialect or validate group and quantifier structure.
+- `regex` has a separate verified lexical compatibility contract in
+  `regex.md`.
 - `proto` recognizes Protocol Buffers declarations, scalar types, comments,
   fields, values, strings and escapes, operators, and punctuation. It does not
   resolve imports, options, field types, or service signatures.
