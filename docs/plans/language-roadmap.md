@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 configured package registry exposes 16 backends as **verified structural**
-and 20 as **verified lexical**. Every entry without a verification marker
+and 21 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -95,7 +95,7 @@ the backend actually understands.
 - [x] 49. Git commit — **dedicated scanner** — *verified lexical*
 - [x] 50. Git rebase — **composed** (rebase scanner with parser-backed Bash exec commands) — *verified structural*
 - [x] 51. Gettext PO — **dedicated scanner** — *verified lexical*
-- [x] 52. reStructuredText — **configured scanner**
+- [x] 52. reStructuredText — **dedicated scanner** — *verified lexical*
 - [x] 53. LaTeX — **dedicated scanner** — *verified lexical*
 - [x] 54. Typst — **configured scanner**
 - [x] 55. Org Mode — **dedicated scanner** — *verified lexical*
