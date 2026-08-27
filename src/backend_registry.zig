@@ -28,6 +28,8 @@ pub const aliases = [_]Alias{
     .{ .alias = "td", .canonical = "tablegen" },
     .{ .alias = "f90", .canonical = "fortran" },
     .{ .alias = "f95", .canonical = "fortran" },
+    .{ .alias = "assembly", .canonical = "asm" },
+    .{ .alias = "gas", .canonical = "asm" },
     .{ .alias = "md", .canonical = "markdown" },
     .{ .alias = "smd", .canonical = "markdown" },
     .{ .alias = "supermd", .canonical = "markdown" },

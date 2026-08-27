@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 configured package registry exposes 27 backends as **verified structural**
-and 25 as **verified lexical**. Every entry without a verification marker
+and 26 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -78,7 +78,7 @@ the backend actually understands.
 - [x] 32. Kotlin — **parser** (shared tolerant C-like declaration parser) — *verified structural*
 - [x] 33. Ruby — **configured scanner**
 - [x] 34. Swift — **configured scanner**
-- [x] 35. Assembly — **configured scanner**
+- [x] 35. Assembly — **configured scanner** — *verified lexical*
 - [x] 36. NASM — **configured scanner**
 - [x] 37. Objective-C — **configured scanner**
 - [x] 38. Vue — **composed** (component markup with parser-backed JavaScript regions) — *verified structural*
