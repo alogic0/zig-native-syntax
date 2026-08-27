@@ -27,5 +27,6 @@ fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void
         .modifiers = &.{ "const", "constexpr", "explicit", "extern", "friend", "inline", "mutable", "static", "thread_local", "typedef", "virtual", "volatile" },
         .type_declarations = &.{ "class", "enum", "struct", "union", "using" },
         .namespace_declarations = &.{"namespace"},
+        .capitalized_calls_are_constructors = true,
     });
 }

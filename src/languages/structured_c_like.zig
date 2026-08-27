@@ -11,6 +11,7 @@ pub const Config = struct {
     function_declarations: []const []const u8 = &.{},
     variable_declarations: []const []const u8 = &.{},
     capitalized_types: bool = true,
+    capitalized_calls_are_constructors: bool = false,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -130,7 +131,7 @@ const Parser = struct {
         } else if (nextNamespaceOperator(parser.source, parser.index)) {
             try parser.sink.add(start, parser.index, .namespace);
         } else if (next == '(') {
-            const constructor = parser.config.capitalized_types and std.ascii.isUpper(word[0]);
+            const constructor = parser.config.capitalized_calls_are_constructors and std.ascii.isUpper(word[0]);
             try parser.sink.add(start, parser.index, if (constructor) .constructor else .function);
             parser.pending_function = parser.declaration or constructor;
             parser.declaration = false;
