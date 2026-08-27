@@ -18,6 +18,7 @@ pub const aliases = [_]Alias{
     .{ .alias = "python3", .canonical = "python" },
     .{ .alias = "terraform", .canonical = "hcl" },
     .{ .alias = "nixos", .canonical = "nix" },
+    .{ .alias = "fish-shell", .canonical = "fish" },
     .{ .alias = "makefile", .canonical = "make" },
     .{ .alias = "sshconfig", .canonical = "ssh-config" },
     .{ .alias = "git-commit", .canonical = "gitcommit" },
