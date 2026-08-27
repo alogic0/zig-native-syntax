@@ -29,15 +29,15 @@ The suffix on each entry records its implementation depth on `main`:
 These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
-input, and deterministic-output contract. There are currently 19 parser-backed
+input, and deterministic-output contract. There are currently 20 parser-backed
 languages, 4 partially parser-backed compositions, 4 tokenizer adapters, 13
-dedicated scanners, and 52 configured scanners. This classification describes
+dedicated scanners, and 51 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 30 backends as **verified structural**
+configured package registry exposes 31 backends as **verified structural**
 and 27 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -77,7 +77,7 @@ the backend actually understands.
 - [x] 31. Lua — **parser** (owned tolerant parser) — *verified structural*
 - [x] 32. Kotlin — **parser** (shared tolerant C-like declaration parser) — *verified structural*
 - [x] 33. Ruby — **parser** (owned tolerant declaration parser) — *verified structural*
-- [x] 34. Swift — **configured scanner**
+- [x] 34. Swift — **parser** (shared tolerant C-like declaration parser) — *verified structural*
 - [x] 35. Assembly — **configured scanner** — *verified lexical*
 - [x] 36. NASM — **configured scanner**
 - [x] 37. Objective-C — **configured scanner**
