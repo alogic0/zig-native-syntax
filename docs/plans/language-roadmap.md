@@ -29,15 +29,15 @@ The suffix on each entry records its implementation depth on `main`:
 These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
-input, and deterministic-output contract. There are currently 9 parser-backed
-languages, 2 partially parser-backed compositions, 4 tokenizer adapters, 14
+input, and deterministic-output contract. There are currently 10 parser-backed
+languages, 2 partially parser-backed compositions, 4 tokenizer adapters, 13
 dedicated scanners, and 59 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 18 backends as **verified structural**
+configured package registry exposes 19 backends as **verified structural**
 and 23 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -61,7 +61,7 @@ the backend actually understands.
 - [x] 15. Dockerfile — **composed** (Dockerfile scanner with parser-backed Bash and lexical JSON regions) — *verified structural*
 - [x] 16. Python — **parser** (owned tolerant parser) — *verified structural*
 - [x] 17. SQL — **dedicated scanner** — *verified lexical*
-- [x] 18. C — **dedicated scanner**
+- [x] 18. C — **parser** (owned tolerant declaration parser) — *verified structural*
 - [x] 19. JavaScript — **parser** (owned tolerant parser) — *verified structural*
 - [x] 20. TypeScript — **parser** (shared JavaScript/TypeScript parser) — *verified structural*
 - [x] 21. YAML — **dedicated scanner** — *verified lexical*

@@ -1,15 +1,11 @@
-# C Highlighting Compatibility
+# C highlighting
 
-The dependency-free `c` backend is a byte-oriented lexical scanner. It
-recognizes preprocessing lines including continuations, line and block
-comments, documentation-comment overlap, prefixed string and character
-literals, escapes, C keywords and common types, primitive values,
-function-shaped identifiers, numbers, operators, punctuation, and ASCII
-identifiers.
+The C backend combines a source-preserving lexical scanner with an owned,
+tolerant declaration pass. The declaration pass distinguishes tag and typedef
+types, functions, parameters, variables, member properties, and labels while
+recovering at statement and block boundaries.
 
-The backend intentionally does not depend on Aro: compiler-grade preprocessing,
-parsing, target types, diagnostics, and semantic storage are unnecessary for
-source-preserving highlighting. The scanner does not expand macros, evaluate
-conditional compilation, resolve typedef names, parse declarators, classify
-fields contextually, or validate literal suffixes and escapes. Unterminated
-comments and literals remain bounded by end of input or the literal's line.
+Preprocessor continuations, comments, literals, escapes, operators, malformed
+declarations, arbitrary invalid bytes, and valid UTF-8 boundaries are covered
+by the conformance suite. The parser is intended for highlighting and does not
+claim to validate translation units or expand macros.

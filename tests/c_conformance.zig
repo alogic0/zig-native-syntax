@@ -5,7 +5,27 @@ const backend = syntax.languages.c.backend;
 
 test "C backend metadata is stable" {
     try std.testing.expectEqualStrings("c", backend.info.canonical_name);
-    try std.testing.expectEqual(syntax.BackendKind.lexical, backend.info.kind);
+    try std.testing.expectEqual(syntax.BackendKind.parser_backed, backend.info.kind);
+    try std.testing.expectEqual(syntax.SupportLevel.verified_structural, backend.info.support_level);
+}
+
+test "C declaration parser distinguishes contextual roles" {
+    const source = "typedef struct Entry { int value; } Entry; static int render(const Entry *entry) { retry: return helper(entry->value); }";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    try expectCapture(source, sink.captures(), "Entry", .type);
+    try expectCapture(source, sink.captures(), "render", .function);
+    try expectCapture(source, sink.captures(), "entry", .parameter);
+    try expectCapture(source, sink.captures(), "retry", .label);
+    try expectCapture(source, sink.captures(), "helper", .function);
+    try expectCapture(source, sink.captures(), "value", .property);
+}
+
+fn expectCapture(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
+    for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
+    return error.TestExpectedEqual;
 }
 
 test "C scanner conforms to the shared backend contract" {
