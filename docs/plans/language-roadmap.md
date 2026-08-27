@@ -37,7 +37,7 @@ the code that runs, not only backend metadata: Ziggy currently declares itself
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 17 backends as **verified structural**
+configured package registry exposes 18 backends as **verified structural**
 and 23 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -103,7 +103,7 @@ the backend actually understands.
 - [x] 57. E-mail — **dedicated scanner** — *verified lexical*
 - [x] 58. Hurl — **dedicated scanner** — *verified lexical*
 - [x] 59. Ninja — **dedicated scanner** — *verified lexical*
-- [x] 60. RPM spec — **configured scanner**
+- [x] 60. RPM spec — **composed** (spec scanner with parser-backed RPM Bash scriptlets) — *verified structural*
 - [x] 61. RPM Bash — **parser** (delegates to the Bash backend) — *verified structural*
 - [x] 62. GDScript — **configured scanner**
 - [x] 63. Perl — **configured scanner**
