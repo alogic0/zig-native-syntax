@@ -29,6 +29,7 @@ pub const languages = struct {
     pub const agda = @import("languages/agda.zig");
     pub const astro = @import("languages/astro.zig");
     pub const bash = @import("languages/bash.zig");
+    pub const batch = @import("languages/batch.zig");
     pub const assembly = @import("languages/assembly.zig");
     pub const c = @import("languages/c.zig");
     pub const cmake = @import("languages/cmake.zig");
