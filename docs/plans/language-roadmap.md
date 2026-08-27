@@ -30,15 +30,15 @@ These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
 input, and deterministic-output contract. There are currently 16 parser-backed
-languages, 4 partially parser-backed compositions, 4 tokenizer adapters, 12
-dedicated scanners, and 55 configured scanners. This classification describes
+languages, 4 partially parser-backed compositions, 4 tokenizer adapters, 13
+dedicated scanners, and 54 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 configured package registry exposes 27 backends as **verified structural**
-and 26 as **verified lexical**. Every entry without a verification marker
+and 27 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -123,7 +123,7 @@ the backend actually understands.
 - [x] 77. Odin — **configured scanner**
 - [x] 78. C3 — **configured scanner**
 - [x] 79. SystemVerilog — **configured scanner**
-- [x] 80. LLVM IR — **configured scanner**
+- [x] 80. LLVM IR — **dedicated scanner** — *verified lexical*
 - [x] 81. OpenSCAD — **configured scanner**
 - [x] 82. Nickel — **configured scanner**
 - [x] 83. Hare — **configured scanner**
