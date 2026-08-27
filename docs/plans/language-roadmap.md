@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 configured package registry exposes 16 backends as **verified structural**
-and 19 as **verified lexical**. Every entry without a verification marker
+and 20 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -98,7 +98,7 @@ the backend actually understands.
 - [x] 52. reStructuredText — **configured scanner**
 - [x] 53. LaTeX — **dedicated scanner** — *verified lexical*
 - [x] 54. Typst — **configured scanner**
-- [x] 55. Org Mode — **configured scanner**
+- [x] 55. Org Mode — **dedicated scanner** — *verified lexical*
 - [x] 56. DTD — **configured scanner**
 - [x] 57. E-mail — **configured scanner**
 - [x] 58. Hurl — **configured scanner**
