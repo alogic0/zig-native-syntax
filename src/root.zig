@@ -81,6 +81,7 @@ pub const languages = struct {
     pub const latex = @import("languages/latex.zig");
     pub const llvm = @import("languages/llvm.zig");
     pub const mail = @import("languages/mail.zig");
+    pub const mlir = @import("languages/mlir.zig");
     pub const nim = @import("languages/nim.zig");
     pub const nickel = @import("languages/nickel.zig");
     pub const ninja = @import("languages/ninja.zig");

@@ -419,6 +419,7 @@ pub fn build(b: *std.Build) void {
     const c3_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "c3", .display_name = "C3", .sample_path = "source.c3" });
     const systemverilog_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "systemverilog", .display_name = "SystemVerilog", .sample_path = "source.sv" });
     const llvm_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "llvm", .display_name = "LLVM IR", .sample_path = "source.ll" });
+    const mlir_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "mlir", .display_name = "MLIR", .sample_path = "source.mlir" });
     const openscad_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "openscad", .display_name = "OpenSCAD", .sample_path = "source.scad" });
     const nickel_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nickel", .display_name = "Nickel", .sample_path = "source.ncl" });
     const hare_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "hare", .display_name = "Hare", .sample_path = "source.ha" });
@@ -1104,7 +1105,7 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }
-    inline for (.{ d_runs, v_runs, odin_runs, c3_runs, systemverilog_runs, llvm_runs, openscad_runs, nickel_runs, hare_runs }) |runs| {
+    inline for (.{ d_runs, v_runs, odin_runs, c3_runs, systemverilog_runs, llvm_runs, mlir_runs, openscad_runs, nickel_runs, hare_runs }) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }
