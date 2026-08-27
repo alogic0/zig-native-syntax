@@ -15,6 +15,7 @@ pub const Config = struct {
     case_insensitive: bool = false,
     classify_identifiers: bool = true,
     identifier_dash: bool = true,
+    strings_stop_at_newline: bool = true,
     at_scope: ?Scope = .attribute,
 };
 
@@ -91,7 +92,7 @@ const Scanner = struct {
             try self.sink.add(at, self.index, .escape);
         } else {
             self.index += 1;
-            if (self.source[self.index - 1] == quote or (quote != '`' and self.source[self.index - 1] == '\n')) break;
+            if (self.source[self.index - 1] == quote or (self.config.strings_stop_at_newline and quote != '`' and self.source[self.index - 1] == '\n')) break;
         };
         try self.sink.add(start, self.index, .string);
         self.after_dot = false;

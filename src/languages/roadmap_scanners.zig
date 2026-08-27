@@ -1,7 +1,7 @@
 const api = @import("../backend.zig");
 const generic = @import("generic.zig");
 
-pub const Kind = enum { kdl, nix, fish, nu, awk, ssh_config, gitcommit, git_rebase, po, rst, latex, typst, org, dtd, mail, hurl, ninja, rpmspec, gdscript, perl, elixir, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
+pub const Kind = enum { kdl, fish, nu, awk, ssh_config, gitcommit, git_rebase, po, rst, latex, typst, org, dtd, mail, hurl, ninja, rpmspec, gdscript, perl, elixir, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, kind: Kind) api.HighlightError!void {
     try generic.highlight(source, sink, config(kind));
@@ -10,7 +10,6 @@ pub fn highlight(source: []const u8, sink: *api.CaptureSink, kind: Kind) api.Hig
 fn config(kind: Kind) generic.Config {
     return switch (kind) {
         .kdl => .{ .line_comments = &.{"//"}, .block_comments = &.{.{ .open = "/*", .close = "*/" }}, .types = &.{ "i64", "f64", "string", "bool" } },
-        .nix => .{ .line_comments = &.{"#"}, .block_comments = &.{.{ .open = "/*", .close = "*/" }}, .keywords = &.{ "assert", "else", "if", "in", "inherit", "let", "or", "rec", "then", "with" } },
         .fish => .{ .line_comments = &.{"#"}, .keywords = &.{ "and", "begin", "break", "case", "else", "end", "for", "function", "if", "in", "not", "or", "return", "set", "switch", "while" } },
         .nu => .{ .line_comments = &.{"#"}, .keywords = &.{ "alias", "break", "const", "def", "else", "export", "extern", "for", "if", "in", "let", "match", "module", "mut", "return", "use", "while" }, .types = &.{ "bool", "float", "int", "list", "nothing", "record", "string", "table" } },
         .awk => .{ .line_comments = &.{"#"}, .keywords = &.{ "BEGIN", "END", "break", "continue", "delete", "else", "exit", "for", "function", "getline", "if", "in", "next", "print", "printf", "return", "while" } },

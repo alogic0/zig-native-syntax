@@ -1,1 +1,5 @@
-let value = "x\n<&>"; count = 42; enabled = true; # comment
+let
+  # Nix corpus
+  render = { name, count ? 1 }:
+    { service.title = "x\n<&> ${builtins.toString count}"; inherit name; enabled = true; };
+in render
