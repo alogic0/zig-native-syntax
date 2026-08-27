@@ -7,10 +7,12 @@ numbers, booleans and constants, identifiers, calls, operators, punctuation,
 and a documented subset of language keywords and primitive types.
 
 The operational and document formats—SSH config, Git commit and rebase text,
-Gettext PO, reStructuredText, LaTeX, Typst, Org, DTD, e-mail, Hurl, Ninja, and
+Gettext PO, reStructuredText, Typst, Org, DTD, e-mail, Hurl, Ninja, and
 RPM spec—receive structural keyword, label, comment, string, and value scopes
 without validation, expansion, or embedded-language parsing. RPM Bash reuses
 the owned Bash parser-backed highlighter.
+
+LaTeX has a separate verified lexical contract in `latex.md`.
 
 KDL, Nix, Fish, Nushell, AWK, GDScript, Perl, Elixir, F#, OCaml, Haskell,
 Gleam, Common Lisp, Scheme, Julia, Elm, PureScript, and Nim use separate
