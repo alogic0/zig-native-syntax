@@ -17,9 +17,7 @@ evaluating embedded languages.
 - `asm` and `nasm` recognize common mnemonics, registers and size names,
   labels, comments, numbers, strings, operators, and punctuation. They do not
   select an instruction set or validate operands and directives.
-- `astro` recognizes markup comments, tags, attributes, quoted
-  attribute values and Astro frontmatter. Script, style, frontmatter, and
-  expression bodies remain embedded text rather than being recursively parsed.
+- `astro` has a separate composed compatibility contract in `astro.md`.
 - `vue` has a separate composed compatibility contract in `vue.md`.
 - `jsdoc` has a separate verified lexical compatibility contract in
   `jsdoc.md`.

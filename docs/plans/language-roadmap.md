@@ -30,14 +30,14 @@ These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
 input, and deterministic-output contract. There are currently 12 parser-backed
-languages, 3 partially parser-backed compositions, 4 tokenizer adapters, 13
+languages, 4 partially parser-backed compositions, 4 tokenizer adapters, 12
 dedicated scanners, and 59 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 22 backends as **verified structural**
+configured package registry exposes 23 backends as **verified structural**
 and 25 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -82,7 +82,7 @@ the backend actually understands.
 - [x] 36. NASM — **configured scanner**
 - [x] 37. Objective-C — **configured scanner**
 - [x] 38. Vue — **composed** (component markup with parser-backed JavaScript regions) — *verified structural*
-- [x] 39. Astro — **dedicated scanner** (shared component-markup scanner)
+- [x] 39. Astro — **composed** (component markup with parser-backed JavaScript regions) — *verified structural*
 - [x] 40. JSDoc — **dedicated scanner** — *verified lexical*
 - [x] 41. Regular expressions — **dedicated scanner** — *verified lexical*
 - [x] 42. Protocol Buffers — **parser** (owned tolerant declaration parser) — *verified structural*
