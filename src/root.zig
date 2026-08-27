@@ -102,6 +102,7 @@ pub const languages = struct {
     pub const rpmspec = @import("languages/rpmspec.zig");
     pub const rst = @import("languages/rst.zig");
     pub const scheme = @import("languages/scheme.zig");
+    pub const shell_session = @import("languages/shell_session.zig");
     pub const ssh_config = @import("languages/ssh_config.zig");
     pub const starlark = @import("languages/starlark.zig");
     pub const systemverilog = @import("languages/systemverilog.zig");
