@@ -1,0 +1,9 @@
+// Dialect conversion <&>
+Rewrite convertValue(value: Value) -> Value;
+
+Pattern SimplifyAdd {
+  let root: Op<arith.addi>;
+  rewrite root with {
+    replace root with op<arith.constant>;
+  };
+}

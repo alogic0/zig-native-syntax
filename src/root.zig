@@ -93,6 +93,7 @@ pub const languages = struct {
     pub const odin = @import("languages/odin.zig");
     pub const openscad = @import("languages/openscad.zig");
     pub const perl = @import("languages/perl.zig");
+    pub const pdll = @import("languages/pdll.zig");
     pub const po = @import("languages/po.zig");
     pub const purescript = @import("languages/purescript.zig");
     pub const query = @import("languages/query.zig");
