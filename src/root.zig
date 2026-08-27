@@ -101,6 +101,7 @@ pub const languages = struct {
     pub const scheme = @import("languages/scheme.zig");
     pub const ssh_config = @import("languages/ssh_config.zig");
     pub const systemverilog = @import("languages/systemverilog.zig");
+    pub const tablegen = @import("languages/tablegen.zig");
     pub const typst = @import("languages/typst.zig");
     pub const uxntal = @import("languages/uxntal.zig");
     pub const v = @import("languages/v.zig");

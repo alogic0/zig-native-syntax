@@ -25,6 +25,7 @@ pub const aliases = [_]Alias{
     .{ .alias = "rs", .canonical = "rust" },
     .{ .alias = "ts", .canonical = "typescript" },
     .{ .alias = "c++", .canonical = "cpp" },
+    .{ .alias = "td", .canonical = "tablegen" },
     .{ .alias = "md", .canonical = "markdown" },
     .{ .alias = "smd", .canonical = "markdown" },
     .{ .alias = "supermd", .canonical = "markdown" },
