@@ -1,1 +1,33 @@
-let run () = let value = "x\n<&>" in let count = 42 in let enabled = true (* comment *)
+[@@@warning "-32"]
+module Geometry = struct
+  type 'a measured = { value : 'a; unit_name : string }
+
+  type shape =
+    | Circle of { radius : float }
+    | Rectangle of float * float
+
+  let area = function
+    | Circle { radius } -> Float.pi *. radius *. radius
+    | Rectangle (width, height) -> width *. height
+
+  let rec map_option f input =
+    match input with
+    | Some value -> Some (f value)
+    | None -> None
+
+  let scale ~factor shape =
+    (* outer comment (* nested comment *) remains bounded *)
+    match shape with
+    | Circle { radius } -> Circle { radius = factor *. radius }
+    | Rectangle (width, height) -> Rectangle (factor *. width, factor *. height)
+
+  let default_scale = 2.0
+  let enabled = true
+  let label = "shape\n<&>"
+end
+
+module Store : sig
+  val find : string -> Geometry.shape option
+end
+
+open Stdlib.List

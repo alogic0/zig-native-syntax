@@ -18,7 +18,7 @@ Hurl has a separate verified lexical contract in `hurl.md`.
 E-mail has a separate verified lexical contract in `mail.md`.
 RPM spec has a separate composed compatibility contract in `rpmspec.md`.
 
-KDL, Nushell, AWK, GDScript, F#, OCaml,
+KDL, Nushell, AWK, GDScript, F#,
 Gleam, Common Lisp, Scheme, Elm, PureScript, and Nim use separate
 language configurations over shared recovery logic. This coverage does not
 resolve names, select dialects, expand macros, validate indentation or types,
@@ -30,6 +30,7 @@ Elixir has a separate verified structural contract in `elixir.md`.
 Julia has a separate verified structural contract in `julia.md`.
 Haskell has a separate verified structural contract in `haskell.md`.
 Perl has a separate verified structural contract in `perl.md`.
+OCaml has a separate verified structural contract in `ocaml.md`.
 
 Quoted strings stop at a newline. Unterminated configured block comments
 extend to end of input, while subsequent lines recover after unterminated
