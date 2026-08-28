@@ -36,6 +36,8 @@ fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void
 }
 
 const Parser = struct {
+    const BindingMode = enum { none, variable, parameter };
+
     source: []const u8,
     sink: *api.CaptureSink,
     capture_count: usize,
@@ -46,6 +48,12 @@ const Parser = struct {
     awaiting_parameters: bool = false,
     awaiting_return_type: bool = false,
     type_context: bool = false,
+    import_active: bool = false,
+    binding_mode: BindingMode = .none,
+    bit_array_depth: usize = 0,
+    bit_array_modifier: bool = false,
+    import_names: [16][]const u8 = undefined,
+    import_name_count: usize = 0,
     suppressed_until: usize = 0,
 
     fn run(parser: *Parser) api.HighlightError!void {
@@ -58,6 +66,9 @@ const Parser = struct {
                 {
                     parser.expected = null;
                     parser.type_context = false;
+                    parser.import_active = false;
+                    parser.binding_mode = .none;
+                    parser.bit_array_modifier = false;
                 }
                 parser.source_cursor = capture.span.end;
             } else {
@@ -84,6 +95,9 @@ const Parser = struct {
         const word = parser.source[capture.span.start..capture.span.end];
         if (std.mem.eql(u8, word, "import")) {
             parser.expected = .namespace;
+            parser.import_active = true;
+        } else if (std.mem.eql(u8, word, "as") and parser.import_active) {
+            parser.expected = .namespace;
         } else if (std.mem.eql(u8, word, "type")) {
             parser.expected = .type;
         } else if (std.mem.eql(u8, word, "fn")) {
@@ -94,8 +108,10 @@ const Parser = struct {
             }
         } else if (std.mem.eql(u8, word, "const")) {
             parser.expected = .constant;
-        } else if (std.mem.eql(u8, word, "let") or std.mem.eql(u8, word, "use")) {
-            parser.expected = .variable;
+        } else if (std.mem.eql(u8, word, "let")) {
+            parser.binding_mode = .variable;
+        } else if (std.mem.eql(u8, word, "use")) {
+            parser.binding_mode = .parameter;
         }
     }
 
@@ -107,6 +123,7 @@ const Parser = struct {
         if (parser.expected) |expected| {
             if (expected == .namespace) {
                 const path_end = importPathEnd(parser.source, start);
+                parser.rememberImportName(parser.source[start..path_end]);
                 parser.empty(capture_index);
                 parser.suppressed_until = path_end;
                 try parser.sink.add(start, path_end, .namespace);
@@ -120,13 +137,27 @@ const Parser = struct {
 
         const next = scanner.nextNonSpace(parser.source, end);
         const previous = scanner.previousNonSpace(parser.source, start);
-        const scope: Scope = if (parser.type_context)
+        const scope: Scope = if (parser.bit_array_modifier)
+            .attribute
+        else if (parser.binding_mode != .none)
+            if (std.ascii.isUpper(word[0])) .constructor else @as(Scope, switch (parser.binding_mode) {
+                .variable => .variable,
+                .parameter => .parameter,
+                .none => unreachable,
+            })
+        else if (parser.type_context)
             .type
+        else if (parser.bit_array_depth != 0 and next == ':')
+            .variable
+        else if (previous == '.' and start >= 2 and parser.source[start - 2] == '.')
+            .variable
         else if (parser.parameter_depth != null and
             (next == ':' or previous == '(' or previous == ','))
             .parameter
         else if (next == ':' and parser.parameter_depth == null)
             .property
+        else if (parser.isImportName(word))
+            .namespace
         else if (previous == '.')
             if (next == '(') .function else .property
         else if (std.ascii.isUpper(word[0]))
@@ -136,15 +167,24 @@ const Parser = struct {
         else
             .variable;
         parser.setScope(capture_index, scope);
+        parser.bit_array_modifier = false;
     }
 
     fn observeOperator(parser: *Parser, capture: Capture) void {
         const operator = parser.source[capture.span.start..capture.span.end];
-        if (operator[0] == ':' or (std.mem.eql(u8, operator, "->") and parser.awaiting_return_type)) {
+        if (std.mem.eql(u8, operator, "<<")) {
+            parser.bit_array_depth += 1;
+        } else if (std.mem.eql(u8, operator, ">>")) {
+            parser.bit_array_depth -|= 1;
+            parser.bit_array_modifier = false;
+        } else if (operator[0] == ':' and parser.bit_array_depth != 0) {
+            parser.bit_array_modifier = true;
+        } else if (operator[0] == ':' or (std.mem.eql(u8, operator, "->") and parser.awaiting_return_type)) {
             parser.type_context = true;
             parser.awaiting_return_type = false;
-        } else if (operator[0] == '=') {
+        } else if (operator[0] == '=' or std.mem.eql(u8, operator, "<-")) {
             parser.type_context = false;
+            parser.binding_mode = .none;
         }
     }
 
@@ -173,6 +213,8 @@ const Parser = struct {
             ';' => {
                 parser.expected = null;
                 parser.type_context = false;
+                parser.import_active = false;
+                parser.binding_mode = .none;
             },
             else => {},
         }
@@ -185,6 +227,23 @@ const Parser = struct {
     fn empty(parser: *Parser, capture_index: usize) void {
         const start = parser.sink.captures()[capture_index].span.start;
         parser.sink.mutableCaptures()[capture_index].span.end = start;
+    }
+
+    fn rememberImportName(parser: *Parser, path: []const u8) void {
+        if (parser.import_name_count == parser.import_names.len) return;
+        const slash = std.mem.lastIndexOfScalar(u8, path, '/') orelse 0;
+        const dot = std.mem.lastIndexOfScalar(u8, path, '.') orelse 0;
+        const separator = @max(slash, dot);
+        const name = if (separator == 0) path else path[separator + 1 ..];
+        parser.import_names[parser.import_name_count] = name;
+        parser.import_name_count += 1;
+    }
+
+    fn isImportName(parser: *const Parser, word: []const u8) bool {
+        for (parser.import_names[0..parser.import_name_count]) |name| {
+            if (std.mem.eql(u8, name, word)) return true;
+        }
+        return false;
     }
 };
 

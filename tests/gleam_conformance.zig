@@ -15,7 +15,7 @@ test "Gleam backend conforms" {
     });
 }
 
-test "Gleam parser classifies declarations imports parameters and fields" {
+test "Gleam parser classifies structural language forms" {
     const source = @embedFile("corpus/gleam/complete.txt");
     var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
     defer sink.deinit();
@@ -29,9 +29,42 @@ test "Gleam parser classifies declarations imports parameters and fields" {
     try expect(source, sink.captures(), "person", .parameter);
     try expect(source, sink.captures(), "prefix", .constant);
     try expect(source, sink.captures(), "@external", .attribute);
+    try expect(source, sink.captures(), "text", .namespace);
+    try expect(source, sink.captures(), "name", .variable);
+    try expect(source, sink.captures(), "enabled", .variable);
+    try expect(source, sink.captures(), "suffix", .parameter);
+    try expect(source, sink.captures(), "updated", .variable);
+    try expect(source, sink.captures(), "enabled", .property);
+    try expect(source, sink.captures(), "try", .function);
+    try expect(source, sink.captures(), "append", .function);
+    try expect(source, sink.captures(), "size", .attribute);
+    try expect(source, sink.captures(), "utf8", .attribute);
+    try expectCount(source, sink.captures(), "list", .namespace, 1);
+    try expectCount(source, sink.captures(), "result", .namespace, 1);
+    try expectCount(source, sink.captures(), "text", .namespace, 3);
+    try expectWithin(source, sink.captures(), "Person(..person", "person", .variable);
+    try expectWithin(source, sink.captures(), "enabled: False", "enabled", .property);
 }
 
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
     for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
+    return error.TestExpectedEqual;
+}
+
+fn expectCount(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope, minimum: usize) !void {
+    var count: usize = 0;
+    for (captures) |capture| {
+        if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) count += 1;
+    }
+    try std.testing.expect(count >= minimum);
+}
+
+fn expectWithin(source: []const u8, captures: []const syntax.Capture, context: []const u8, text: []const u8, scope: syntax.Scope) !void {
+    const context_start = std.mem.indexOf(u8, source, context) orelse return error.TestExpectedEqual;
+    const relative_start = std.mem.indexOf(u8, context, text) orelse return error.TestExpectedEqual;
+    const start = context_start + relative_start;
+    for (captures) |capture| {
+        if (capture.scope == scope and capture.span.start == start and capture.span.end == start + text.len) return;
+    }
     return error.TestExpectedEqual;
 }
