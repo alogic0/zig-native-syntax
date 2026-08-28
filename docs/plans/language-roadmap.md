@@ -37,7 +37,7 @@ the code that runs, not only backend metadata: Ziggy currently declares itself
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 56 backends as **verified structural**
+configured package registry exposes 57 backends as **verified structural**
 and 28 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -113,7 +113,7 @@ the backend actually understands.
 - [x] 67. Haskell — **parser** (shared Haskell/Elm/PureScript structural scanner) — *verified structural*
 - [x] 68. Gleam — **parser** (owned tolerant structural scanner) — *verified structural*
 - [x] 69. Common Lisp — **parser** (shared S-expression structural scanner) — *verified structural*
-- [x] 70. Scheme — **configured scanner**
+- [x] 70. Scheme — **parser** (shared S-expression structural scanner) — *verified structural*
 - [x] 71. Julia — **parser** (owned tolerant declaration and macro parser) — *verified structural*
 - [x] 72. Elm — **parser** (shared Haskell/Elm/PureScript structural scanner) — *verified structural*
 - [x] 73. PureScript — **parser** (shared Haskell/Elm/PureScript structural scanner) — *verified structural*

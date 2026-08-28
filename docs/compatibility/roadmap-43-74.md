@@ -19,7 +19,8 @@ E-mail has a separate verified lexical contract in `mail.md`.
 RPM spec has a separate composed compatibility contract in `rpmspec.md`.
 Elm and PureScript have separate verified structural contracts in `elm.md` and
 `purescript.md`.
-Common Lisp has a separate verified structural contract in `commonlisp.md`.
+Common Lisp and Scheme have separate verified structural contracts in
+`commonlisp.md` and `scheme.md`.
 
 KDL, Nushell, AWK, GDScript,
 Common Lisp, Scheme, Elm, PureScript, and Nim use separate

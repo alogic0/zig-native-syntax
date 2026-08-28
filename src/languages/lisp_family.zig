@@ -28,6 +28,7 @@ const Kind = enum {
     binding,
     slots,
     slot,
+    namespace_parts,
 };
 
 const Frame = struct {
@@ -77,11 +78,12 @@ const Parser = struct {
         else switch (parser.frames[parser.depth - 1].kind) {
             .quoted => .quoted,
             .define_function, .define_macro, .lambda => if (parser.frames[parser.depth - 1].words >= 2 or parser.frames[parser.depth - 1].kind == .lambda) .parameters else .normal,
-            .scheme_define => if (parser.frames[parser.depth - 1].words == 1) .scheme_signature else .normal,
+            .scheme_define => if (parser.frames[parser.depth - 1].words == 1 and parser.frames[parser.depth - 1].children == 0) .scheme_signature else .normal,
             .let => if (parser.frames[parser.depth - 1].words == 1) .bindings else .normal,
             .bindings => .binding,
             .parameters => .parameters,
             .define_type => if (parser.frames[parser.depth - 1].children >= 1) .slots else .normal,
+            .define_namespace => if (parser.frames[parser.depth - 1].words == 1 and parser.frames[parser.depth - 1].children == 0) .namespace_parts else .normal,
             .slots => .slot,
             else => .normal,
         };
@@ -107,6 +109,11 @@ const Parser = struct {
             parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
         }
         const word = parser.source[start..parser.index];
+        if (parser.quoted_next) {
+            parser.quoted_next = false;
+            try parser.sink.add(start, parser.index, .constant);
+            return;
+        }
         if (parser.depth == 0 or std.ascii.isDigit(word[0])) return;
 
         var frame = &parser.frames[parser.depth - 1];
@@ -142,6 +149,14 @@ const Parser = struct {
                 try parser.sink.add(start, parser.index, .property);
                 return;
             },
+            .slots => if (first) {
+                try parser.sink.add(start, parser.index, .property);
+                return;
+            },
+            .namespace_parts => {
+                try parser.sink.add(start, parser.index, .namespace);
+                return;
+            },
             else => {},
         }
         if (first) {
@@ -161,7 +176,7 @@ const Parser = struct {
             .define_variable => if (frame.words == 2) try parser.sink.add(start, parser.index, .variable) else try parser.captureValue(start),
             .define_constant => if (frame.words == 2) try parser.sink.add(start, parser.index, .constant) else try parser.captureValue(start),
             .scheme_define => if (frame.words == 2) try parser.sink.add(start, parser.index, .variable) else try parser.captureValue(start),
-            .parameters, .scheme_signature, .binding, .slot => try parser.captureValue(start),
+            .parameters, .scheme_signature, .binding, .slot, .slots, .namespace_parts => try parser.captureValue(start),
             else => try parser.captureValue(start),
         }
     }
@@ -179,7 +194,7 @@ const Parser = struct {
         if (wordIs(word, &.{ "defun", "defgeneric", "defmethod" })) return .define_function;
         if (wordIs(word, &.{ "defmacro", "define-syntax" })) return .define_macro;
         if (wordIs(word, &.{ "defclass", "defstruct", "deftype", "define-record-type" })) return .define_type;
-        if (wordIs(word, &.{ "defpackage", "in-package" })) return .define_namespace;
+        if (wordIs(word, &.{ "defpackage", "define-library", "import", "in-package" })) return .define_namespace;
         if (wordIs(word, &.{ "defvar", "defparameter" })) return .define_variable;
         if (std.mem.eql(u8, word, "defconstant")) return .define_constant;
         if (parser.dialect == .scheme and std.mem.eql(u8, word, "define")) return .scheme_define;

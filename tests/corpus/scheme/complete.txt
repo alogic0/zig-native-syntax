@@ -1,1 +1,19 @@
-(define (run) (let ((value "x\n<&>") (count 42) (enabled true)) value)) ; comment
+(define-library (demo core)
+  (export greet make-person person-name)
+  (import (scheme base))
+  (begin
+    (define-record-type <person>
+      (make-person name enabled)
+      person?
+      (name person-name)
+      (enabled person-enabled))
+
+    (define limit 42)
+
+    (define (greet person)
+      (let ((message "hello\\n<&>"))
+        (if #t message 'missing)))
+
+    (define-syntax when-ready
+      (syntax-rules ()
+        ((_ body) body))))) ; comment
