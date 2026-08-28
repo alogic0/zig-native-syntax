@@ -1,1 +1,21 @@
-run = let value = "x\n<&>"; count = 42; enabled = true in value -- comment
+{-# LANGUAGE DeriveGeneric #-}
+module Demo.Shapes (Shape(..), area) where
+
+import qualified Data.Map.Strict as Map
+
+data Shape
+  = Circle { radius :: Double }
+  | Rectangle Double Double
+  deriving (Show)
+
+area :: Shape -> Double
+area (Circle radius) = pi * radius ^ 2
+area (Rectangle width height) = width * height
+
+scale :: Double -> Shape -> Shape
+scale factor shape = case shape of
+  Circle radius -> Circle (factor * radius)
+  Rectangle width height -> Rectangle (factor * width) (factor * height)
+
+label shape = "shape\\n<&>"
+enabled = True -- retained flag
