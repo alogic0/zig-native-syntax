@@ -146,6 +146,21 @@ test "Bash parser does not split digit-leading argument words" {
     try expectNoCapture(source, sink.captures(), "127", .number);
 }
 
+test "Bash nested redirection recovery is safe at end of input" {
+    try expectSafeAndDeterministic("echo > > target");
+}
+
+test "Bash nested redirection recovery consumes following arguments" {
+    const source = "echo > > first second\n";
+    try expectSafeAndDeterministic(source);
+
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+    try expectCapture(source, sink.captures(), "echo", .function);
+    try expectNoCapture(source, sink.captures(), "second", .label);
+}
+
 test "Bash corpus covers heredocs and incomplete constructs" {
     const source = @embedFile("corpus/bash/complete.sh");
     var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
@@ -156,6 +171,19 @@ test "Bash corpus covers heredocs and incomplete constructs" {
     try expectCapture(source, sink.captures(), "${name:-world}", .variable);
     try expectCapture(source, sink.captures(), "$(printf '%s' \"$name\")", .embedded);
     try expectCapture(source, sink.captures(), "EOF", .label);
+}
+
+fn expectSafeAndDeterministic(source: []const u8) !void {
+    var first: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer first.deinit();
+    try backend.highlight(source, &first);
+
+    var second: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer second.deinit();
+    try backend.highlight(source, &second);
+
+    try std.testing.expectEqualSlices(syntax.Capture, first.captures(), second.captures());
+    for (first.captures()) |capture| try capture.validate(source.len);
 }
 
 fn expectCapture(
