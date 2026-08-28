@@ -2,6 +2,7 @@ const std = @import("std");
 const api = @import("../backend.zig");
 const Scope = @import("../scope.zig").Scope;
 const nextNonSpace = @import("scanner_support.zig").nextNonSpace;
+const previousNonSpace = @import("scanner_support.zig").previousNonSpace;
 const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 
 pub const Config = struct {
@@ -12,6 +13,7 @@ pub const Config = struct {
     namespace_declarations: []const []const u8 = &.{ "namespace", "package" },
     function_declarations: []const []const u8 = &.{},
     variable_declarations: []const []const u8 = &.{},
+    constant_declarations: []const []const u8 = &.{},
     capitalized_types: bool = true,
     capitalized_calls_are_constructors: bool = false,
     function_receiver_before_name: bool = false,
@@ -21,6 +23,8 @@ pub const Config = struct {
     colon_names_are_properties: bool = false,
     namespace_declarations_end_at_newline: bool = false,
     double_colon_declarations: bool = false,
+    identifier_export_marker: bool = false,
+    colon_properties_in_parentheses: bool = false,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -94,6 +98,12 @@ const Parser = struct {
                 parser.namespace_declaration = false;
                 parser.index += 1;
             },
+            '=' => {
+                parser.expected = null;
+                parser.declaration = false;
+                parser.pending_function = false;
+                parser.index += 1;
+            },
             '{' => {
                 parser.brace_depth += 1;
                 if (parser.pending_type_body) {
@@ -146,7 +156,7 @@ const Parser = struct {
         parser.index += 1;
         while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
         const word = parser.source[start..parser.index];
-        const next = nextNonSpace(parser.source, parser.index);
+        const next = nextAfterIdentifier(parser.source, parser.index, parser.config.identifier_export_marker);
 
         if (parser.expected != null and parser.receiver_depth == null) {
             const scope = parser.expected.?;
@@ -201,6 +211,10 @@ const Parser = struct {
             parser.expected = .variable;
             return;
         }
+        if (contains(parser.config.constant_declarations, word)) {
+            parser.expected = .constant;
+            return;
+        }
         if (contains(parser.config.modifiers, word) or contains(parser.config.builtin_types, word)) {
             parser.declaration = true;
             return;
@@ -234,11 +248,16 @@ const Parser = struct {
             parser.declaration = false;
         } else if (next == '{' and parser.config.capitalized_braces_are_constructors and parser.isKnownType(word)) {
             try parser.sink.add(start, parser.index, .constructor);
-        } else if (next == ':' and parser.paren_depth == 0 and
+        } else if (next == ':' and (parser.paren_depth == 0 or parser.config.colon_properties_in_parentheses) and
             parser.parameter_depth == null and parser.receiver_depth == null and
             !nextIsColonAssignment(parser.source, parser.index))
         {
             try parser.sink.add(start, parser.index, if (parser.config.colon_names_are_properties) .property else .label);
+        } else if ((parser.parameter_depth != null or parser.receiver_depth != null) and
+            previousNonSpace(parser.source, start) == ':' and
+            (std.ascii.isUpper(word[0]) or contains(parser.config.builtin_types, word)))
+        {
+            try parser.sink.add(start, parser.index, .type);
         } else if (parser.config.capitalized_types and std.ascii.isUpper(word[0]) and next != '=' and next != ',' and next != ';') {
             try parser.sink.add(start, parser.index, .type);
             parser.declaration = true;
@@ -298,6 +317,16 @@ fn nextIsColonAssignment(source: []const u8, after: usize) bool {
     var cursor = after;
     while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
     return cursor + 1 < source.len and source[cursor] == ':' and source[cursor + 1] == '=';
+}
+
+fn nextAfterIdentifier(source: []const u8, after: usize, skip_export_marker: bool) ?u8 {
+    var cursor = after;
+    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
+    if (skip_export_marker and cursor < source.len and source[cursor] == '*') {
+        cursor += 1;
+        while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
+    }
+    return if (cursor < source.len) source[cursor] else null;
 }
 
 fn declarationAfterDoubleColon(source: []const u8, after: usize, config: Config) ?Scope {

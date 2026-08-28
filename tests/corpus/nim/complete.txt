@@ -1,1 +1,19 @@
-proc run() = let value = "x\n<&>"; let count = 42; let enabled = true # comment
+import std/strformat
+
+type
+  Person* = object
+    name*: string
+    enabled*: bool
+
+const Limit* = 42
+var count = 1
+let greeting = "hello\\n<&>"
+
+proc render*(person: Person, prefix: string = greeting): string {.inline.} =
+  let message = prefix & person.name
+  result = fmt"{message}: {count}"
+
+proc makePerson(name: string): Person =
+  Person(name: name, enabled: true)
+
+# comment

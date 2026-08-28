@@ -21,6 +21,7 @@ Elm and PureScript have separate verified structural contracts in `elm.md` and
 `purescript.md`.
 Common Lisp and Scheme have separate verified structural contracts in
 `commonlisp.md` and `scheme.md`.
+Nim has a separate verified structural contract in `nim.md`.
 
 KDL, Nushell, AWK, GDScript,
 Common Lisp, Scheme, Elm, PureScript, and Nim use separate
