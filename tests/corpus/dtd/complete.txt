@@ -1,1 +1,13 @@
-ELEMENT note (PCDATA) "x\n<&>" 42 true <!-- comment
+<!ELEMENT note (to,from,heading,body)>
+<!ATTLIST note
+  id ID #REQUIRED
+  status (draft|final) "draft">
+<!ENTITY % shared "INCLUDE">
+%shared;
+<!ENTITY writer "Oleg &amp; Co.">
+<!NOTATION gif SYSTEM "image/gif">
+<![IGNORE[
+  <!ELEMENT ignored ANY>
+]]>
+<!-- comment -->
+<?audit source?>

@@ -30,15 +30,15 @@ These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
 input, and deterministic-output contract. There are currently 53 parser-backed
-languages, 10 partially parser-backed compositions, 4 tokenizer adapters, 25
-dedicated scanners, and 3 configured scanners. This classification describes
+languages, 10 partially parser-backed compositions, 4 tokenizer adapters, 26
+dedicated scanners, and 2 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 configured package registry exposes 63 backends as **verified structural**
-and 31 as **verified lexical**. Every entry without a verification marker
+and 32 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -99,7 +99,7 @@ the backend actually understands.
 - [x] 53. LaTeX — **dedicated scanner** — *verified lexical*
 - [x] 54. Typst — **composed** (markup scanner with owned code parser and math scanner) — *verified structural*
 - [x] 55. Org Mode — **dedicated scanner** — *verified lexical*
-- [x] 56. DTD — **configured scanner**
+- [x] 56. DTD — **dedicated scanner** — *verified lexical*
 - [x] 57. E-mail — **dedicated scanner** — *verified lexical*
 - [x] 58. Hurl — **dedicated scanner** — *verified lexical*
 - [x] 59. Ninja — **dedicated scanner** — *verified lexical*

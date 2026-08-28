@@ -1,7 +1,7 @@
 const api = @import("../backend.zig");
 const generic = @import("generic.zig");
 
-pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, org, dtd, mail, hurl, ninja, rpmspec, commonlisp, scheme, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim };
+pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, org, mail, hurl, ninja, rpmspec, commonlisp, scheme, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, comptime kind: Kind) api.HighlightError!void {
     try generic.highlight(source, sink, config(kind));
@@ -17,7 +17,6 @@ pub fn config(comptime kind: Kind) generic.Config {
         .rst => .{ .line_comments = &.{".. "}, .keywords = &.{ "attention", "code-block", "contents", "image", "include", "note", "raw", "reference", "tip", "warning" } },
         .latex => .{ .line_comments = &.{"%"}, .keywords = &.{ "begin", "chapter", "cite", "documentclass", "emph", "end", "include", "input", "item", "label", "ref", "section", "subsection", "textbf", "usepackage" } },
         .org => .{ .line_comments = &.{"# "}, .keywords = &.{ "BEGIN_SRC", "END_SRC", "TODO", "DONE", "PROPERTIES", "END" } },
-        .dtd => .{ .line_comments = &.{"<!--"}, .keywords = &.{ "ATTLIST", "DOCTYPE", "ELEMENT", "ENTITY", "NOTATION", "PUBLIC", "SYSTEM" }, .types = &.{ "ANY", "CDATA", "EMPTY", "ID", "IDREF", "NMTOKEN", "PCDATA" } },
         .mail => .{ .line_comments = &.{">"}, .keywords = &.{ "From", "To", "Cc", "Date", "Subject", "Reply-To", "Message-ID", "Content-Type" }, .case_insensitive = true },
         .hurl => .{ .line_comments = &.{"#"}, .keywords = &.{ "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HTTP" }, .types = &.{ "jsonpath", "regex", "xpath", "status", "url", "body", "bytes", "duration", "header" } },
         .ninja => .{ .line_comments = &.{"#"}, .keywords = &.{ "build", "default", "include", "pool", "rule", "subninja" } },
