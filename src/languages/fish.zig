@@ -1,6 +1,7 @@
 const std = @import("std");
 const api = @import("../backend.zig");
 const g = @import("generic.zig");
+const scanner = @import("scanner_support.zig");
 
 pub const backend: api.Backend = .init(.{
     .canonical_name = "fish",
@@ -78,7 +79,7 @@ const StructureParser = struct {
                 }
             },
             'a'...'z', 'A'...'Z', '_' => try parser.scanWord(),
-            else => parser.index += validUtf8Length(parser.source[parser.index..]),
+            else => parser.index += scanner.validUtf8Length(parser.source[parser.index..]),
         };
     }
 
@@ -227,7 +228,7 @@ const StructureParser = struct {
         while (parser.index < parser.source.len and !std.ascii.isWhitespace(parser.source[parser.index]) and
             std.mem.indexOfScalar(u8, ";|&", parser.source[parser.index]) == null)
         {
-            parser.index += validUtf8Length(parser.source[parser.index..]);
+            parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
         }
     }
 
@@ -236,7 +237,7 @@ const StructureParser = struct {
         while (parser.index < parser.source.len and !std.ascii.isWhitespace(parser.source[parser.index]) and
             std.mem.indexOfScalar(u8, ";|&()<>", parser.source[parser.index]) == null)
         {
-            parser.index += validUtf8Length(parser.source[parser.index..]);
+            parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
         }
         if (parser.index > start) try parser.sink.add(start, parser.index, .function);
         parser.decorated_command = false;
@@ -244,7 +245,7 @@ const StructureParser = struct {
     }
 
     fn skipLine(parser: *StructureParser) void {
-        parser.index = std.mem.indexOfScalarPos(u8, parser.source, parser.index, '\n') orelse parser.source.len;
+        parser.index = scanner.lineEnd(parser.source, parser.index, parser.source.len);
     }
 };
 
@@ -267,11 +268,4 @@ fn isWordContinue(byte: u8) bool {
 
 fn isVariableContinue(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or byte == '_';
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

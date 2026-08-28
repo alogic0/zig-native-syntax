@@ -1,6 +1,7 @@
 const std = @import("std");
 const api = @import("../backend.zig");
 const g = @import("generic.zig");
+const scanner = @import("scanner_support.zig");
 
 const max_interpolation_depth = 32;
 
@@ -110,7 +111,7 @@ const StructureParser = struct {
                 parser.index += 1;
             },
             'a'...'z', 'A'...'Z', '_' => try parser.scanWord(),
-            else => parser.index += validUtf8Length(parser.source[parser.index..]),
+            else => parser.index += scanner.validUtf8Length(parser.source[parser.index..]),
         };
     }
 
@@ -143,11 +144,11 @@ const StructureParser = struct {
             try parser.sink.add(start, parser.index, .builtin);
         } else if (parser.inherit_mode) {
             try parser.sink.add(start, parser.index, if (parser.inherit_expression_depth > 0) .variable else .property);
-        } else if (nextNonSpace(parser.source, parser.index) == ':') {
+        } else if (scanner.nextNonSpace(parser.source, parser.index) == ':') {
             try parser.sink.add(start, parser.index, .parameter);
-        } else if (nextNonSpace(parser.source, parser.index) == '=') {
+        } else if (scanner.nextNonSpace(parser.source, parser.index) == '=') {
             try parser.sink.add(start, parser.index, if (parser.inLetBindingScope()) .variable else .property);
-        } else if (nextNonSpace(parser.source, parser.index) == '.') {
+        } else if (scanner.nextNonSpace(parser.source, parser.index) == '.') {
             try parser.sink.add(start, parser.index, .property);
         } else {
             try parser.sink.add(start, parser.index, .variable);
@@ -165,7 +166,7 @@ const StructureParser = struct {
                 if (!std.mem.eql(u8, word, "or")) try parser.sink.add(start, cursor, .parameter);
             } else if (parser.source[cursor] == '"') {
                 cursor = stringEnd(parser.source, cursor);
-            } else cursor += validUtf8Length(parser.source[cursor..]);
+            } else cursor += scanner.validUtf8Length(parser.source[cursor..]);
         }
         parser.index = close + 1;
     }
@@ -174,7 +175,7 @@ const StructureParser = struct {
         const start = parser.index;
         const end = stringEnd(parser.source, parser.index);
         try parser.highlightInterpolations(parser.index + 1, end);
-        if (nextNonSpace(parser.source, end) == '=') try parser.sink.add(start, end, .property);
+        if (scanner.nextNonSpace(parser.source, end) == '=') try parser.sink.add(start, end, .property);
         parser.index = end;
     }
 
@@ -194,7 +195,7 @@ const StructureParser = struct {
         if (start + 2 < close) try parser.highlightEmbeddedExpression(start + 2, close);
         const end = if (close < parser.source.len) close + 1 else close;
         if (close < parser.source.len) try parser.sink.add(close, end, .special);
-        if (nextNonSpace(parser.source, end) == '=' or previousNonSpace(parser.source, start) == '.' or nextNonSpace(parser.source, end) == '.') {
+        if (scanner.nextNonSpace(parser.source, end) == '=' or previousNonSpace(parser.source, start) == '.' or scanner.nextNonSpace(parser.source, end) == '.') {
             try parser.sink.add(start, end, .property);
         }
         parser.index = end;
@@ -214,7 +215,7 @@ const StructureParser = struct {
                 continue;
             }
             if (parser.source[parser.index] == '{' or parser.source[parser.index] == '}') break;
-            parser.index += validUtf8Length(parser.source[parser.index..]);
+            parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
         }
         try parser.sink.add(start, parser.index, .string);
     }
@@ -271,11 +272,11 @@ const StructureParser = struct {
     }
 
     fn skipLine(parser: *StructureParser) void {
-        parser.index = std.mem.indexOfScalarPos(u8, parser.source, parser.index, '\n') orelse parser.source.len;
+        parser.index = scanner.lineEnd(parser.source, parser.index, parser.source.len);
     }
 
     fn skipBlock(parser: *StructureParser) void {
-        parser.index = if (std.mem.indexOfPos(u8, parser.source, parser.index + 2, "*/")) |close| close + 2 else parser.source.len;
+        parser.index = scanner.blockCommentEnd(parser.source, parser.index, parser.source.len);
     }
 };
 
@@ -284,9 +285,9 @@ fn parameterSetEnd(source: []const u8, open: usize) ?usize {
     var depth: usize = 1;
     while (cursor < source.len) {
         switch (source[cursor]) {
-            '#' => cursor = lineEnd(source, cursor, source.len),
+            '#' => cursor = scanner.lineEnd(source, cursor, source.len),
             '/' => if (startsWithAt(source, cursor, "/*")) {
-                cursor = blockCommentEnd(source, cursor, source.len);
+                cursor = scanner.blockCommentEnd(source, cursor, source.len);
             } else {
                 cursor += 1;
             },
@@ -305,7 +306,7 @@ fn parameterSetEnd(source: []const u8, open: usize) ?usize {
                 if (depth == 0) return if (hasParameterSetSuffix(source, cursor + 1)) cursor else null;
                 cursor += 1;
             },
-            else => cursor += validUtf8Length(source[cursor..]),
+            else => cursor += scanner.validUtf8Length(source[cursor..]),
         }
     }
     return null;
@@ -315,9 +316,9 @@ fn matchingBrace(source: []const u8, start: usize, limit: usize) ?usize {
     var cursor = start;
     var depth: usize = 1;
     while (cursor < limit) switch (source[cursor]) {
-        '#' => cursor = lineEnd(source, cursor, limit),
+        '#' => cursor = scanner.lineEnd(source, cursor, limit),
         '/' => if (startsWithAt(source, cursor, "/*")) {
-            cursor = blockCommentEnd(source, cursor, limit);
+            cursor = scanner.blockCommentEnd(source, cursor, limit);
         } else {
             cursor += 1;
         },
@@ -336,7 +337,7 @@ fn matchingBrace(source: []const u8, start: usize, limit: usize) ?usize {
             if (depth == 0) return cursor;
             cursor += 1;
         },
-        else => cursor += validUtf8Length(source[cursor..]),
+        else => cursor += scanner.validUtf8Length(source[cursor..]),
     };
     return null;
 }
@@ -351,7 +352,7 @@ fn isPathStart(source: []const u8, start: usize) bool {
 fn searchPathEnd(source: []const u8, start: usize) ?usize {
     var cursor = start + 1;
     if (cursor >= source.len) return null;
-    while (cursor < source.len) : (cursor += validUtf8Length(source[cursor..])) {
+    while (cursor < source.len) : (cursor += scanner.validUtf8Length(source[cursor..])) {
         if (source[cursor] == '>') return if (cursor > start + 1) cursor + 1 else null;
         if (std.ascii.isWhitespace(source[cursor]) or source[cursor] == '<') return null;
     }
@@ -363,7 +364,7 @@ fn uriEnd(source: []const u8, start: usize) usize {
     while (cursor < source.len and !std.ascii.isWhitespace(source[cursor]) and
         std.mem.indexOfScalar(u8, ";,(){}[]", source[cursor]) == null)
     {
-        cursor += validUtf8Length(source[cursor..]);
+        cursor += scanner.validUtf8Length(source[cursor..]);
     }
     return cursor;
 }
@@ -372,7 +373,7 @@ fn indentedStringClose(source: []const u8, start: usize) ?usize {
     var cursor = start;
     while (cursor + 1 < source.len) {
         if (!startsWithAt(source, cursor, "''")) {
-            cursor += validUtf8Length(source[cursor..]);
+            cursor += scanner.validUtf8Length(source[cursor..]);
             continue;
         }
         if (cursor + 2 < source.len and source[cursor + 2] == '\'') {
@@ -394,15 +395,6 @@ fn indentedStringClose(source: []const u8, start: usize) ?usize {
 
 fn indentedStringEnd(source: []const u8, start: usize, limit: usize) usize {
     const close = indentedStringClose(source, start + 2) orelse return limit;
-    return @min(close + 2, limit);
-}
-
-fn lineEnd(source: []const u8, start: usize, limit: usize) usize {
-    return @min(std.mem.indexOfScalarPos(u8, source, start, '\n') orelse limit, limit);
-}
-
-fn blockCommentEnd(source: []const u8, start: usize, limit: usize) usize {
-    const close = std.mem.indexOfPos(u8, source, start + 2, "*/") orelse return limit;
     return @min(close + 2, limit);
 }
 
@@ -437,12 +429,6 @@ fn stringEnd(source: []const u8, start: usize) usize {
     return cursor;
 }
 
-fn nextNonSpace(source: []const u8, after: usize) ?u8 {
-    var cursor = after;
-    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
-    return if (cursor < source.len) source[cursor] else null;
-}
-
 fn previousNonSpace(source: []const u8, before: usize) ?u8 {
     var cursor = before;
     while (cursor > 0 and std.ascii.isWhitespace(source[cursor - 1])) cursor -= 1;
@@ -469,11 +455,4 @@ fn isIdentifierStart(byte: u8) bool {
 
 fn isIdentifierContinue(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or byte == '_' or byte == '-' or byte == '\'';
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

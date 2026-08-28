@@ -3,6 +3,7 @@ const api = @import("../backend.zig");
 const Scope = @import("../scope.zig").Scope;
 const Span = @import("../capture.zig").Span;
 const g = @import("generic.zig");
+const scanner = @import("scanner_support.zig");
 
 pub const backend: api.Backend = .init(.{
     .canonical_name = "objc",
@@ -85,7 +86,7 @@ const StructureParser = struct {
                     parser.index += 1;
                 },
                 'a'...'z', 'A'...'Z', '_' => try parser.scanWord(),
-                else => parser.index += validUtf8Length(parser.source[parser.index..]),
+                else => parser.index += scanner.validUtf8Length(parser.source[parser.index..]),
             }
         }
     }
@@ -141,7 +142,7 @@ const StructureParser = struct {
                 parser.index += 1;
                 while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
                 try parser.sink.add(start, parser.index, .function);
-            } else parser.index += validUtf8Length(parser.source[parser.index..]);
+            } else parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
         }
         if (parser.index < parser.source.len) parser.index += 1;
     }
@@ -159,7 +160,7 @@ const StructureParser = struct {
             if (std.ascii.isUpper(word[0])) try parser.sink.add(start, parser.index, .type);
         } else if (parser.square_depth > 0) {
             parser.message_word_count += 1;
-            if (nextNonSpace(parser.source, parser.index) == ':' or parser.message_word_count == 2) try parser.sink.add(start, parser.index, .function);
+            if (scanner.nextNonSpace(parser.source, parser.index) == ':' or parser.message_word_count == 2) try parser.sink.add(start, parser.index, .function);
         } else if (std.ascii.isUpper(word[0]) and !isBuiltinType(word)) {
             try parser.sink.add(start, parser.index, .type);
         }
@@ -181,16 +182,16 @@ const StructureParser = struct {
                     const start = parser.index;
                     parser.index += 1;
                     while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
-                    if (!method_name_seen or nextNonSpace(parser.source, parser.index) == ':') {
+                    if (!method_name_seen or scanner.nextNonSpace(parser.source, parser.index) == ':') {
                         try parser.sink.add(start, parser.index, .function);
                         method_name_seen = true;
-                        if (nextNonSpace(parser.source, parser.index) == ':') expect_parameter = true;
+                        if (scanner.nextNonSpace(parser.source, parser.index) == ':') expect_parameter = true;
                     } else if (expect_parameter) {
                         try parser.sink.add(start, parser.index, .parameter);
                         expect_parameter = false;
                     }
                 },
-                else => parser.index += validUtf8Length(parser.source[parser.index..]),
+                else => parser.index += scanner.validUtf8Length(parser.source[parser.index..]),
             }
         }
     }
@@ -215,7 +216,7 @@ const StructureParser = struct {
                 while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
                 const word = parser.source[start..parser.index];
                 try parser.sink.add(start, parser.index, if (isBuiltinType(word) or std.ascii.isUpper(word[0])) .type else .parameter);
-            } else parser.index += validUtf8Length(parser.source[parser.index..]);
+            } else parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
         }
     }
 
@@ -231,7 +232,7 @@ const StructureParser = struct {
             const start = parser.index;
             parser.index += 1;
             while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
-            if (nextNonSpace(parser.source, parser.index) == ')') {
+            if (scanner.nextNonSpace(parser.source, parser.index) == ')') {
                 try parser.sink.add(start, parser.index, .variable);
                 parser.pending_block_parameters = true;
                 return;
@@ -259,7 +260,7 @@ const StructureParser = struct {
                 const word = parser.source[start..parser.index];
                 try parser.sink.add(start, parser.index, if (isBuiltinType(word) or std.ascii.isUpper(word[0])) .type else .parameter);
             },
-            else => parser.index += validUtf8Length(parser.source[parser.index..]),
+            else => parser.index += scanner.validUtf8Length(parser.source[parser.index..]),
         };
     }
 
@@ -277,11 +278,11 @@ const StructureParser = struct {
     }
 
     fn skipLine(parser: *StructureParser) void {
-        parser.index = std.mem.indexOfScalarPos(u8, parser.source, parser.index, '\n') orelse parser.source.len;
+        parser.index = scanner.lineEnd(parser.source, parser.index, parser.source.len);
     }
 
     fn skipBlock(parser: *StructureParser) void {
-        parser.index = if (std.mem.indexOfPos(u8, parser.source, parser.index + 2, "*/")) |close| close + 2 else parser.source.len;
+        parser.index = scanner.blockCommentEnd(parser.source, parser.index, parser.source.len);
     }
 
     fn scanObjcString(parser: *StructureParser) api.HighlightError!void {
@@ -304,12 +305,6 @@ const StructureParser = struct {
         }
     }
 };
-
-fn nextNonSpace(source: []const u8, after: usize) ?u8 {
-    var cursor = after;
-    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
-    return if (cursor < source.len) source[cursor] else null;
-}
 
 fn wordIs(word: []const u8, candidates: []const []const u8) bool {
     for (candidates) |candidate| if (std.mem.eql(u8, word, candidate)) return true;
@@ -334,11 +329,4 @@ fn isIdentifierStart(byte: u8) bool {
 
 fn isIdentifierContinue(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or byte == '_';
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

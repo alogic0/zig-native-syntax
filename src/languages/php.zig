@@ -5,6 +5,7 @@ const Span = @import("../capture.zig").Span;
 const Scope = @import("../scope.zig").Scope;
 const g = @import("generic.zig");
 const markup = @import("component_markup.zig");
+const scanner = @import("scanner_support.zig");
 
 pub const backend: api.Backend = .init(.{
     .canonical_name = "php",
@@ -144,7 +145,7 @@ const StructureParser = struct {
             },
             '$' => try parser.scanVariable(),
             'a'...'z', 'A'...'Z', '_' => try parser.scanWord(),
-            else => parser.index += validUtf8Length(parser.source[parser.index..]),
+            else => parser.index += scanner.validUtf8Length(parser.source[parser.index..]),
         };
     }
 
@@ -177,9 +178,9 @@ const StructureParser = struct {
         } else if (std.ascii.eqlIgnoreCase(word, "new")) {
             parser.expected = .constructor;
         } else if (previousOperator(parser.source, start, "->") or previousOperator(parser.source, start, "?->")) {
-            try parser.sink.add(start, parser.index, if (nextNonSpace(parser.source, parser.index) == '(') .function else .property);
+            try parser.sink.add(start, parser.index, if (scanner.nextNonSpace(parser.source, parser.index) == '(') .function else .property);
         } else if (previousOperator(parser.source, start, "::")) {
-            try parser.sink.add(start, parser.index, if (nextNonSpace(parser.source, parser.index) == '(') .function else .property);
+            try parser.sink.add(start, parser.index, if (scanner.nextNonSpace(parser.source, parser.index) == '(') .function else .property);
         }
     }
 
@@ -199,11 +200,11 @@ const StructureParser = struct {
     }
 
     fn skipLine(parser: *StructureParser) void {
-        parser.index = std.mem.indexOfScalarPos(u8, parser.source, parser.index, '\n') orelse parser.source.len;
+        parser.index = scanner.lineEnd(parser.source, parser.index, parser.source.len);
     }
 
     fn skipBlock(parser: *StructureParser) void {
-        parser.index = if (std.mem.indexOfPos(u8, parser.source, parser.index + 2, "*/")) |close| close + 2 else parser.source.len;
+        parser.index = scanner.blockCommentEnd(parser.source, parser.index, parser.source.len);
     }
 
     fn skipString(parser: *StructureParser, quote: u8) void {
@@ -227,15 +228,15 @@ fn phpClose(source: []const u8, start: usize) usize {
         if (std.mem.startsWith(u8, source[cursor..], "//") or
             (source[cursor] == '#' and !std.mem.startsWith(u8, source[cursor..], "#[")))
         {
-            cursor = std.mem.indexOfScalarPos(u8, source, cursor, '\n') orelse source.len;
+            cursor = scanner.lineEnd(source, cursor, source.len);
         } else if (std.mem.startsWith(u8, source[cursor..], "/*")) {
-            cursor = if (std.mem.indexOfPos(u8, source, cursor + 2, "*/")) |close| close + 2 else source.len;
+            cursor = scanner.blockCommentEnd(source, cursor, source.len);
         } else if (std.mem.startsWith(u8, source[cursor..], "<<<")) {
             cursor = heredocEnd(source, cursor);
         } else if (source[cursor] == '\'' or source[cursor] == '"' or source[cursor] == '`') {
-            cursor = quotedEnd(source, cursor, source[cursor]);
+            cursor = scanner.quotedEnd(source, cursor, source[cursor], false);
         } else {
-            cursor += validUtf8Length(source[cursor..]);
+            cursor += scanner.validUtf8Length(source[cursor..]);
         }
     }
     return source.len;
@@ -268,29 +269,10 @@ fn heredocEnd(source: []const u8, start: usize) usize {
     return source.len;
 }
 
-fn quotedEnd(source: []const u8, start: usize, quote: u8) usize {
-    var cursor = start + 1;
-    while (cursor < source.len) {
-        if (source[cursor] == '\\') {
-            cursor += @min(@as(usize, 2), source.len - cursor);
-            continue;
-        }
-        cursor += 1;
-        if (source[cursor - 1] == quote) break;
-    }
-    return cursor;
-}
-
 fn previousOperator(source: []const u8, before: usize, operator: []const u8) bool {
     var cursor = before;
     while (cursor > 0 and std.ascii.isWhitespace(source[cursor - 1])) cursor -= 1;
     return cursor >= operator.len and std.mem.eql(u8, source[cursor - operator.len .. cursor], operator);
-}
-
-fn nextNonSpace(source: []const u8, after: usize) ?u8 {
-    var cursor = after;
-    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
-    return if (cursor < source.len) source[cursor] else null;
 }
 
 fn wordIs(word: []const u8, candidates: []const []const u8) bool {
@@ -300,11 +282,4 @@ fn wordIs(word: []const u8, candidates: []const []const u8) bool {
 
 fn isIdentifierContinue(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or byte == '_';
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }
