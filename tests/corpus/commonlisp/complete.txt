@@ -1,1 +1,18 @@
-(defun run () (let ((value "x\n<&>") (count 42) (enabled true)) value)) ; comment
+(defpackage #:demo (:use #:cl))
+(in-package #:demo)
+
+(defclass person ()
+  ((name :initarg :name :accessor person-name)
+   (enabled :initarg :enabled)))
+
+(defconstant +limit+ 42)
+(defparameter *enabled* t)
+
+(defun greet (person &optional (prefix "hello\\n<&>"))
+  (format nil "~a, ~a" prefix person))
+
+(defmacro with-person ((name value) &body body)
+  `(let ((,name ,value)) ,@body))
+
+(let ((message "ready"))
+  (greet message)) ; comment
