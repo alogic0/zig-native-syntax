@@ -24,6 +24,25 @@ test "Objective-C parser distinguishes declarations and selectors" {
     try expect(source, sink.captures(), "count", .parameter);
 }
 
+test "Objective-C handles Foundation generics blocks literals and multiline methods" {
+    const source = @embedFile("corpus/objc/runtime.m");
+    var sink: s.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try s.languages.objc.backend.highlight(source, &sink);
+
+    try expect(source, sink.captures(), "DataSource", .type);
+    try expect(source, sink.captures(), "ObjectType", .type);
+    try expect(source, sink.captures(), "loadItemAtIndex", .function);
+    try expect(source, sink.captures(), "completion", .function);
+    try expect(source, sink.captures(), "index", .parameter);
+    try expect(source, sink.captures(), "handler", .variable);
+    try expect(source, sink.captures(), "success", .parameter);
+    try expect(source, sink.captures(), "error", .parameter);
+    try expect(source, sink.captures(), "@\"one\"", .string);
+    try expect(source, sink.captures(), "@YES", .boolean);
+    try expect(source, sink.captures(), "loadItemAtIndex", .function);
+}
+
 fn expect(source: []const u8, captures: []const s.Capture, text: []const u8, scope: s.Scope) !void {
     for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
     return error.TestExpectedEqual;

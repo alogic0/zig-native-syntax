@@ -35,6 +35,7 @@ const StructureParser = struct {
     message_word_count: usize = 0,
     property_candidate: ?Span = null,
     in_property: bool = false,
+    pending_block_parameters: bool = false,
 
     fn run(parser: *StructureParser) api.HighlightError!void {
         while (parser.index < parser.source.len) {
@@ -50,7 +51,16 @@ const StructureParser = struct {
                     parser.line_start = parser.index;
                 },
                 '\'', '"' => parser.skipString(parser.source[parser.index]),
-                '@' => if (parser.index + 1 < parser.source.len and parser.source[parser.index + 1] == '"') parser.skipObjcString() else try parser.scanDirective(),
+                '@' => try parser.scanAtConstruct(),
+                '^' => try parser.scanBlockName(),
+                '(' => {
+                    if (parser.pending_block_parameters) {
+                        try parser.scanBlockParameters();
+                        parser.pending_block_parameters = false;
+                    } else {
+                        parser.index += 1;
+                    }
+                },
                 '[' => {
                     parser.square_depth += 1;
                     parser.message_word_count = 0;
@@ -80,12 +90,34 @@ const StructureParser = struct {
         }
     }
 
+    fn scanAtConstruct(parser: *StructureParser) api.HighlightError!void {
+        if (parser.index + 1 >= parser.source.len) {
+            parser.index += 1;
+            return;
+        }
+        if (parser.source[parser.index + 1] == '"') {
+            try parser.scanObjcString();
+        } else if (parser.source[parser.index + 1] == '[' or parser.source[parser.index + 1] == '{' or
+            parser.source[parser.index + 1] == '(' or std.ascii.isDigit(parser.source[parser.index + 1]))
+        {
+            try parser.sink.add(parser.index, parser.index + 1, .special);
+            parser.index += 1;
+        } else {
+            try parser.scanDirective();
+        }
+    }
+
     fn scanDirective(parser: *StructureParser) api.HighlightError!void {
         const start = parser.index;
         parser.index += 1;
         while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
         const directive = parser.source[start + 1 .. parser.index];
         if (directive.len == 0) return;
+        if (wordIs(directive, &.{ "YES", "NO" })) {
+            try parser.sink.add(start, parser.index, .boolean);
+            return;
+        }
+        if (!isDirective(directive)) return;
         try parser.sink.add(start, parser.index, .keyword);
         if (wordIs(directive, &.{ "interface", "implementation", "protocol" })) {
             parser.expected = .type;
@@ -94,7 +126,24 @@ const StructureParser = struct {
         } else if (std.mem.eql(u8, directive, "property")) {
             parser.in_property = true;
             parser.property_candidate = null;
+        } else if (std.mem.eql(u8, directive, "selector")) {
+            try parser.scanSelector();
         }
+    }
+
+    fn scanSelector(parser: *StructureParser) api.HighlightError!void {
+        while (parser.index < parser.source.len and std.ascii.isWhitespace(parser.source[parser.index])) parser.index += 1;
+        if (parser.index >= parser.source.len or parser.source[parser.index] != '(') return;
+        parser.index += 1;
+        while (parser.index < parser.source.len and parser.source[parser.index] != ')') {
+            if (isIdentifierStart(parser.source[parser.index])) {
+                const start = parser.index;
+                parser.index += 1;
+                while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
+                try parser.sink.add(start, parser.index, .function);
+            } else parser.index += validUtf8Length(parser.source[parser.index..]);
+        }
+        if (parser.index < parser.source.len) parser.index += 1;
     }
 
     fn scanWord(parser: *StructureParser) api.HighlightError!void {
@@ -120,10 +169,14 @@ const StructureParser = struct {
         parser.index += 1;
         var expect_parameter = false;
         var method_name_seen = false;
-        while (parser.index < parser.source.len and parser.source[parser.index] != ';' and parser.source[parser.index] != '{' and parser.source[parser.index] != '\n') {
+        while (parser.index < parser.source.len and parser.source[parser.index] != ';' and parser.source[parser.index] != '{') {
             switch (parser.source[parser.index]) {
                 '\'', '"' => parser.skipString(parser.source[parser.index]),
                 '(' => try parser.scanMethodType(),
+                '\n' => {
+                    parser.index += 1;
+                    parser.line_start = parser.index;
+                },
                 'a'...'z', 'A'...'Z', '_' => {
                     const start = parser.index;
                     parser.index += 1;
@@ -144,15 +197,70 @@ const StructureParser = struct {
 
     fn scanMethodType(parser: *StructureParser) api.HighlightError!void {
         parser.index += 1;
-        while (parser.index < parser.source.len and parser.source[parser.index] != ')' and parser.source[parser.index] != '\n') {
+        var depth: usize = 1;
+        while (parser.index < parser.source.len and depth > 0) {
+            if (parser.source[parser.index] == '(') {
+                depth += 1;
+                parser.index += 1;
+                continue;
+            }
+            if (parser.source[parser.index] == ')') {
+                depth -= 1;
+                parser.index += 1;
+                continue;
+            }
             if (isIdentifierStart(parser.source[parser.index])) {
                 const start = parser.index;
                 parser.index += 1;
                 while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
-                try parser.sink.add(start, parser.index, .type);
+                const word = parser.source[start..parser.index];
+                try parser.sink.add(start, parser.index, if (isBuiltinType(word) or std.ascii.isUpper(word[0])) .type else .parameter);
             } else parser.index += validUtf8Length(parser.source[parser.index..]);
         }
-        if (parser.index < parser.source.len and parser.source[parser.index] == ')') parser.index += 1;
+    }
+
+    fn scanBlockName(parser: *StructureParser) api.HighlightError!void {
+        const operator = parser.index;
+        parser.index += 1;
+        while (parser.index < parser.source.len and std.ascii.isWhitespace(parser.source[parser.index])) parser.index += 1;
+        if (parser.index < parser.source.len and parser.source[parser.index] == '(') {
+            parser.pending_block_parameters = true;
+            return;
+        }
+        if (parser.index < parser.source.len and isIdentifierStart(parser.source[parser.index])) {
+            const start = parser.index;
+            parser.index += 1;
+            while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
+            if (nextNonSpace(parser.source, parser.index) == ')') {
+                try parser.sink.add(start, parser.index, .variable);
+                parser.pending_block_parameters = true;
+                return;
+            }
+        }
+        parser.index = operator + 1;
+    }
+
+    fn scanBlockParameters(parser: *StructureParser) api.HighlightError!void {
+        parser.index += 1;
+        var depth: usize = 1;
+        while (parser.index < parser.source.len and depth > 0) switch (parser.source[parser.index]) {
+            '(' => {
+                depth += 1;
+                parser.index += 1;
+            },
+            ')' => {
+                depth -= 1;
+                parser.index += 1;
+            },
+            'a'...'z', 'A'...'Z', '_' => {
+                const start = parser.index;
+                parser.index += 1;
+                while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
+                const word = parser.source[start..parser.index];
+                try parser.sink.add(start, parser.index, if (isBuiltinType(word) or std.ascii.isUpper(word[0])) .type else .parameter);
+            },
+            else => parser.index += validUtf8Length(parser.source[parser.index..]),
+        };
     }
 
     fn atPreprocessorStart(parser: StructureParser) bool {
@@ -176,9 +284,11 @@ const StructureParser = struct {
         parser.index = if (std.mem.indexOfPos(u8, parser.source, parser.index + 2, "*/")) |close| close + 2 else parser.source.len;
     }
 
-    fn skipObjcString(parser: *StructureParser) void {
+    fn scanObjcString(parser: *StructureParser) api.HighlightError!void {
+        const start = parser.index;
         parser.index += 1;
         parser.skipString('"');
+        try parser.sink.add(start, parser.index, .string);
     }
 
     fn skipString(parser: *StructureParser, quote: u8) void {
@@ -212,6 +322,10 @@ fn isQualifier(word: []const u8) bool {
 
 fn isBuiltinType(word: []const u8) bool {
     return wordIs(word, &.{ "BOOL", "Class", "IMP", "SEL", "id", "instancetype", "int", "void" });
+}
+
+fn isDirective(word: []const u8) bool {
+    return wordIs(word, &.{ "autoreleasepool", "available", "catch", "class", "dynamic", "encode", "end", "finally", "implementation", "interface", "optional", "package", "private", "property", "protected", "protocol", "public", "required", "selector", "synchronized", "synthesize", "throw", "try" });
 }
 
 fn isIdentifierStart(byte: u8) bool {
