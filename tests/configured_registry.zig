@@ -21,6 +21,24 @@ test "configured registry exposes verified core and enabled external backends" {
     }
 }
 
+test "all 95 catalog backends are verified" {
+    const verified_core = comptime syntax.collectVerifiedBackends(syntax.languages);
+    try std.testing.expectEqual(registry.core_catalog_count, verified_core.len);
+    try std.testing.expectEqual(
+        registry.supported_backend_count,
+        registry.core_catalog_count + registry.external_catalog_count,
+    );
+
+    if (registry.enabled_core_backend_count == registry.core_catalog_count and
+        registry.enabled_external_backend_count == registry.external_catalog_count)
+    {
+        try std.testing.expectEqual(registry.supported_backend_count, registry.backends.len);
+        for (registry.backends) |backend| {
+            try std.testing.expect(backend.info.support_level != .experimental);
+        }
+    }
+}
+
 test "configured registry owns core and external aliases" {
     for (syntax.aliases) |entry| {
         if (registry.backendForName(entry.canonical)) |canonical| {

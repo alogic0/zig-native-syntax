@@ -25,6 +25,12 @@ const external_count: usize = @intFromBool(options.ziggy) +
     @as(usize, @intFromBool(options.superhtml)) +
     @as(usize, @intFromBool(options.markdown));
 
+pub const supported_backend_count: usize = 95;
+pub const core_catalog_count: usize = 87;
+pub const external_catalog_count: usize = 8;
+pub const enabled_core_backend_count: usize = core_backends.len;
+pub const enabled_external_backend_count: usize = external_count;
+
 /// All verified core backends plus every verified external backend enabled by
 /// the dependency's build options. Analysis builds may additionally link an
 /// explicit set of experimental core backends without promoting them.

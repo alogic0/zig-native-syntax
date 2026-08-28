@@ -44,6 +44,8 @@ Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
 the backend actually understands.
 
+All 95 catalog backends now satisfy one of the two verified support levels.
+
 - [x] 1. Zig — **parser** (`std.zig.Tokenizer` and `std.zig.Ast`) — *verified structural*
 - [x] 2. Ziggy — **tokenizer** (Ziggy tokenizer; AST not consumed) — *verified lexical*
 - [x] 3. Ziggy Schema — **parser** (Ziggy Schema tokenizer and AST) — *verified structural*
