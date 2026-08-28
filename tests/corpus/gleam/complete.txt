@@ -1,5 +1,7 @@
 //// A compact structural Gleam sample.
 import gleam/list
+import gleam/result
+import gleam/string as text
 
 @external(erlang, "erlang", "display")
 fn display(value: String) -> Nil
@@ -17,4 +19,18 @@ pub fn greet(person: Person, loud: Bool) -> String {
     True -> prefix <> names
     False -> "hello"
   }
+}
+
+pub fn describe(person: Person) -> String {
+  let Person(name, enabled) = person
+  use suffix <- result.try(Ok("!"))
+  let updated = Person(..person, enabled: False)
+  let payload = <<1, answer:size(8), name:utf8>>
+
+  updated.name
+  |> text.append(suffix)
+  |> text.append(case updated {
+    Person(current_name, True) if current_name != "" -> current_name
+    Person(_, False) -> "disabled"
+  })
 }
