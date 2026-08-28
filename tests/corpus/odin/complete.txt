@@ -1,10 +1,22 @@
 package main
+import "core:fmt"
+
 Item :: struct {
     value: string,
     enabled: bool,
     count: int,
 }
-value := "x\\n"
-enabled := true
-count := 42
+
+total :: proc(item: Item, delta: int) -> int {
+    return item.count + delta
+}
+
+make_item :: proc(name: string) -> Item {
+    message := "x\\n"
+    item := Item{value = name, enabled = true, count = 42}
+    fmt.println(item.value)
+    return item
+}
+
+answer :: 42
 // comment

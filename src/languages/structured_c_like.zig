@@ -20,6 +20,7 @@ pub const Config = struct {
     capitalized_braces_are_constructors: bool = false,
     colon_names_are_properties: bool = false,
     namespace_declarations_end_at_newline: bool = false,
+    double_colon_declarations: bool = false,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -43,6 +44,8 @@ const Parser = struct {
     pending_type_body: bool = false,
     type_body_depth: ?usize = null,
     namespace_declaration: bool = false,
+    predeclared_type: bool = false,
+    predeclared_function: bool = false,
     known_types: std.ArrayList([]const u8) = .empty,
 
     fn deinit(parser: *Parser) void {
@@ -53,7 +56,10 @@ const Parser = struct {
         while (parser.index < parser.source.len) switch (parser.source[parser.index]) {
             ' ', '\t', '\r' => parser.index += 1,
             '\n' => {
-                if (parser.config.namespace_declarations_end_at_newline) parser.namespace_declaration = false;
+                if (parser.config.namespace_declarations_end_at_newline) {
+                    parser.namespace_declaration = false;
+                    if (parser.expected == .namespace) parser.expected = null;
+                }
                 parser.index += 1;
             },
             '#' => parser.skipLine(),
@@ -154,7 +160,26 @@ const Parser = struct {
             parser.expected = null;
             return;
         }
+        if (parser.config.double_colon_declarations) {
+            if (declarationAfterDoubleColon(parser.source, parser.index, parser.config)) |scope| {
+                try parser.sink.add(start, parser.index, scope);
+                switch (scope) {
+                    .type => {
+                        try parser.rememberType(word);
+                        parser.predeclared_type = true;
+                    },
+                    .function => parser.predeclared_function = true,
+                    else => {},
+                }
+                return;
+            }
+        }
         if (contains(parser.config.type_declarations, word)) {
+            if (parser.predeclared_type) {
+                parser.predeclared_type = false;
+                parser.pending_type_body = true;
+                return;
+            }
             parser.expected = .type;
             return;
         }
@@ -164,6 +189,11 @@ const Parser = struct {
             return;
         }
         if (contains(parser.config.function_declarations, word)) {
+            if (parser.predeclared_function) {
+                parser.predeclared_function = false;
+                parser.pending_function = true;
+                return;
+            }
             parser.expected = .function;
             return;
         }
@@ -199,7 +229,10 @@ const Parser = struct {
             parser.declaration = false;
         } else if (next == '{' and parser.config.capitalized_braces_are_constructors and parser.isKnownType(word)) {
             try parser.sink.add(start, parser.index, .constructor);
-        } else if (next == ':' and parser.paren_depth == 0 and !nextIsColonAssignment(parser.source, parser.index)) {
+        } else if (next == ':' and parser.paren_depth == 0 and
+            parser.parameter_depth == null and parser.receiver_depth == null and
+            !nextIsColonAssignment(parser.source, parser.index))
+        {
             try parser.sink.add(start, parser.index, if (parser.config.colon_names_are_properties) .property else .label);
         } else if (parser.config.capitalized_types and std.ascii.isUpper(word[0]) and next != '=' and next != ',' and next != ';') {
             try parser.sink.add(start, parser.index, .type);
@@ -260,6 +293,22 @@ fn nextIsColonAssignment(source: []const u8, after: usize) bool {
     var cursor = after;
     while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
     return cursor + 1 < source.len and source[cursor] == ':' and source[cursor + 1] == '=';
+}
+
+fn declarationAfterDoubleColon(source: []const u8, after: usize, config: Config) ?Scope {
+    var cursor = after;
+    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
+    if (cursor + 1 >= source.len or source[cursor] != ':' or source[cursor + 1] != ':') return null;
+    cursor += 2;
+    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
+    if (cursor >= source.len or !std.ascii.isAlphabetic(source[cursor])) return .constant;
+    const start = cursor;
+    cursor += 1;
+    while (cursor < source.len and isIdentifierContinue(source[cursor])) cursor += 1;
+    const declaration = source[start..cursor];
+    if (contains(config.type_declarations, declaration)) return .type;
+    if (contains(config.function_declarations, declaration)) return .function;
+    return .constant;
 }
 
 fn nextIdentifierIsType(source: []const u8, after: usize, builtin_types: []const []const u8) bool {
