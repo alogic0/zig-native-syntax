@@ -1,10 +1,21 @@
-module demo;
+module demo::render;
+import std::io;
+
 struct Item {
     String value;
     bool enabled;
     int count;
 }
-String value = "x\\n";
-bool enabled = true;
-int count = 42;
+
+fn int total(Item item, int delta) {
+    return item.count + delta;
+}
+
+fn Item make_item(String name) {
+    Item item = { .value = name, .enabled = true, .count = 42 };
+    io::printfn("x\\n");
+    return item;
+}
+
+const int LIMIT = 42;
 // comment

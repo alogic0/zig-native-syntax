@@ -212,8 +212,13 @@ const Parser = struct {
         } else if (previousMemberOperator(parser.source, start)) {
             try parser.sink.add(start, parser.index, .property);
         } else if (previousNamespaceOperator(parser.source, start)) {
-            try parser.sink.add(start, parser.index, .type);
-            parser.declaration = true;
+            if (next == '(') {
+                try parser.sink.add(start, parser.index, .function);
+                parser.declaration = false;
+            } else {
+                try parser.sink.add(start, parser.index, .type);
+                parser.declaration = true;
+            }
         } else if (nextNamespaceOperator(parser.source, parser.index)) {
             try parser.sink.add(start, parser.index, .namespace);
         } else if (parser.config.type_body_fields_before_type and
