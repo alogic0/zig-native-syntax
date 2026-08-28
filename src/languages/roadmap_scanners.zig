@@ -1,7 +1,7 @@
 const api = @import("../backend.zig");
 const generic = @import("generic.zig");
 
-pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, org, dtd, mail, hurl, ninja, rpmspec, commonlisp, scheme, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
+pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, org, dtd, mail, hurl, ninja, rpmspec, commonlisp, scheme, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, comptime kind: Kind) api.HighlightError!void {
     try generic.highlight(source, sink, config(kind));
@@ -39,6 +39,5 @@ pub fn config(comptime kind: Kind) generic.Config {
         .agda => .{ .line_comments = &.{"--"}, .block_comments = &.{.{ .open = "{-", .close = "-}" }}, .keywords = &.{ "abstract", "constructor", "data", "do", "eta-equality", "field", "forall", "hiding", "import", "in", "inductive", "instance", "interleaved", "irrelevant", "let", "macro", "module", "mutual", "no-eta-equality", "open", "overlap", "pattern", "postulate", "primitive", "private", "public", "quote", "record", "rewrite", "syntax", "tactic", "unquote", "unquoteDecl", "unquoteDef", "using", "variable", "where", "with" }, .types = &.{ "Level", "Prop", "Set", "Setω" }, .classify_identifiers = false },
         .query => .{ .line_comments = &.{";"}, .keywords = &.{ "any-of", "contains", "eq", "is", "match", "not-any-of", "not-eq", "not-is", "not-match", "offset", "set" }, .constants = &.{ "ERROR", "MISSING" } },
         .vim => .{ .line_comments = &.{"\""}, .keywords = &.{ "abbreviate", "as", "autocmd", "break", "call", "catch", "command", "const", "continue", "def", "delcommand", "else", "elseif", "enddef", "endfor", "endfunction", "endif", "endtry", "endwhile", "execute", "final", "finish", "for", "function", "if", "import", "in", "let", "lockvar", "return", "set", "silent", "throw", "try", "unlet", "var", "vim9script", "while" }, .types = &.{ "blob", "bool", "dict", "float", "func", "list", "number", "string" }, .constants = &.{ "null", "none", "v:null", "v:none" }, .quotes = "'", .classify_identifiers = false },
-        .uxntal => .{ .block_comments = &.{.{ .open = "(", .close = ")" }}, .keywords = &.{ "ADD", "AND", "BRK", "DEI", "DEO", "DIV", "DUP", "EOR", "EQU", "GTH", "INC", "JCI", "JCN", "JMI", "JMP", "JSI", "JSR", "LDA", "LDZ", "LTH", "MUL", "NEQ", "NIP", "ORA", "OVR", "POP", "ROT", "SFT", "STA", "STH", "STZ", "SUB", "SWP" }, .quotes = "\"" },
     };
 }

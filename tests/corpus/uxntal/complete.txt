@@ -1,6 +1,12 @@
 |0100
+%emit-byte ( value -- ) { #18 DEO }
 @main
-  #2a #01 ADD
-  "x\\n
+  &loop
+  #2a #01 ADD2k
+  ,&loop JCN
+  $&loop
+  ;Screen/width DEI2
+  "hello
+  [ #ff ] emit-byte
   BRK
-( comment )
+( outer ( nested ) comment )
