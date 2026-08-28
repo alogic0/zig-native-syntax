@@ -550,6 +550,10 @@ const Parser = struct {
         }
 
         if (parser.role == .function_name) {
+            if (parser.function_keyword == null) {
+                parser.role = .argument;
+                return parser.parseWordComponent(token_index);
+            }
             if (parser.tokenTag(token_index) == .word) {
                 const last = parser.shellWordEnd(token_index);
                 _ = try parser.builder.addNode(.function_name, token_index, last, token_index);
@@ -610,13 +614,17 @@ const Parser = struct {
     }
 
     fn addRedirectionTarget(parser: *Parser, token_index: syntax.TokenIndex) ParseError!void {
+        const operator = parser.redirection_operator orelse {
+            parser.role = .argument;
+            return parser.parseWordComponent(token_index);
+        };
         const last = parser.shellWordEnd(token_index);
         _ = try parser.builder.addNode(.redirection_target, token_index, last, token_index);
         _ = try parser.builder.addNode(
             .redirection,
-            parser.redirection_operator.?,
+            operator,
             last,
-            parser.redirection_operator.?,
+            operator,
         );
         parser.cursor.index = last - 1;
         parser.role = parser.redirection_return_role;
