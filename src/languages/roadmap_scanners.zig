@@ -1,7 +1,7 @@
 const api = @import("../backend.zig");
 const generic = @import("generic.zig");
 
-pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, org, dtd, mail, hurl, ninja, rpmspec, perl, elixir, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
+pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, org, dtd, mail, hurl, ninja, rpmspec, perl, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, kind: Kind) api.HighlightError!void {
     try generic.highlight(source, sink, config(kind));
@@ -23,7 +23,6 @@ fn config(kind: Kind) generic.Config {
         .ninja => .{ .line_comments = &.{"#"}, .keywords = &.{ "build", "default", "include", "pool", "rule", "subninja" } },
         .rpmspec => .{ .line_comments = &.{"#"}, .keywords = &.{ "Name", "Version", "Release", "Summary", "License", "Source", "BuildRequires", "Requires", "description", "prep", "build", "install", "files", "changelog" }, .case_insensitive = true },
         .perl => .{ .line_comments = &.{"#"}, .keywords = &.{ "BEGIN", "END", "else", "elsif", "for", "foreach", "if", "last", "local", "my", "next", "our", "package", "return", "say", "state", "sub", "unless", "use", "while" }, .constants = &.{"undef"} },
-        .elixir => .{ .line_comments = &.{"#"}, .keywords = &.{ "after", "alias", "case", "catch", "cond", "def", "defmodule", "defp", "do", "else", "end", "fn", "for", "if", "import", "in", "receive", "rescue", "try", "unless", "when" }, .constants = &.{"nil"} },
         .fsharp => .{ .line_comments = &.{"//"}, .block_comments = &.{.{ .open = "(*", .close = "*)" }}, .keywords = &.{ "and", "as", "class", "do", "else", "exception", "for", "fun", "function", "if", "in", "inherit", "interface", "let", "match", "member", "module", "namespace", "open", "rec", "return", "then", "try", "type", "while", "with", "yield" }, .types = &.{ "bool", "char", "float", "int", "list", "obj", "string", "unit" } },
         .ocaml => .{ .block_comments = &.{.{ .open = "(*", .close = "*)" }}, .keywords = &.{ "and", "as", "begin", "class", "do", "done", "else", "end", "exception", "for", "fun", "function", "if", "in", "include", "let", "match", "module", "of", "open", "rec", "sig", "struct", "then", "try", "type", "val", "when", "while", "with" }, .types = &.{ "bool", "bytes", "char", "float", "int", "list", "option", "string", "unit" } },
         .haskell => .{ .line_comments = &.{"--"}, .block_comments = &.{.{ .open = "{-", .close = "-}" }}, .keywords = &.{ "case", "class", "data", "deriving", "do", "else", "if", "import", "in", "instance", "let", "module", "newtype", "of", "then", "type", "where" }, .types = &.{ "Bool", "Char", "Either", "Float", "IO", "Int", "Integer", "Maybe", "String" } },

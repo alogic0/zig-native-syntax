@@ -1,1 +1,13 @@
-def run do value = "x\n<&>"; count = 42; enabled = true end # comment
+defmodule Demo.Worker do # worker API
+  @moduledoc "Processes <&> jobs\\n"
+  @spec run(binary(), keyword()) :: {:ok, map()} | {:error, atom()}
+  def run(input, opts \\ []) when is_binary(input) do
+    pattern = ~r/^[a-z]+$/u
+    with {:ok, value} <- parse(input),
+         {:ok, limit} <- Keyword.fetch(opts, :limit) do
+      {:ok, %{value: value, limit: limit, attempts: 3, enabled: true}}
+    end
+  end
+
+  defp parse(value), do: String.trim(value)
+end
