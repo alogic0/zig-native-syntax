@@ -1095,7 +1095,7 @@ pub fn build(b: *std.Build) void {
         analysis_registry_options.addOption(bool, name, false);
     }
     analysis_registry_options.addOption([]const u8, "size_analysis_exclusions", "");
-    analysis_registry_options.addOption([]const u8, "size_analysis_inclusions", "nasm");
+    analysis_registry_options.addOption([]const u8, "size_analysis_inclusions", "dtd");
     const analysis_registry = b.createModule(.{
         .root_source_file = b.path("src/configured_registry.zig"),
         .target = target,

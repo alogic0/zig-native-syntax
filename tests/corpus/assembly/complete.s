@@ -1,6 +1,14 @@
 # Assembly corpus
+.macro save reg
+  push \reg
+.endm
+.section .text
+.globl start
 start:
-  mov rax, 42
-  add rax, rbx
+  mov $42, %rax
+  add %rbx, %rax
+  call render
+  jmp .done
 message: .ascii "x\n<&>"
+.done:
   ret

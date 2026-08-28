@@ -17,9 +17,8 @@ evaluating embedded languages.
 - `powershell` has a separate parser-backed compatibility contract in
   `powershell.md`.
 - `lua` has a separate parser-backed compatibility contract in `lua.md`.
-- `asm` and `nasm` recognize common mnemonics, registers and size names,
-  labels, comments, numbers, strings, operators, and punctuation. They do not
-  select an instruction set or validate operands and directives.
+- `asm` and `nasm` have a separate shared dedicated-scanner compatibility
+  contract in `assembly.md`.
 - `astro` has a separate composed compatibility contract in `astro.md`.
 - `vue` has a separate composed compatibility contract in `vue.md`.
 - `jsdoc` has a separate verified lexical compatibility contract in
