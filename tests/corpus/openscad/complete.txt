@@ -1,7 +1,13 @@
-module demo() {
-    value = "x\\n";
-    enabled = true;
-    count = 42;
-    cube([1, 2, 3]);
+use <utils.scad>
+
+module rounded_box(size = [1, 2, 3], radius = 1) {
+    local_size = size;
+    translate([0, 0, radius]) cube(size = local_size, center = true);
 }
+
+function doubled(value) = value * 2;
+steps = [for (item = [0:2]) doubled(item)];
+let (offset = 2) rounded_box(size = [3, 4, 5], radius = offset);
+missing = undef;
+label = "x\\n";
 // comment

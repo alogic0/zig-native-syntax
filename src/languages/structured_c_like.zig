@@ -14,6 +14,7 @@ pub const Config = struct {
     function_declarations: []const []const u8 = &.{},
     variable_declarations: []const []const u8 = &.{},
     constant_declarations: []const []const u8 = &.{},
+    binding_introducers: []const []const u8 = &.{},
     capitalized_types: bool = true,
     capitalized_calls_are_constructors: bool = false,
     function_receiver_before_name: bool = false,
@@ -25,6 +26,7 @@ pub const Config = struct {
     double_colon_declarations: bool = false,
     identifier_export_marker: bool = false,
     colon_properties_in_parentheses: bool = false,
+    equals_properties_in_calls: bool = false,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -50,6 +52,8 @@ const Parser = struct {
     namespace_declaration: bool = false,
     predeclared_type: bool = false,
     predeclared_function: bool = false,
+    pending_binding: bool = false,
+    binding_depth: ?usize = null,
     known_types: std.ArrayList([]const u8) = .empty,
 
     fn deinit(parser: *Parser) void {
@@ -77,7 +81,10 @@ const Parser = struct {
             '\'', '"', '`' => parser.skipString(parser.source[parser.index]),
             '(' => {
                 parser.paren_depth += 1;
-                if (parser.config.function_receiver_before_name and parser.expected == .function) {
+                if (parser.pending_binding) {
+                    parser.binding_depth = parser.paren_depth;
+                    parser.pending_binding = false;
+                } else if (parser.config.function_receiver_before_name and parser.expected == .function) {
                     parser.receiver_depth = parser.paren_depth;
                 } else if (parser.pending_function) {
                     parser.parameter_depth = parser.paren_depth;
@@ -86,6 +93,7 @@ const Parser = struct {
                 parser.index += 1;
             },
             ')' => {
+                if (parser.binding_depth == parser.paren_depth) parser.binding_depth = null;
                 if (parser.receiver_depth == parser.paren_depth) parser.receiver_depth = null;
                 if (parser.parameter_depth == parser.paren_depth) parser.parameter_depth = null;
                 parser.paren_depth -|= 1;
@@ -215,6 +223,10 @@ const Parser = struct {
             parser.expected = .constant;
             return;
         }
+        if (contains(parser.config.binding_introducers, word)) {
+            parser.pending_binding = true;
+            return;
+        }
         if (contains(parser.config.modifiers, word) or contains(parser.config.builtin_types, word)) {
             parser.declaration = true;
             return;
@@ -265,6 +277,10 @@ const Parser = struct {
             try parser.sink.add(start, parser.index, .parameter);
         } else if (parser.parameter_depth != null) {
             try parser.sink.add(start, parser.index, .parameter);
+        } else if (next == '=' and parser.binding_depth != null) {
+            try parser.sink.add(start, parser.index, .variable);
+        } else if (next == '=' and parser.config.equals_properties_in_calls and parser.paren_depth > 0) {
+            try parser.sink.add(start, parser.index, .property);
         } else if (parser.declaration) {
             const scope: Scope = if (parser.parameter_depth != null)
                 .parameter
