@@ -1081,11 +1081,30 @@ pub fn build(b: *std.Build) void {
     });
     const run_configured_registry_tests = b.addRunArtifact(configured_registry_tests);
 
+    const registry_fuzz_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/registry_fuzz.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "native_syntax_registry", .module = configured_registry },
+            },
+        }),
+    });
+    const run_registry_fuzz_tests = b.addRunArtifact(registry_fuzz_tests);
+    const fuzz_registry_step = b.step(
+        "fuzz-registry",
+        "Fuzz every configured syntax backend",
+    );
+    fuzz_registry_step.dependOn(&run_registry_fuzz_tests.step);
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
     test_step.dependOn(&run_adversarial_backend_tests.step);
     test_step.dependOn(&run_configured_registry_tests.step);
+    test_step.dependOn(&run_registry_fuzz_tests.step);
     test_step.dependOn(&run_html_property_tests.step);
     test_step.dependOn(&run_zig_corpus_tests.step);
     test_step.dependOn(&run_zig_conformance_tests.step);

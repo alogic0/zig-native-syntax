@@ -482,12 +482,14 @@ const Parser = struct {
         try parser.finishSimpleCommand(parser.eofIndex());
 
         if (parser.role == .redirection_target) {
-            const operator = parser.redirection_operator.?;
-            try parser.builder.addDiagnostic(.expected_redirection_target, parser.tokenEnd(operator));
+            if (parser.redirection_operator) |operator| {
+                try parser.builder.addDiagnostic(.expected_redirection_target, parser.tokenEnd(operator));
+            }
         }
         if (parser.role == .function_name) {
-            const keyword = parser.function_keyword.?;
-            try parser.builder.addDiagnostic(.expected_function_name, parser.tokenEnd(keyword));
+            if (parser.function_keyword) |keyword| {
+                try parser.builder.addDiagnostic(.expected_function_name, parser.tokenEnd(keyword));
+            }
         }
 
         const token_count: syntax.TokenIndex = @intCast(parser.builder.tokens.items.len);
