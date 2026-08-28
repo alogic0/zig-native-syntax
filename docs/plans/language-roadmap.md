@@ -38,7 +38,7 @@ listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
 configured package registry exposes 63 backends as **verified structural**
-and 30 as **verified lexical**. Every entry without a verification marker
+and 31 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
 malformed-input recovery, source preservation, and aliases that match syntax
@@ -131,7 +131,7 @@ the backend actually understands.
 - [x] 85. Tree-sitter Query — **parser** (owned tolerant S-expression parser) — *verified structural*
 - [x] 86. Vimscript — **parser** (owned tolerant command and expression parser) — *verified structural*
 - [x] 87. Uxntal — **dedicated scanner** — *verified lexical*
-- [x] 88. Generic comment tags — **dedicated scanner**
+- [x] 88. Generic comment tags — **dedicated scanner** — *verified lexical*
 - [x] 89. MLIR — **dedicated scanner** — *verified lexical*
 - [x] 90. TableGen — **parser** (owned tolerant declaration parser) — *verified structural*
 - [x] 91. Fortran — **configured scanner** — *verified lexical*
