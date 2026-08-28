@@ -72,13 +72,21 @@ pub fn collectVerified(comptime namespace: type) [verifiedCount(namespace)]Backe
 /// canonical names. This exists for link-time code-size analysis; normal
 /// registries pass an empty exclusion list and include every verified backend.
 pub fn collectVerifiedExcept(comptime namespace: type, comptime excluded: []const u8) [verifiedCountExcept(namespace, excluded)]Backend {
+    return collectForAnalysis(namespace, "", excluded);
+}
+
+/// Collects the normal verified registry plus explicitly named experimental
+/// backends, with exclusions taking precedence. Inclusion exists only for
+/// link-time code-size analysis and must not be used as a quality promotion.
+pub fn collectForAnalysis(comptime namespace: type, comptime included: []const u8, comptime excluded: []const u8) [analysisCount(namespace, included, excluded)]Backend {
     @setEvalBranchQuota(100_000);
-    var result: [verifiedCountExcept(namespace, excluded)]Backend = undefined;
+    var result: [analysisCount(namespace, included, excluded)]Backend = undefined;
     var index: usize = 0;
     inline for (std.meta.declarations(namespace)) |declaration| {
         const language = @field(namespace, declaration);
         if (@hasDecl(language, "backend") and
-            language.backend.info.support_level != .experimental and
+            (language.backend.info.support_level != .experimental or
+                nameInList(language.backend.info.canonical_name, included)) and
             !nameInList(language.backend.info.canonical_name, excluded))
         {
             result[index] = language.backend;
@@ -114,12 +122,17 @@ fn verifiedCount(comptime namespace: type) comptime_int {
 }
 
 fn verifiedCountExcept(comptime namespace: type, comptime excluded: []const u8) comptime_int {
+    return analysisCount(namespace, "", excluded);
+}
+
+fn analysisCount(comptime namespace: type, comptime included: []const u8, comptime excluded: []const u8) comptime_int {
     @setEvalBranchQuota(100_000);
     var count = 0;
     for (std.meta.declarations(namespace)) |declaration| {
         const language = @field(namespace, declaration);
         if (@hasDecl(language, "backend") and
-            language.backend.info.support_level != .experimental and
+            (language.backend.info.support_level != .experimental or
+                nameInList(language.backend.info.canonical_name, included)) and
             !nameInList(language.backend.info.canonical_name, excluded)) count += 1;
     }
     return count;

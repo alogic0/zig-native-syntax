@@ -7,7 +7,7 @@ test "configured registry exposes verified core and enabled external backends" {
     try std.testing.expectEqualStrings("zig", registry.backendForName("zig").?.info.canonical_name);
 
     for (registry.backends, 0..) |backend, index| {
-        try std.testing.expect(backend.info.support_level != .experimental);
+        try std.testing.expect(registry.analysis_mode or backend.info.support_level != .experimental);
         try std.testing.expectEqualStrings(
             backend.info.canonical_name,
             registry.backendForName(backend.info.canonical_name).?.info.canonical_name,

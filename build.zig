@@ -18,6 +18,11 @@ pub fn build(b: *std.Build) void {
         "size-analysis-exclude-backends",
         "Comma-separated core backends omitted only for code-size analysis",
     ) orelse "";
+    const size_analysis_inclusions = b.option(
+        []const u8,
+        "size-analysis-include-backends",
+        "Comma-separated experimental core backends included only for code-size analysis",
+    ) orelse "";
     const enable_ziggy_backend = b.option(
         bool,
         "backend-ziggy",
@@ -1054,6 +1059,7 @@ pub fn build(b: *std.Build) void {
     registry_options.addOption(bool, "superhtml", enable_superhtml_backend);
     registry_options.addOption(bool, "markdown", enable_markdown_backend);
     registry_options.addOption([]const u8, "size_analysis_exclusions", size_analysis_exclusions);
+    registry_options.addOption([]const u8, "size_analysis_inclusions", size_analysis_inclusions);
 
     const configured_registry = b.addModule("native_syntax_registry", .{
         .root_source_file = b.path("src/configured_registry.zig"),
@@ -1084,6 +1090,32 @@ pub fn build(b: *std.Build) void {
     });
     const run_configured_registry_tests = b.addRunArtifact(configured_registry_tests);
 
+    const analysis_registry_options = b.addOptions();
+    inline for (.{ "ziggy", "ziggy_schema", "scripty", "html", "xml", "css", "superhtml", "markdown" }) |name| {
+        analysis_registry_options.addOption(bool, name, false);
+    }
+    analysis_registry_options.addOption([]const u8, "size_analysis_exclusions", "");
+    analysis_registry_options.addOption([]const u8, "size_analysis_inclusions", "nasm");
+    const analysis_registry = b.createModule(.{
+        .root_source_file = b.path("src/configured_registry.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+    });
+    analysis_registry.addOptions("registry_options", analysis_registry_options);
+    const configured_registry_analysis_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/configured_registry_analysis.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "native_syntax_registry", .module = analysis_registry },
+            },
+        }),
+    });
+    const run_configured_registry_analysis_tests = b.addRunArtifact(configured_registry_analysis_tests);
+
     const registry_fuzz_tests = b.addTest(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("tests/registry_fuzz.zig"),
@@ -1107,6 +1139,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_public_api_tests.step);
     test_step.dependOn(&run_adversarial_backend_tests.step);
     test_step.dependOn(&run_configured_registry_tests.step);
+    test_step.dependOn(&run_configured_registry_analysis_tests.step);
     test_step.dependOn(&run_registry_fuzz_tests.step);
     test_step.dependOn(&run_html_property_tests.step);
     test_step.dependOn(&run_zig_corpus_tests.step);

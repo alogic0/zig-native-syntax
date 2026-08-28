@@ -10,7 +10,11 @@ const xml = if (options.xml) @import("native_syntax_xml") else struct {};
 const css = if (options.css) @import("native_syntax_css") else struct {};
 const superhtml = if (options.superhtml) @import("native_syntax_superhtml") else struct {};
 const markdown = if (options.markdown) @import("native_syntax_markdown") else struct {};
-const core_backends = syntax.collectVerifiedBackendsExcept(syntax.languages, options.size_analysis_exclusions);
+const core_backends = syntax.collectBackendsForAnalysis(
+    syntax.languages,
+    options.size_analysis_inclusions,
+    options.size_analysis_exclusions,
+);
 
 const external_count: usize = @intFromBool(options.ziggy) +
     @as(usize, @intFromBool(options.ziggy_schema)) +
@@ -22,7 +26,8 @@ const external_count: usize = @intFromBool(options.ziggy) +
     @as(usize, @intFromBool(options.markdown));
 
 /// All verified core backends plus every verified external backend enabled by
-/// the dependency's build options.
+/// the dependency's build options. Analysis builds may additionally link an
+/// explicit set of experimental core backends without promoting them.
 pub const backends = blk: {
     var result: [core_backends.len + external_count]syntax.Backend = undefined;
     var index: usize = 0;
@@ -44,11 +49,12 @@ pub const backends = blk: {
 pub fn backendForName(name: []const u8) ?syntax.Backend {
     const canonical = syntax.canonicalLanguageName(name);
     for (backends) |backend| {
-        if (backend.info.support_level != .experimental and
-            std.ascii.eqlIgnoreCase(canonical, backend.info.canonical_name)) return backend;
+        if (std.ascii.eqlIgnoreCase(canonical, backend.info.canonical_name)) return backend;
     }
     return null;
 }
+
+pub const analysis_mode = options.size_analysis_inclusions.len != 0;
 
 fn append(
     result: anytype,
