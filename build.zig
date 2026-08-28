@@ -560,6 +560,9 @@ pub fn build(b: *std.Build) void {
     );
     syntax_core_benchmark_step.dependOn(&run_syntax_core_benchmark.step);
 
+    addMlBenchmark(b, target, .ReleaseFast, "benchmark-ml", "benchmark-ml-fast");
+    addMlBenchmark(b, target, .ReleaseSmall, "benchmark-ml-small", "benchmark-ml-small");
+
     const rust_conformance_tests = b.addTest(.{
         .root_module = b.createModule(.{
             .root_source_file = b.path("tests/rust_conformance.zig"),
@@ -1196,6 +1199,33 @@ const OptionalBackendRuns = struct {
     backend_test_run: *std.Build.Step.Run,
     preview_test_run: *std.Build.Step.Run,
 };
+
+fn addMlBenchmark(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    step_name: []const u8,
+    executable_name: []const u8,
+) void {
+    const benchmark_native_syntax = b.createModule(.{
+        .root_source_file = b.path("src/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    const executable = b.addExecutable(.{
+        .name = executable_name,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/ml_benchmark.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "native_syntax", .module = benchmark_native_syntax }},
+        }),
+    });
+    const run = b.addRunArtifact(executable);
+    run.addPassthruArgs();
+    const step = b.step(step_name, b.fmt("Benchmark OCaml and F# with {s}", .{@tagName(optimize)}));
+    step.dependOn(&run.step);
+}
 
 const CoreLanguageOptions = struct {
     name: []const u8,
