@@ -1,5 +1,6 @@
 const std = @import("std");
 const api = @import("../backend.zig");
+const Capture = @import("../capture.zig").Capture;
 const Scope = @import("../scope.zig").Scope;
 const generic = @import("generic.zig");
 const scanner = @import("scanner_support.zig");
@@ -18,76 +19,100 @@ const keywords = &.{
 const types = &.{ "BitArray", "Bool", "Float", "Int", "List", "Nil", "Result", "String" };
 
 fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void {
-    var parser: Parser = .{ .source = source, .sink = sink };
     try generic.highlight(source, sink, .{
         .line_comments = &.{"//"},
         .keywords = keywords,
         .types = types,
         .booleans = &.{ "True", "False" },
-        .classify_identifiers = false,
+        .classify_identifiers = true,
         .identifier_dash = false,
-        .structural_observer = .{
-            .context = &parser,
-            .before = Parser.before,
-            .observe = Parser.observe,
-        },
     });
+    var parser: Parser = .{
+        .source = source,
+        .sink = sink,
+        .capture_count = sink.captures().len,
+    };
+    try parser.run();
 }
 
 const Parser = struct {
     source: []const u8,
     sink: *api.CaptureSink,
+    capture_count: usize,
+    source_cursor: usize = 0,
     expected: ?Scope = null,
     paren_depth: usize = 0,
     parameter_depth: ?usize = null,
     awaiting_parameters: bool = false,
     awaiting_return_type: bool = false,
     type_context: bool = false,
+    suppressed_until: usize = 0,
 
-    fn before(_: *anyopaque, _: *usize) api.HighlightError!bool {
-        return false;
-    }
-
-    fn observe(context: *anyopaque, index: *usize, event: generic.StructuralEvent) api.HighlightError!void {
-        const parser: *Parser = @ptrCast(@alignCast(context));
-        switch (event) {
-            .word => |word| try parser.scanWord(index, word.start, word.end, word.lexical_scope),
-            .operator => |operator| parser.observeOperator(parser.source[operator.start..operator.end]),
-            .punctuation => |byte| parser.observePunctuation(byte),
-            .newline => {
-                if (parser.parameter_depth == null) {
+    fn run(parser: *Parser) api.HighlightError!void {
+        var capture_index: usize = 0;
+        while (capture_index < parser.capture_count) : (capture_index += 1) {
+            const capture = parser.sink.captures()[capture_index];
+            if (capture.span.start >= parser.source_cursor) {
+                if (std.mem.indexOfScalar(u8, parser.source[parser.source_cursor..capture.span.start], '\n') != null and
+                    parser.parameter_depth == null)
+                {
                     parser.expected = null;
                     parser.type_context = false;
                 }
-            },
+                parser.source_cursor = capture.span.end;
+            } else {
+                parser.source_cursor = @max(parser.source_cursor, capture.span.end);
+            }
+
+            if (capture.span.start < parser.suppressed_until) {
+                parser.empty(capture_index);
+                continue;
+            }
+
+            switch (capture.scope) {
+                .keyword => parser.observeKeyword(capture),
+                .type, .builtin, .boolean, .constant => {},
+                .variable, .property, .function, .label => try parser.refineWord(capture_index, capture),
+                .operator => parser.observeOperator(capture),
+                .punctuation => parser.observePunctuation(capture),
+                else => {},
+            }
         }
     }
 
-    fn scanWord(parser: *Parser, index: *usize, start: usize, end: usize, lexical_scope: ?Scope) api.HighlightError!void {
-        const word = parser.source[start..end];
-        if (lexical_scope == .keyword) {
-            if (std.mem.eql(u8, word, "import")) {
-                parser.expected = .namespace;
-            } else if (std.mem.eql(u8, word, "type")) {
-                parser.expected = .type;
-            } else if (std.mem.eql(u8, word, "fn")) {
-                if (scanner.nextNonSpace(parser.source, end) == '(') {
-                    parser.awaiting_parameters = true;
-                } else {
-                    parser.expected = .function;
-                }
-            } else if (std.mem.eql(u8, word, "const")) {
-                parser.expected = .constant;
-            } else if (std.mem.eql(u8, word, "let") or std.mem.eql(u8, word, "use")) {
-                parser.expected = .variable;
+    fn observeKeyword(parser: *Parser, capture: Capture) void {
+        const word = parser.source[capture.span.start..capture.span.end];
+        if (std.mem.eql(u8, word, "import")) {
+            parser.expected = .namespace;
+        } else if (std.mem.eql(u8, word, "type")) {
+            parser.expected = .type;
+        } else if (std.mem.eql(u8, word, "fn")) {
+            if (scanner.nextNonSpace(parser.source, capture.span.end) == '(') {
+                parser.awaiting_parameters = true;
+            } else {
+                parser.expected = .function;
             }
-            return;
+        } else if (std.mem.eql(u8, word, "const")) {
+            parser.expected = .constant;
+        } else if (std.mem.eql(u8, word, "let") or std.mem.eql(u8, word, "use")) {
+            parser.expected = .variable;
         }
-        if (lexical_scope == .type or lexical_scope == .boolean or lexical_scope == .constant) return;
+    }
+
+    fn refineWord(parser: *Parser, capture_index: usize, capture: Capture) api.HighlightError!void {
+        const start = capture.span.start;
+        const end = capture.span.end;
+        const word = parser.source[start..end];
 
         if (parser.expected) |expected| {
-            if (expected == .namespace) index.* = importPathEnd(parser.source, start);
-            try parser.sink.add(start, index.*, expected);
+            if (expected == .namespace) {
+                const path_end = importPathEnd(parser.source, start);
+                parser.empty(capture_index);
+                parser.suppressed_until = path_end;
+                try parser.sink.add(start, path_end, .namespace);
+            } else {
+                parser.setScope(capture_index, expected);
+            }
             parser.expected = null;
             if (expected == .function) parser.awaiting_parameters = true;
             return;
@@ -95,26 +120,26 @@ const Parser = struct {
 
         const next = scanner.nextNonSpace(parser.source, end);
         const previous = scanner.previousNonSpace(parser.source, start);
-        if (parser.type_context) {
-            try parser.sink.add(start, end, .type);
-        } else if (parser.parameter_depth != null and
+        const scope: Scope = if (parser.type_context)
+            .type
+        else if (parser.parameter_depth != null and
             (next == ':' or previous == '(' or previous == ','))
-        {
-            try parser.sink.add(start, end, .parameter);
-        } else if (next == ':' and parser.parameter_depth == null) {
-            try parser.sink.add(start, end, .property);
-        } else if (previous == '.') {
-            try parser.sink.add(start, end, if (next == '(') .function else .property);
-        } else if (std.ascii.isUpper(word[0])) {
-            try parser.sink.add(start, end, .constructor);
-        } else if (next == '(') {
-            try parser.sink.add(start, end, .function);
-        } else {
-            try parser.sink.add(start, end, .variable);
-        }
+            .parameter
+        else if (next == ':' and parser.parameter_depth == null)
+            .property
+        else if (previous == '.')
+            if (next == '(') .function else .property
+        else if (std.ascii.isUpper(word[0]))
+            .constructor
+        else if (next == '(')
+            .function
+        else
+            .variable;
+        parser.setScope(capture_index, scope);
     }
 
-    fn observeOperator(parser: *Parser, operator: []const u8) void {
+    fn observeOperator(parser: *Parser, capture: Capture) void {
+        const operator = parser.source[capture.span.start..capture.span.end];
         if (operator[0] == ':' or (std.mem.eql(u8, operator, "->") and parser.awaiting_return_type)) {
             parser.type_context = true;
             parser.awaiting_return_type = false;
@@ -123,8 +148,8 @@ const Parser = struct {
         }
     }
 
-    fn observePunctuation(parser: *Parser, byte: u8) void {
-        switch (byte) {
+    fn observePunctuation(parser: *Parser, capture: Capture) void {
+        switch (parser.source[capture.span.start]) {
             '(' => {
                 parser.paren_depth += 1;
                 if (parser.awaiting_parameters) {
@@ -151,6 +176,15 @@ const Parser = struct {
             },
             else => {},
         }
+    }
+
+    fn setScope(parser: *Parser, capture_index: usize, scope: Scope) void {
+        parser.sink.mutableCaptures()[capture_index].scope = scope;
+    }
+
+    fn empty(parser: *Parser, capture_index: usize) void {
+        const start = parser.sink.captures()[capture_index].span.start;
+        parser.sink.mutableCaptures()[capture_index].span.end = start;
     }
 };
 

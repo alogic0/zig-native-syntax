@@ -1,8 +1,8 @@
 # OCaml Compatibility
 
 The verified structural OCaml backend uses the shared tolerant ML-family
-parser. Its lexical scanner feeds structural state during the same source
-traversal instead of rescanning the source. It recognizes modules and qualified opens, type and value declarations,
+parser. Its lexical scanner traverses the source once, then structural state
+refines the emitted captures without rescanning source bytes. It recognizes modules and qualified opens, type and value declarations,
 declaration parameters, labelled parameters, type variables, variant
 constructors, record fields, type annotations, and attributes. Its lexical
 foundation classifies nested comments, strings and escapes, literals, numbers,

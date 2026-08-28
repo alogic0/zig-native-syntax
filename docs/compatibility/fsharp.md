@@ -1,8 +1,8 @@
 # F# Compatibility
 
 The verified structural F# backend uses the shared tolerant ML-family parser.
-Its lexical scanner feeds structural state during the same source traversal
-instead of rescanning the source. It recognizes namespaces and opened modules, type and value declarations,
+Its lexical scanner traverses the source once, then structural state refines
+the emitted captures without rescanning source bytes. It recognizes namespaces and opened modules, type and value declarations,
 members, declaration parameters, optional parameters, discriminated-union
 constructors and named fields, record fields, type annotations, attributes,
 and line directives. Its lexical foundation classifies nested block and line

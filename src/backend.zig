@@ -104,6 +104,11 @@ pub const CaptureSink = struct {
         return sink.list.items;
     }
 
+    /// Returns captures for an in-place structural refinement pass.
+    pub fn mutableCaptures(sink: *CaptureSink) []Capture {
+        return sink.list.items;
+    }
+
     /// Transfers ownership of the capture allocation to the caller.
     pub fn toOwnedSlice(sink: *CaptureSink) Allocator.Error![]Capture {
         return sink.list.toOwnedSlice(sink.allocator);

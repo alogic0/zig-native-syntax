@@ -1,5 +1,6 @@
 const std = @import("std");
 const api = @import("../backend.zig");
+const Capture = @import("../capture.zig").Capture;
 const Scope = @import("../scope.zig").Scope;
 const generic = @import("generic.zig");
 const scanner = @import("scanner_support.zig");
@@ -12,23 +13,25 @@ const ocaml_keywords = &.{ "and", "as", "assert", "begin", "class", "constraint"
 const ocaml_types = &.{ "array", "bool", "bytes", "char", "float", "int", "int32", "int64", "list", "option", "result", "string", "unit" };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, dialect: Dialect) api.HighlightError!void {
-    var parser: Parser = .{ .source = source, .sink = sink, .dialect = dialect };
     try generic.highlight(source, sink, .{
         .line_comments = if (dialect == .fsharp) &.{"//"} else &.{},
         .block_comments = &.{.{ .open = "(*", .close = "*)" }},
         .nested_block_comments = true,
         .keywords = keywords(dialect),
         .types = types(dialect),
-        .classify_identifiers = false,
+        .classify_identifiers = true,
         .identifier_dash = false,
         .triple_quoted_strings = dialect == .fsharp,
         .preprocessor = dialect == .fsharp,
-        .structural_observer = .{
-            .context = &parser,
-            .before = Parser.before,
-            .observe = Parser.observe,
-        },
+        .apostrophe_identifiers = true,
     });
+    var parser: Parser = .{
+        .source = source,
+        .sink = sink,
+        .dialect = dialect,
+        .capture_count = sink.captures().len,
+    };
+    try parser.run();
 }
 
 const Expected = enum { namespace, type, declaration };
@@ -37,75 +40,94 @@ const Parser = struct {
     source: []const u8,
     sink: *api.CaptureSink,
     dialect: Dialect,
-    line_start: usize = 0,
+    capture_count: usize,
+    source_cursor: usize = 0,
     expected: ?Expected = null,
     parameter_mode: bool = false,
     type_context: bool = false,
     constructor_pending: bool = false,
     brace_depth: usize = 0,
+    suppressed_until: usize = 0,
+    namespace_until: usize = 0,
 
-    fn before(context: *anyopaque, index: *usize) api.HighlightError!bool {
-        const parser: *Parser = @ptrCast(@alignCast(context));
-        return try parser.scanAttribute(index) or parser.scanTypeVariable(index) or try parser.scanLabel(index);
-    }
+    fn run(parser: *Parser) api.HighlightError!void {
+        var capture_index: usize = 0;
+        while (capture_index < parser.capture_count) : (capture_index += 1) {
+            const capture = parser.sink.captures()[capture_index];
+            if (capture.span.start >= parser.source_cursor) {
+                if (std.mem.indexOfScalar(u8, parser.source[parser.source_cursor..capture.span.start], '\n') != null) {
+                    parser.resetLineState();
+                }
+                parser.source_cursor = capture.span.end;
+            } else {
+                parser.source_cursor = @max(parser.source_cursor, capture.span.end);
+            }
 
-    fn observe(context: *anyopaque, index: *usize, event: generic.StructuralEvent) api.HighlightError!void {
-        const parser: *Parser = @ptrCast(@alignCast(context));
-        switch (event) {
-            .word => |word| try parser.scanWord(index, word.start, word.end, word.lexical_scope),
-            .operator => |operator| parser.observeOperator(parser.source[operator.start..operator.end]),
-            .punctuation => |byte| parser.observePunctuation(byte),
-            .newline => {
-                parser.line_start = index.*;
-                parser.resetLineState();
-            },
+            if (capture.span.start < parser.suppressed_until) {
+                parser.empty(capture_index);
+                continue;
+            }
+            if (capture.span.start < parser.namespace_until and isIdentifierScope(capture.scope)) {
+                parser.setScope(capture_index, .namespace);
+                continue;
+            }
+
+            switch (capture.scope) {
+                .keyword => parser.observeKeyword(capture),
+                .type, .builtin, .boolean, .constant => {},
+                .variable, .property, .function, .label => try parser.refineWord(capture_index, capture),
+                .operator => try parser.refineOperator(capture_index, capture),
+                .punctuation => try parser.refinePunctuation(capture_index, capture),
+                else => {},
+            }
         }
     }
 
-    fn scanWord(parser: *Parser, index: *usize, start: usize, end: usize, lexical_scope: ?Scope) api.HighlightError!void {
+    fn observeKeyword(parser: *Parser, capture: Capture) void {
+        const word = parser.source[capture.span.start..capture.span.end];
+        if (parser.expected == .declaration and wordIs(word, declarationModifiers(parser.dialect))) return;
+        if (wordIs(word, &.{ "module", "namespace", "open", "include" })) {
+            parser.expected = .namespace;
+        } else if (wordIs(word, &.{ "type", "class", "interface", "exception" })) {
+            parser.expected = .type;
+        } else if (wordIs(word, declarationKeywords(parser.dialect))) {
+            parser.expected = .declaration;
+        } else if (wordIs(word, &.{ "fun", "function" })) {
+            parser.parameter_mode = true;
+        } else if (std.mem.eql(u8, word, "of")) {
+            parser.type_context = true;
+        }
+    }
+
+    fn refineWord(parser: *Parser, capture_index: usize, capture: Capture) api.HighlightError!void {
+        const start = capture.span.start;
+        const end = capture.span.end;
         const word = parser.source[start..end];
 
-        if (lexical_scope == .keyword) {
-            if (parser.expected == .declaration and wordIs(word, declarationModifiers(parser.dialect))) return;
-            if (wordIs(word, &.{ "module", "namespace", "open", "include" })) {
-                parser.expected = .namespace;
-            } else if (wordIs(word, &.{ "type", "class", "interface", "exception" })) {
-                parser.expected = .type;
-            } else if (wordIs(word, declarationKeywords(parser.dialect))) {
-                parser.expected = .declaration;
-            } else if (wordIs(word, &.{ "fun", "function" })) {
-                parser.parameter_mode = true;
-            } else if (std.mem.eql(u8, word, "of")) {
-                parser.type_context = true;
-            }
+        if (wordIs(word, &.{ "Some", "Ok", "Error" })) {
+            parser.empty(capture_index);
             return;
         }
-        if (lexical_scope == .type or lexical_scope == .boolean or lexical_scope == .constant or
-            wordIs(word, &.{ "Some", "Ok", "Error" })) return;
 
         if (parser.expected) |expected| switch (expected) {
             .namespace => {
-                index.* = scanner.qualifiedIdentifierEnd(parser.source, start, ".", .apostrophe, .identifier);
-                try parser.sink.add(start, index.*, .namespace);
-                var separator = start;
-                while (std.mem.indexOfScalarPos(u8, parser.source, separator, '.')) |dot| {
-                    if (dot >= index.*) break;
-                    try parser.sink.add(dot, dot + 1, .punctuation);
-                    separator = dot + 1;
-                }
+                const namespace_end = scanner.qualifiedIdentifierEnd(parser.source, start, ".", .apostrophe, .identifier);
+                parser.setScope(capture_index, .namespace);
+                parser.namespace_until = namespace_end;
+                try parser.sink.add(start, namespace_end, .namespace);
                 parser.expected = null;
                 return;
             },
             .type => {
-                try parser.sink.add(start, end, .type);
+                parser.setScope(capture_index, .type);
                 parser.expected = null;
                 return;
             },
             .declaration => {
                 if (scanner.nextNonSpace(parser.source, end) == '.') {
-                    try parser.sink.add(start, end, .parameter);
+                    parser.setScope(capture_index, .parameter);
                 } else {
-                    try parser.sink.add(start, end, .function);
+                    parser.setScope(capture_index, .function);
                     parser.expected = null;
                     parser.parameter_mode = true;
                 }
@@ -114,61 +136,38 @@ const Parser = struct {
         };
 
         const next = scanner.nextNonSpace(parser.source, end);
-        if (next == ':' and (parser.brace_depth > 0 or
-            (parser.dialect == .fsharp and !parser.parameter_mode)))
+        const scope: Scope = if (next == ':' and
+            (parser.brace_depth > 0 or (parser.dialect == .fsharp and !parser.parameter_mode)))
+            .property
+        else if (parser.constructor_pending and std.ascii.isUpper(word[0]))
+            .constructor
+        else if (parser.type_context)
+            .type
+        else if (parser.parameter_mode)
+            .parameter
+        else if (scanner.previousNonSpace(parser.source, start) == '.')
+            if (next == '(') .function else .property
+        else if (next == '(')
+            .function
+        else if (std.ascii.isUpper(word[0]))
+            .constructor
+        else
+            .variable;
+        parser.setScope(capture_index, scope);
+        if (scope == .constructor) parser.constructor_pending = false;
+    }
+
+    fn refineOperator(parser: *Parser, capture_index: usize, capture: Capture) api.HighlightError!void {
+        const operator = parser.source[capture.span.start..capture.span.end];
+        if ((operator[0] == '~' or operator[0] == '?') and
+            capture.span.end < parser.source.len and scanner.isAsciiIdentifierStart(parser.source[capture.span.end]))
         {
-            try parser.sink.add(start, end, .property);
-        } else if (parser.constructor_pending and std.ascii.isUpper(word[0])) {
-            try parser.sink.add(start, end, .constructor);
-            parser.constructor_pending = false;
-        } else if (parser.type_context) {
-            try parser.sink.add(start, end, .type);
-        } else if (parser.parameter_mode) {
-            try parser.sink.add(start, end, .parameter);
-        } else if (scanner.previousNonSpace(parser.source, start) == '.') {
-            try parser.sink.add(start, end, if (next == '(') .function else .property);
-        } else if (next == '(') {
-            try parser.sink.add(start, end, .function);
-        } else if (std.ascii.isUpper(word[0])) {
-            try parser.sink.add(start, end, .constructor);
-        } else {
-            try parser.sink.add(start, end, .variable);
+            const end = scanner.identifierEnd(parser.source, capture.span.end, .ascii);
+            parser.empty(capture_index);
+            parser.suppressed_until = end;
+            try parser.sink.add(capture.span.start, end, .parameter);
+            return;
         }
-    }
-
-    fn scanAttribute(parser: *Parser, index: *usize) api.HighlightError!bool {
-        const start = index.*;
-        const fsharp = parser.dialect == .fsharp and std.mem.startsWith(u8, parser.source[start..], "[<");
-        const ocaml = parser.dialect == .ocaml and std.mem.startsWith(u8, parser.source[start..], "[@");
-        if (!fsharp and !ocaml) return false;
-        const closing = if (fsharp) ">]" else "]";
-        const close = std.mem.indexOfPos(u8, parser.source, start + 2, closing);
-        index.* = if (close) |at| at + closing.len else parser.source.len;
-        try parser.sink.add(start, index.*, .attribute);
-        return true;
-    }
-
-    fn scanTypeVariable(parser: *Parser, index: *usize) bool {
-        const start = index.*;
-        if (start >= parser.source.len or parser.source[start] != '\'') return false;
-        if (start + 1 >= parser.source.len or !scanner.isAsciiIdentifierStart(parser.source[start + 1])) return false;
-        const end = scanner.identifierEnd(parser.source, start + 1, .ascii);
-        if (end < parser.source.len and parser.source[end] == '\'') return false;
-        parser.sink.add(start, end, .type) catch return false;
-        index.* = end;
-        return true;
-    }
-
-    fn scanLabel(parser: *Parser, index: *usize) api.HighlightError!bool {
-        const start = index.*;
-        if (start >= parser.source.len or (parser.source[start] != '~' and parser.source[start] != '?')) return false;
-        if (start + 1 >= parser.source.len or !scanner.isAsciiIdentifierStart(parser.source[start + 1])) return false;
-        index.* = scanner.identifierEnd(parser.source, start + 1, .ascii);
-        try parser.sink.add(start, index.*, .parameter);
-        return true;
-    }
-
-    fn observeOperator(parser: *Parser, operator: []const u8) void {
         if (operator[0] == ':') {
             parser.type_context = true;
             parser.parameter_mode = false;
@@ -185,7 +184,21 @@ const Parser = struct {
         }
     }
 
-    fn observePunctuation(parser: *Parser, byte: u8) void {
+    fn refinePunctuation(parser: *Parser, capture_index: usize, capture: Capture) api.HighlightError!void {
+        const byte = parser.source[capture.span.start];
+        if (byte == '[') {
+            const fsharp = parser.dialect == .fsharp and std.mem.startsWith(u8, parser.source[capture.span.start..], "[<");
+            const ocaml = parser.dialect == .ocaml and std.mem.startsWith(u8, parser.source[capture.span.start..], "[@");
+            if (fsharp or ocaml) {
+                const closing = if (fsharp) ">]" else "]";
+                const close = std.mem.indexOfPos(u8, parser.source, capture.span.start + 2, closing);
+                const end = if (close) |at| at + closing.len else parser.source.len;
+                parser.empty(capture_index);
+                parser.suppressed_until = end;
+                try parser.sink.add(capture.span.start, end, .attribute);
+                return;
+            }
+        }
         switch (byte) {
             '{' => parser.brace_depth += 1,
             '}' => parser.brace_depth -|= 1,
@@ -195,6 +208,15 @@ const Parser = struct {
         }
     }
 
+    fn setScope(parser: *Parser, capture_index: usize, scope: Scope) void {
+        parser.sink.mutableCaptures()[capture_index].scope = scope;
+    }
+
+    fn empty(parser: *Parser, capture_index: usize) void {
+        const start = parser.sink.captures()[capture_index].span.start;
+        parser.sink.mutableCaptures()[capture_index].span.end = start;
+    }
+
     fn resetLineState(parser: *Parser) void {
         parser.expected = null;
         parser.parameter_mode = false;
@@ -202,6 +224,13 @@ const Parser = struct {
         parser.constructor_pending = false;
     }
 };
+
+fn isIdentifierScope(scope: Scope) bool {
+    return switch (scope) {
+        .variable, .property, .function, .label => true,
+        else => false,
+    };
+}
 
 fn keywords(dialect: Dialect) []const []const u8 {
     return if (dialect == .fsharp) fsharp_keywords else ocaml_keywords;
