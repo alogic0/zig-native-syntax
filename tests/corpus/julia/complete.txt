@@ -1,1 +1,24 @@
-function run() value = "x\n<&>"; count = 42; enabled = true; end # comment
+module Geometry # public shapes
+
+abstract type Shape end
+
+struct Circle <: Shape
+    radius::Float64
+end
+
+function area(circle::Circle; scale::Float64 = 1.0)
+    @assert circle.radius >= 0
+    message = "area\\n<&>"
+    return :ok, π * circle.radius^2 * scale
+end
+
+area(radius::Float64) = π * radius^2
+
+macro checked(expr)
+    quote
+        $(esc(expr))
+    end
+end
+
+enabled = true
+end
