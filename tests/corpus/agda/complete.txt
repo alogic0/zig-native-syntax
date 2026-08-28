@@ -1,10 +1,17 @@
-module Demo where
+module Demo.Core where
+
+open import Data.Nat
 
 data Item : Set where
   item : Item
 
-value : Item
-value = item
+record Point : Set where
+  field
+    x : Set
+    y : Set
+
+select : Item → Item
+select value = value
 text = "x\\n"
 enabled = true
 count = 42
