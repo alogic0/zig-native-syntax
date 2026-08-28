@@ -1,12 +1,13 @@
 # CMake Highlighting Compatibility
 
-The dependency-free `cmake` backend recognizes comments, command calls,
-control-flow keywords, variables, strings and escapes, booleans, constants,
-numbers, operators, and punctuation. It is a bounded lexical scanner, not a
-CMake evaluator; it does not expand variables, interpret generator
-expressions, or validate command signatures. Unterminated strings stop at the
-current line.
+The dependency-free `cmake` backend uses a single-pass tolerant structural
+scanner. It recognizes line and bracket comments, bracket and quoted arguments,
+command calls, function and macro declarations, formal parameters, variable
+bindings and references, targets, properties, generator expressions, control
+flow, primitive values, operators, and punctuation.
 
-The backend is verified for lexical highlighting of command-oriented project
-and library corpora, with exact tests for calls, control flow, variables,
-primitive values, malformed strings, and source preservation.
+The scanner is not a CMake evaluator: it does not expand variables or generator
+expressions, execute commands, or validate command signatures. Unterminated
+quoted and bracket arguments recover at end of input. Exact tests cover nested
+references and generator expressions, declarations, target/property commands,
+malformed input, and source preservation.
