@@ -29,9 +29,9 @@ The suffix on each entry records its implementation depth on `main`:
 These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
-input, and deterministic-output contract. There are currently 33 parser-backed
+input, and deterministic-output contract. There are currently 34 parser-backed
 languages, 7 partially parser-backed compositions, 4 tokenizer adapters, 14
-dedicated scanners, and 37 configured scanners. This classification describes
+dedicated scanners, and 36 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
@@ -108,10 +108,10 @@ the backend actually understands.
 - [x] 62. GDScript — **parser** (owned tolerant declaration parser) — *verified structural*
 - [x] 63. Perl — **parser** (owned tolerant declaration and quote-like parser) — *verified structural*
 - [x] 64. Elixir — **parser** (owned tolerant declaration and sigil parser) — *verified structural*
-- [x] 65. F# — **parser** (shared tolerant ML-family parser) — *verified structural*
-- [x] 66. OCaml — **parser** (shared tolerant ML-family parser) — *verified structural*
+- [x] 65. F# — **parser** (shared single-pass ML-family parser) — *verified structural*
+- [x] 66. OCaml — **parser** (shared single-pass ML-family parser) — *verified structural*
 - [x] 67. Haskell — **parser** (owned tolerant declaration and equation parser) — *verified structural*
-- [x] 68. Gleam — **configured scanner**
+- [x] 68. Gleam — **parser-backed** — *experimental structural*
 - [x] 69. Common Lisp — **configured scanner**
 - [x] 70. Scheme — **configured scanner**
 - [x] 71. Julia — **parser** (owned tolerant declaration and macro parser) — *verified structural*

@@ -35,6 +35,23 @@ test "OCaml parser classifies modules declarations patterns and fields" {
     try expect(source, sink.captures(), "find", .function);
 }
 
+test "OCaml fused scanner preserves rendered output" {
+    const source = "module Demo = struct\nlet rec map f input : int = f input\ntype shape = Circle of float\nend";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+    var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+    try syntax.html.render(source, sink.captures(), std.testing.allocator, &output.writer);
+    try std.testing.expectEqualStrings(
+        "<span class=\"syntax-keyword\">module</span> <span class=\"syntax-namespace\">Demo</span> <span class=\"syntax-operator\">=</span> <span class=\"syntax-keyword\">struct</span>\n" ++
+            "<span class=\"syntax-keyword\">let</span> <span class=\"syntax-keyword\">rec</span> <span class=\"syntax-function\">map</span> <span class=\"syntax-parameter\">f</span> <span class=\"syntax-parameter\">input</span> <span class=\"syntax-operator\">:</span> <span class=\"syntax-builtin syntax-type\">int</span> <span class=\"syntax-operator\">=</span> <span class=\"syntax-variable\">f</span> <span class=\"syntax-variable\">input</span>\n" ++
+            "<span class=\"syntax-keyword\">type</span> <span class=\"syntax-type\">shape</span> <span class=\"syntax-operator\">=</span> <span class=\"syntax-constructor\">Circle</span> <span class=\"syntax-keyword\">of</span> <span class=\"syntax-builtin syntax-type\">float</span>\n" ++
+            "<span class=\"syntax-keyword\">end</span>",
+        output.written(),
+    );
+}
+
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
     for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
     return error.TestExpectedEqual;

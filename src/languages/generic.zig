@@ -3,6 +3,17 @@ const api = @import("../backend.zig");
 const Scope = @import("../scope.zig").Scope;
 
 pub const BlockComment = struct { open: []const u8, close: []const u8 };
+pub const StructuralEvent = union(enum) {
+    word: struct { start: usize, end: usize, lexical_scope: ?Scope },
+    operator: struct { start: usize, end: usize },
+    punctuation: u8,
+    newline,
+};
+pub const StructuralObserver = struct {
+    context: *anyopaque,
+    before: *const fn (*anyopaque, *usize) api.HighlightError!bool,
+    observe: *const fn (*anyopaque, *usize, StructuralEvent) api.HighlightError!void,
+};
 pub const Config = struct {
     line_comments: []const []const u8 = &.{},
     block_comments: []const BlockComment = &.{},
@@ -21,6 +32,7 @@ pub const Config = struct {
     triple_quoted_strings: bool = false,
     nested_block_comments: bool = false,
     at_scope: ?Scope = .attribute,
+    structural_observer: ?StructuralObserver = null,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -41,17 +53,25 @@ const Scanner = struct {
                 try self.scanAngleHeredoc();
                 continue;
             }
+            if (self.config.structural_observer) |observer| {
+                if (try observer.before(observer.context, &self.index)) continue;
+            }
             if (self.config.preprocessor and self.source[self.index] == '#' and self.onlyIndentBefore()) try self.scanToLineEnd(.macro) else if (self.matchBlock()) |block| try self.scanBlock(block) else if (self.matchLineComment()) try self.scanToLineEnd(.comment) else switch (self.source[self.index]) {
                 '\n' => {
                     self.index += 1;
                     self.line_start = self.index;
                     self.after_dot = false;
+                    try self.observe(.newline);
                 },
                 '0'...'9' => try self.scanNumber(),
                 '$' => try self.scanVariable(),
                 '@' => try self.scanAttribute(),
                 '+', '-', '*', '/', '%', '=', '!', '<', '>', '&', '|', '^', '~', '?', ':' => try self.scanOperator(),
-                '(', ')', '[', ']', '{', '}', ',', ';' => try self.captureByte(.punctuation, false),
+                '(', ')', '[', ']', '{', '}', ',', ';' => {
+                    const byte = self.source[self.index];
+                    try self.captureByte(.punctuation, false);
+                    try self.observe(.{ .punctuation = byte });
+                },
                 '.' => try self.captureByte(.punctuation, true),
                 else => {
                     if (std.mem.indexOfScalar(u8, self.config.quotes, self.source[self.index]) != null) {
@@ -202,6 +222,7 @@ const Scanner = struct {
         while (self.index < self.source.len and std.mem.indexOfScalar(u8, "+-*/%=!<>&|^~?:", self.source[self.index]) != null) self.index += 1;
         try self.sink.add(start, self.index, .operator);
         self.after_dot = false;
+        try self.observe(.{ .operator = .{ .start = start, .end = self.index } });
     }
     fn captureByte(self: *Scanner, scope: Scope, dot: bool) api.HighlightError!void {
         try self.sink.add(self.index, self.index + 1, scope);
@@ -224,7 +245,14 @@ const Scanner = struct {
             try self.sink.add(start, self.index, resolved);
             if (resolved == .type) try self.sink.add(start, self.index, .builtin);
         }
+        try self.observe(.{ .word = .{ .start = start, .end = self.index, .lexical_scope = scope } });
         self.after_dot = false;
+    }
+
+    fn observe(self: *Scanner, event: StructuralEvent) api.HighlightError!void {
+        if (self.config.structural_observer) |observer| {
+            try observer.observe(observer.context, &self.index, event);
+        }
     }
 
     fn isIdentifierContinue(self: Scanner, byte: u8) bool {

@@ -38,6 +38,23 @@ test "F# parser classifies namespaces declarations unions and members" {
     try expect(source, sink.captures(), "?limit", .parameter);
 }
 
+test "F# fused scanner preserves rendered output" {
+    const source = "namespace Demo.Core\n[<Struct>]\ntype Shape = | Circle of float\nlet area (shape: Shape) = 42.0";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+    var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+    try syntax.html.render(source, sink.captures(), std.testing.allocator, &output.writer);
+    try std.testing.expectEqualStrings(
+        "<span class=\"syntax-keyword\">namespace</span> <span class=\"syntax-namespace\">Demo</span><span class=\"syntax-namespace syntax-punctuation\">.</span><span class=\"syntax-namespace\">Core</span>\n" ++
+            "<span class=\"syntax-attribute\">[&lt;Struct&gt;]</span>\n" ++
+            "<span class=\"syntax-keyword\">type</span> <span class=\"syntax-type\">Shape</span> <span class=\"syntax-operator\">=</span> <span class=\"syntax-operator\">|</span> <span class=\"syntax-constructor\">Circle</span> <span class=\"syntax-keyword\">of</span> <span class=\"syntax-builtin syntax-type\">float</span>\n" ++
+            "<span class=\"syntax-keyword\">let</span> <span class=\"syntax-function\">area</span> <span class=\"syntax-punctuation\">(</span><span class=\"syntax-parameter\">shape</span><span class=\"syntax-operator\">:</span> <span class=\"syntax-type\">Shape</span><span class=\"syntax-punctuation\">)</span> <span class=\"syntax-operator\">=</span> <span class=\"syntax-number\">42.0</span>",
+        output.written(),
+    );
+}
+
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
     for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
     return error.TestExpectedEqual;
