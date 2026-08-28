@@ -1,6 +1,9 @@
-let item = {
-  value = "x\\n",
-  enabled = true,
-  count = 42,
-} in item
+let make_item = fun name enabled => {
+  name | String | doc "display name" = name,
+  enabled = enabled,
+  nested.count = 42,
+  message = "hello %{name}\\n",
+} in
+let item = make_item "demo" true in
+item.name
 # comment
