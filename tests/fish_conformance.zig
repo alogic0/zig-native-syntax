@@ -26,7 +26,34 @@ test "Fish parser distinguishes declarations commands arguments and substitution
     try expect(source, sink.captures(), "$message", .variable);
 }
 
+test "Fish parser covers completion scripts continuations and redirections" {
+    const source = @embedFile("corpus/fish/completions.fish");
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try syntax.languages.fish.backend.highlight(source, &sink);
+
+    try expect(source, sink.captures(), "__fish_viewer_needs_command", .function);
+    try expect(source, sink.captures(), "tokens", .variable);
+    try expect(source, sink.captures(), "commandline", .builtin);
+    try expect(source, sink.captures(), "$tokens[1..-1]", .variable);
+    try expect(source, sink.captures(), "find", .function);
+    try expect(source, sink.captures(), "complete", .builtin);
+    try expect(source, sink.captures(), "-n", .attribute);
+    try expect(source, sink.captures(), "type", .builtin);
+    try expect(source, sink.captures(), "string", .builtin);
+    try expect(source, sink.captures(), "/usr/bin/printf", .function);
+    try expect(source, sink.captures(), "$argv[1]", .variable);
+    try expectMissing(source, sink.captures(), "dev", .function);
+    try expectMissing(source, sink.captures(), "tmp", .function);
+}
+
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
     for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
     return error.TestExpectedEqual;
+}
+
+fn expectMissing(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
+    for (captures) |capture| {
+        if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return error.TestUnexpectedResult;
+    }
 }
