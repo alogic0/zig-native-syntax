@@ -1,7 +1,7 @@
 const api = @import("../backend.zig");
 const generic = @import("generic.zig");
 
-pub const Kind = enum { kdl, awk, ssh_config, gitcommit, git_rebase, po, rst, latex, typst, org, dtd, mail, hurl, ninja, rpmspec, perl, elixir, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
+pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, typst, org, dtd, mail, hurl, ninja, rpmspec, perl, elixir, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, kind: Kind) api.HighlightError!void {
     try generic.highlight(source, sink, config(kind));
@@ -10,7 +10,6 @@ pub fn highlight(source: []const u8, sink: *api.CaptureSink, kind: Kind) api.Hig
 fn config(kind: Kind) generic.Config {
     return switch (kind) {
         .kdl => .{ .line_comments = &.{"//"}, .block_comments = &.{.{ .open = "/*", .close = "*/" }}, .types = &.{ "i64", "f64", "string", "bool" } },
-        .awk => .{ .line_comments = &.{"#"}, .keywords = &.{ "BEGIN", "END", "break", "continue", "delete", "else", "exit", "for", "function", "getline", "if", "in", "next", "print", "printf", "return", "while" } },
         .ssh_config => .{ .line_comments = &.{"#"}, .keywords = &.{ "Host", "Match", "HostName", "IdentityFile", "Include", "Port", "ProxyJump", "SendEnv", "SetEnv", "User" }, .case_insensitive = true },
         .gitcommit => .{ .line_comments = &.{"#"} },
         .git_rebase => .{ .line_comments = &.{"#"}, .keywords = &.{ "break", "drop", "edit", "exec", "fixup", "label", "merge", "pick", "reword", "reset", "squash", "update-ref" } },

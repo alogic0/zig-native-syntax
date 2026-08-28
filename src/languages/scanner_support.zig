@@ -28,11 +28,17 @@ pub fn quotedEnd(source: []const u8, start: usize, quote: u8, stop_at_newline: b
     var cursor = start + 1;
     while (cursor < source.len) {
         if (source[cursor] == '\\') {
-            cursor += @min(@as(usize, 2), source.len - cursor);
+            cursor = escapeEnd(source, cursor);
             continue;
         }
         cursor += 1;
         if (source[cursor - 1] == quote or (stop_at_newline and source[cursor - 1] == '\n')) break;
     }
     return cursor;
+}
+
+pub fn escapeEnd(source: []const u8, start: usize) usize {
+    const escaped = start + 1;
+    if (escaped >= source.len) return source.len;
+    return escaped + validUtf8Length(source[escaped..]);
 }
