@@ -9,6 +9,9 @@ and line directives. Its lexical foundation classifies nested block and line
 comments, ordinary and triple-quoted strings, escapes, literals, numbers,
 operators, and punctuation.
 
+The source-traversal design and reproducible performance comparison are
+documented in [ML-family scanner performance](../architecture/ml-family-performance.md).
+
 The parser does not type-check patterns, resolve modules or overloads, expand
 computation expressions, or fully parse active patterns, quotations, units of
 measure, interpolated strings, or statically resolved type parameters. Space-
