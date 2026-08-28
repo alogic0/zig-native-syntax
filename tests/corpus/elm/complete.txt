@@ -1,1 +1,23 @@
-run = let value = "x\n<&>"; count = 42; enabled = true in value -- comment
+module Demo.Profile exposing (Profile, Status(..), render)
+
+import Html as H
+
+type alias Profile =
+    { name : String
+    , enabled : Bool
+    }
+
+type Status
+    = Ready
+    | Failed String
+
+render : Profile -> String
+render profile =
+    let
+        greeting = "hello\\n<&>"
+    in
+    H.text profile.name
+
+sample = { name = "Ada", enabled = True }
+count = 42
+-- comment
