@@ -2,7 +2,7 @@ const std = @import("std");
 const api = @import("../backend.zig");
 const scanner = @import("scanner_support.zig");
 
-pub const Dialect = enum { elm, purescript };
+pub const Dialect = enum { elm, haskell, purescript };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, dialect: Dialect) api.HighlightError!void {
     var parser: Parser = .{ .source = source, .sink = sink, .dialect = dialect };
@@ -24,9 +24,14 @@ const Parser = struct {
     equation_parameters: bool = false,
     data_declaration: bool = false,
     constructor_pending: bool = false,
+    inline_binding_pending: bool = false,
 
     fn run(parser: *Parser) api.HighlightError!void {
         while (parser.index < parser.source.len) {
+            if (parser.dialect == .haskell and std.mem.startsWith(u8, parser.source[parser.index..], "{-#")) {
+                try parser.scanPragma();
+                continue;
+            }
             if (std.mem.startsWith(u8, parser.source[parser.index..], "--")) {
                 parser.index = scanner.lineEnd(parser.source, parser.index, parser.source.len);
                 continue;
@@ -58,6 +63,7 @@ const Parser = struct {
                     parser.constructor_pending = parser.data_declaration;
                     parser.type_context = false;
                     parser.equation_parameters = false;
+                    parser.inline_binding_pending = false;
                     parser.index += 1;
                 },
                 '|' => {
@@ -86,6 +92,7 @@ const Parser = struct {
         const first_on_line = scanner.onlyIndentBefore(parser.source, parser.line_start, start);
 
         if (parser.expected_namespace) {
+            if (parser.dialect == .haskell and std.mem.eql(u8, word, "qualified")) return;
             parser.index = scanner.qualifiedIdentifierEnd(parser.source, start, ".", .apostrophe, .identifier);
             try parser.sink.add(start, parser.index, .namespace);
             parser.expected_namespace = false;
@@ -111,17 +118,21 @@ const Parser = struct {
             parser.data_declaration = parser.dialect == .elm;
             return;
         }
-        if (parser.dialect == .purescript and
+        if (parser.dialect != .elm and
             (std.mem.eql(u8, word, "data") or std.mem.eql(u8, word, "newtype") or
-                std.mem.eql(u8, word, "class")))
+                std.mem.eql(u8, word, "class") or
+                (parser.dialect == .haskell and std.mem.eql(u8, word, "family"))))
         {
             parser.expected_type = true;
             parser.data_declaration = !std.mem.eql(u8, word, "class");
             return;
         }
-        if (isKeyword(word, parser.dialect) or isLiteral(word, parser.dialect)) return;
+        if (isKeyword(word, parser.dialect) or isLiteral(word, parser.dialect)) {
+            parser.inline_binding_pending = std.mem.eql(u8, word, "let");
+            return;
+        }
 
-        const declaration = if (first_on_line) lineDeclaration(parser.source, parser.index, parser.dialect) else .none;
+        const declaration = if (first_on_line or parser.inline_binding_pending) lineDeclaration(parser.source, parser.index, parser.dialect) else .none;
         if (parser.brace_depth > 0 and nextIsSignature(parser.source, parser.index, parser.dialect)) {
             try parser.sink.add(start, parser.index, .property);
         } else if (parser.brace_depth > 0 and scanner.nextNonSpace(parser.source, parser.index) == '=') {
@@ -147,6 +158,13 @@ const Parser = struct {
         } else {
             try parser.sink.add(start, parser.index, .variable);
         }
+        parser.inline_binding_pending = false;
+    }
+
+    fn scanPragma(parser: *Parser) api.HighlightError!void {
+        const start = parser.index;
+        parser.index = if (std.mem.indexOfPos(u8, parser.source, start + 3, "#-}")) |close| close + 3 else parser.source.len;
+        try parser.sink.add(start, parser.index, .attribute);
     }
 
     fn skipNestedComment(parser: *Parser) void {
@@ -167,7 +185,7 @@ const Parser = struct {
 fn lineDeclaration(source: []const u8, after: usize, dialect: Dialect) Declaration {
     const end = scanner.lineEnd(source, after, source.len);
     const tail = source[after..end];
-    if (dialect == .purescript) {
+    if (dialect != .elm) {
         if (std.mem.indexOf(u8, tail, "::") != null) return .signature;
     } else if (std.mem.indexOfScalar(u8, tail, ':') != null) return .signature;
     if (std.mem.indexOfScalar(u8, tail, '=') != null) return .equation;
@@ -184,15 +202,17 @@ fn nextIsSignature(source: []const u8, after: usize, dialect: Dialect) bool {
 fn isKeyword(word: []const u8, dialect: Dialect) bool {
     const common = &.{ "as", "case", "else", "if", "import", "in", "let", "module", "of", "then", "type" };
     if (scanner.wordIs(word, common)) return true;
-    return if (dialect == .elm)
-        scanner.wordIs(word, &.{ "alias", "exposing", "port" })
-    else
-        scanner.wordIs(word, &.{ "class", "data", "derive", "do", "forall", "foreign", "instance", "newtype", "where" });
+    return switch (dialect) {
+        .elm => scanner.wordIs(word, &.{ "alias", "exposing", "port" }),
+        .haskell => scanner.wordIs(word, &.{ "class", "data", "default", "deriving", "do", "family", "foreign", "hiding", "infix", "infixl", "infixr", "instance", "newtype", "qualified", "where" }),
+        .purescript => scanner.wordIs(word, &.{ "class", "data", "derive", "do", "forall", "foreign", "instance", "newtype", "where" }),
+    };
 }
 
 fn isLiteral(word: []const u8, dialect: Dialect) bool {
-    return if (dialect == .elm)
-        scanner.wordIs(word, &.{ "True", "False", "Nothing", "Just", "Ok", "Err" })
-    else
-        scanner.wordIs(word, &.{ "true", "false", "Nothing", "Just", "Left", "Right" });
+    return switch (dialect) {
+        .elm => scanner.wordIs(word, &.{ "True", "False", "Nothing", "Just", "Ok", "Err" }),
+        .haskell => scanner.wordIs(word, &.{ "True", "False", "Nothing" }),
+        .purescript => scanner.wordIs(word, &.{ "true", "false", "Nothing", "Just", "Left", "Right" }),
+    };
 }

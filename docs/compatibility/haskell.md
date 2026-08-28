@@ -1,6 +1,7 @@
 # Haskell Compatibility
 
-The verified structural Haskell backend recognizes module and import names,
+The verified structural Haskell backend uses the shared
+Haskell/Elm/PureScript scanner. It recognizes module and import names,
 algebraic type and class declarations, constructors, record fields, function
 signatures and equations, inline `let` bindings, equation parameters, type
 references, and language pragmas. Its lexical foundation classifies line and

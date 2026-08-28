@@ -110,13 +110,13 @@ the backend actually understands.
 - [x] 64. Elixir — **parser** (owned tolerant declaration and sigil parser) — *verified structural*
 - [x] 65. F# — **parser** (shared single-pass ML-family parser) — *verified structural*
 - [x] 66. OCaml — **parser** (shared single-pass ML-family parser) — *verified structural*
-- [x] 67. Haskell — **parser** (owned tolerant declaration and equation parser) — *verified structural*
+- [x] 67. Haskell — **parser** (shared Haskell/Elm/PureScript structural scanner) — *verified structural*
 - [x] 68. Gleam — **parser** (owned tolerant structural scanner) — *verified structural*
 - [x] 69. Common Lisp — **configured scanner**
 - [x] 70. Scheme — **configured scanner**
 - [x] 71. Julia — **parser** (owned tolerant declaration and macro parser) — *verified structural*
-- [x] 72. Elm — **parser** (shared Elm/PureScript structural scanner) — *verified structural*
-- [x] 73. PureScript — **parser** (shared Elm/PureScript structural scanner) — *verified structural*
+- [x] 72. Elm — **parser** (shared Haskell/Elm/PureScript structural scanner) — *verified structural*
+- [x] 73. PureScript — **parser** (shared Haskell/Elm/PureScript structural scanner) — *verified structural*
 - [x] 74. Nim — **configured scanner**
 - [x] 75. D — **parser** (shared tolerant C-like declaration parser) — *verified structural*
 - [x] 76. V — **parser** (shared tolerant C-like declaration parser) — *verified structural*

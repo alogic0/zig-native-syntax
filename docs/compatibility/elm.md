@@ -1,7 +1,7 @@
 # Elm Highlighting Compatibility
 
 The verified structural Elm backend combines the shared lexical scanner with
-the shared Elm/PureScript structural scanner. It recognizes modules and
+the shared Haskell/Elm/PureScript structural scanner. It recognizes modules and
 imports, type aliases and custom types, constructors, function signatures and
 equations, parameters, record fields, qualified modules, and member access.
 
