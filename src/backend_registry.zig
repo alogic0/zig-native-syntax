@@ -68,6 +68,26 @@ pub fn collectVerified(comptime namespace: type) [verifiedCount(namespace)]Backe
     return result;
 }
 
+/// Collects verified backends while omitting a comma-separated set of
+/// canonical names. This exists for link-time code-size analysis; normal
+/// registries pass an empty exclusion list and include every verified backend.
+pub fn collectVerifiedExcept(comptime namespace: type, comptime excluded: []const u8) [verifiedCountExcept(namespace, excluded)]Backend {
+    @setEvalBranchQuota(100_000);
+    var result: [verifiedCountExcept(namespace, excluded)]Backend = undefined;
+    var index: usize = 0;
+    inline for (std.meta.declarations(namespace)) |declaration| {
+        const language = @field(namespace, declaration);
+        if (@hasDecl(language, "backend") and
+            language.backend.info.support_level != .experimental and
+            !nameInList(language.backend.info.canonical_name, excluded))
+        {
+            result[index] = language.backend;
+            index += 1;
+        }
+    }
+    return result;
+}
+
 pub fn find(name: []const u8, backends: []const Backend) ?Backend {
     const canonical = canonicalName(name);
     for (backends) |backend| {
@@ -91,4 +111,28 @@ fn verifiedCount(comptime namespace: type) comptime_int {
         if (@hasDecl(language, "backend") and language.backend.info.support_level != .experimental) count += 1;
     }
     return count;
+}
+
+fn verifiedCountExcept(comptime namespace: type, comptime excluded: []const u8) comptime_int {
+    @setEvalBranchQuota(100_000);
+    var count = 0;
+    for (std.meta.declarations(namespace)) |declaration| {
+        const language = @field(namespace, declaration);
+        if (@hasDecl(language, "backend") and
+            language.backend.info.support_level != .experimental and
+            !nameInList(language.backend.info.canonical_name, excluded)) count += 1;
+    }
+    return count;
+}
+
+fn nameInList(comptime name: []const u8, comptime list: []const u8) bool {
+    var start: usize = 0;
+    while (start <= list.len) {
+        const relative_end = std.mem.indexOfScalarPos(u8, list, start, ',') orelse list.len;
+        const candidate = std.mem.trim(u8, list[start..relative_end], " \t");
+        if (std.mem.eql(u8, name, candidate)) return true;
+        if (relative_end == list.len) break;
+        start = relative_end + 1;
+    }
+    return false;
 }

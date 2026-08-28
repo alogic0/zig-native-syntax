@@ -24,6 +24,7 @@ pub const MetadataError = backend.MetadataError;
 pub const Alias = backend_registry.Alias;
 pub const aliases = backend_registry.aliases;
 pub const collectVerifiedBackends = backend_registry.collectVerified;
+pub const collectVerifiedBackendsExcept = backend_registry.collectVerifiedExcept;
 
 pub const languages = struct {
     pub const agda = @import("languages/agda.zig");

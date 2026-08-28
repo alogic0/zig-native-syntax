@@ -10,7 +10,7 @@ const xml = if (options.xml) @import("native_syntax_xml") else struct {};
 const css = if (options.css) @import("native_syntax_css") else struct {};
 const superhtml = if (options.superhtml) @import("native_syntax_superhtml") else struct {};
 const markdown = if (options.markdown) @import("native_syntax_markdown") else struct {};
-const core_backends = syntax.collectVerifiedBackends(syntax.languages);
+const core_backends = syntax.collectVerifiedBackendsExcept(syntax.languages, options.size_analysis_exclusions);
 
 const external_count: usize = @intFromBool(options.ziggy) +
     @as(usize, @intFromBool(options.ziggy_schema)) +

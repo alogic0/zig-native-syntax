@@ -13,6 +13,11 @@ pub fn build(b: *std.Build) void {
         "external-backends",
         "Enable all external syntax backends unless individually overridden",
     ) orelse true;
+    const size_analysis_exclusions = b.option(
+        []const u8,
+        "size-analysis-exclude-backends",
+        "Comma-separated core backends omitted only for code-size analysis",
+    ) orelse "";
     const enable_ziggy_backend = b.option(
         bool,
         "backend-ziggy",
@@ -1045,6 +1050,7 @@ pub fn build(b: *std.Build) void {
     registry_options.addOption(bool, "css", enable_css_backend);
     registry_options.addOption(bool, "superhtml", enable_superhtml_backend);
     registry_options.addOption(bool, "markdown", enable_markdown_backend);
+    registry_options.addOption([]const u8, "size_analysis_exclusions", size_analysis_exclusions);
 
     const configured_registry = b.addModule("native_syntax_registry", .{
         .root_source_file = b.path("src/configured_registry.zig"),
