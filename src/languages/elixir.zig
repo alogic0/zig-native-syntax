@@ -86,7 +86,7 @@ const Parser = struct {
 
     fn scanWord(parser: *Parser) api.HighlightError!void {
         const start = parser.index;
-        parser.index = identifierEnd(parser.source, parser.index);
+        parser.index = scanner.identifierEnd(parser.source, parser.index, .callable);
         var word = parser.source[start..parser.index];
 
         if (parser.expected) |scope| {
@@ -144,16 +144,16 @@ const Parser = struct {
         parser.index += 1;
         if (parser.source[parser.index] == '\'' or parser.source[parser.index] == '"') {
             parser.skipString(parser.source[parser.index]);
-        } else if (isIdentifierStart(parser.source[parser.index])) {
-            parser.index = identifierEnd(parser.source, parser.index);
+        } else if (scanner.isAsciiIdentifierStart(parser.source[parser.index])) {
+            parser.index = scanner.identifierEnd(parser.source, parser.index, .callable);
         }
         if (parser.index > start + 1) try parser.sink.add(start, parser.index, .constant);
     }
 
     fn skipAttribute(parser: *Parser) void {
         parser.index += 1;
-        if (parser.index < parser.source.len and isIdentifierStart(parser.source[parser.index])) {
-            parser.index = identifierEnd(parser.source, parser.index);
+        if (parser.index < parser.source.len and scanner.isAsciiIdentifierStart(parser.source[parser.index])) {
+            parser.index = scanner.identifierEnd(parser.source, parser.index, .callable);
         }
     }
 
@@ -161,14 +161,8 @@ const Parser = struct {
         const start = parser.index;
         if (start + 2 >= parser.source.len or !std.ascii.isAlphabetic(parser.source[start + 1])) return false;
         const opening = parser.source[start + 2];
-        const closing: u8 = switch (opening) {
-            '(' => ')',
-            '[' => ']',
-            '{' => '}',
-            '<' => '>',
-            '/', '|', '\'', '"' => opening,
-            else => return false,
-        };
+        if (std.mem.indexOfScalar(u8, "([{</|'\"", opening) == null) return false;
+        const closing = scanner.matchingDelimiter(opening);
         parser.index = start + 3;
         var depth: usize = 1;
         while (parser.index < parser.source.len) {
@@ -190,44 +184,12 @@ const Parser = struct {
     }
 
     fn skipString(parser: *Parser, quote: u8) void {
-        const triple = parser.index + 2 < parser.source.len and parser.source[parser.index + 1] == quote and parser.source[parser.index + 2] == quote;
-        if (!triple) {
-            parser.index = scanner.quotedEnd(parser.source, parser.index, quote, true);
-            return;
-        }
-        parser.index += 3;
-        while (parser.index < parser.source.len) {
-            if (parser.source[parser.index] == '\\') {
-                parser.index = scanner.escapeEnd(parser.source, parser.index);
-            } else if (parser.index + 2 < parser.source.len and parser.source[parser.index] == quote and parser.source[parser.index + 1] == quote and parser.source[parser.index + 2] == quote) {
-                parser.index += 3;
-                return;
-            } else parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
-        }
+        parser.index = scanner.stringEnd(parser.source, parser.index, quote, true);
     }
 };
 
 fn aliasEnd(source: []const u8, start: usize) usize {
-    var end = identifierEnd(source, start);
-    while (end + 1 < source.len and source[end] == '.' and std.ascii.isUpper(source[end + 1])) {
-        end = identifierEnd(source, end + 1);
-    }
-    return end;
-}
-
-fn identifierEnd(source: []const u8, start: usize) usize {
-    var end = start + 1;
-    while (end < source.len and isIdentifierContinue(source[end])) end += 1;
-    if (end < source.len and (source[end] == '!' or source[end] == '?')) end += 1;
-    return end;
-}
-
-fn isIdentifierStart(byte: u8) bool {
-    return std.ascii.isAlphabetic(byte) or byte == '_';
-}
-
-fn isIdentifierContinue(byte: u8) bool {
-    return std.ascii.isAlphanumeric(byte) or byte == '_';
+    return scanner.qualifiedIdentifierEnd(source, start, ".", .callable, .uppercase);
 }
 
 fn isParameterPosition(source: []const u8, start: usize) bool {

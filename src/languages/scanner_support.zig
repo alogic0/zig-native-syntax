@@ -1,5 +1,8 @@
 const std = @import("std");
 
+pub const IdentifierStyle = enum { ascii, callable, apostrophe };
+pub const SegmentStart = enum { identifier, uppercase };
+
 /// Advances over one valid UTF-8 scalar and retains arbitrary-byte recovery
 /// for malformed or truncated input.
 pub fn validUtf8Length(source: []const u8) usize {
@@ -58,4 +61,91 @@ pub fn escapeEnd(source: []const u8, start: usize) usize {
     const escaped = start + 1;
     if (escaped >= source.len) return source.len;
     return escaped + validUtf8Length(source[escaped..]);
+}
+
+pub fn isAsciiIdentifierStart(byte: u8) bool {
+    return std.ascii.isAlphabetic(byte) or byte == '_';
+}
+
+pub noinline fn identifierEnd(source: []const u8, start: usize, style: IdentifierStyle) usize {
+    var end = start + 1;
+    while (end < source.len and
+        (std.ascii.isAlphanumeric(source[end]) or source[end] == '_' or
+            (style == .apostrophe and source[end] == '\''))) end += 1;
+    if (style == .callable and end < source.len and
+        (source[end] == '!' or source[end] == '?')) end += 1;
+    return end;
+}
+
+pub noinline fn qualifiedIdentifierEnd(
+    source: []const u8,
+    start: usize,
+    separator: []const u8,
+    style: IdentifierStyle,
+    segment_start: SegmentStart,
+) usize {
+    var end = identifierEnd(source, start, style);
+    while (end + separator.len < source.len and
+        std.mem.startsWith(u8, source[end..], separator) and
+        validSegmentStart(source[end + separator.len], segment_start))
+    {
+        end = identifierEnd(source, end + separator.len, style);
+    }
+    return end;
+}
+
+fn validSegmentStart(byte: u8, policy: SegmentStart) bool {
+    return switch (policy) {
+        .identifier => isAsciiIdentifierStart(byte),
+        .uppercase => std.ascii.isUpper(byte),
+    };
+}
+
+pub noinline fn stringEnd(source: []const u8, start: usize, quote: u8, allow_triple: bool) usize {
+    const triple = allow_triple and start + 2 < source.len and
+        source[start + 1] == quote and source[start + 2] == quote;
+    if (!triple) return quotedEnd(source, start, quote, true);
+
+    var index = start + 3;
+    while (index < source.len) {
+        if (source[index] == '\\') {
+            index = escapeEnd(source, index);
+        } else if (index + 2 < source.len and source[index] == quote and
+            source[index + 1] == quote and source[index + 2] == quote)
+        {
+            return index + 3;
+        } else {
+            index += validUtf8Length(source[index..]);
+        }
+    }
+    return index;
+}
+
+pub fn matchingDelimiter(opening: u8) u8 {
+    return switch (opening) {
+        '(' => ')',
+        '[' => ']',
+        '{' => '}',
+        '<' => '>',
+        else => opening,
+    };
+}
+
+pub fn onlyIndentBefore(source: []const u8, line_start: usize, position: usize) bool {
+    for (source[line_start..position]) |byte| {
+        if (byte != ' ' and byte != '\t') return false;
+    }
+    return true;
+}
+
+test "shared identifier policies preserve language-specific spelling" {
+    try std.testing.expectEqual(@as(usize, 6), identifierEnd("ready? next", 0, .callable));
+    try std.testing.expectEqual(@as(usize, 6), identifierEnd("value' next", 0, .apostrophe));
+    try std.testing.expectEqual(@as(usize, 16), qualifiedIdentifierEnd("Demo.HTTP.Server", 0, ".", .ascii, .uppercase));
+    try std.testing.expectEqual(@as(usize, 18), qualifiedIdentifierEnd("Demo::HTTP::Server", 0, "::", .ascii, .identifier));
+}
+
+test "shared string scanner handles single and triple quotes" {
+    try std.testing.expectEqual(@as(usize, 7), stringEnd("\"value\" tail", 0, '"', true));
+    try std.testing.expectEqual(@as(usize, 13), stringEnd("\"\"\"value\\n\"\"\" tail", 0, '"', true));
 }

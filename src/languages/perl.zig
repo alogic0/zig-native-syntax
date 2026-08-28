@@ -123,7 +123,7 @@ const Parser = struct {
 
     fn scanWord(parser: *Parser) api.HighlightError!void {
         const start = parser.index;
-        parser.index = identifierEnd(parser.source, parser.index);
+        parser.index = scanner.identifierEnd(parser.source, parser.index, .ascii);
         const word = parser.source[start..parser.index];
 
         if (parser.expected) |scope| {
@@ -183,8 +183,8 @@ const Parser = struct {
                 parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
             }
             if (parser.index < parser.source.len) parser.index += 1;
-        } else if (parser.index < parser.source.len and isVariableStart(parser.source[parser.index])) {
-            parser.index = identifierEnd(parser.source, parser.index);
+        } else if (parser.index < parser.source.len and scanner.isAsciiIdentifierStart(parser.source[parser.index])) {
+            parser.index = scanner.identifierEnd(parser.source, parser.index, .ascii);
         } else if (parser.index < parser.source.len) parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
         try parser.sink.add(start, parser.index, .variable);
         if (parser.parameter_depth != null) try parser.sink.add(start, parser.index, .parameter);
@@ -221,7 +221,7 @@ const Parser = struct {
         if (delimiter >= parser.source.len or std.ascii.isAlphanumeric(parser.source[delimiter]) or parser.source[delimiter] == '_') return false;
 
         const opening = parser.source[delimiter];
-        const closing = matchingDelimiter(opening);
+        const closing = scanner.matchingDelimiter(opening);
         parser.index = try parser.scanDelimited(delimiter, opening, closing);
         const replacement = (operator_len == 1 and (parser.source[start] == 's' or parser.source[start] == 'y')) or
             (operator_len == 2 and std.mem.eql(u8, parser.source[start .. start + 2], "tr"));
@@ -326,39 +326,12 @@ const Parser = struct {
     }
 
     fn onlyIndentBefore(parser: Parser, position: usize) bool {
-        for (parser.source[parser.line_start..position]) |byte| {
-            if (byte != ' ' and byte != '\t') return false;
-        }
-        return true;
+        return scanner.onlyIndentBefore(parser.source, parser.line_start, position);
     }
 };
 
-fn matchingDelimiter(opening: u8) u8 {
-    return switch (opening) {
-        '(' => ')',
-        '[' => ']',
-        '{' => '}',
-        '<' => '>',
-        else => opening,
-    };
-}
-
 fn qualifiedEnd(source: []const u8, start: usize) usize {
-    var end = identifierEnd(source, start);
-    while (end + 2 < source.len and source[end] == ':' and source[end + 1] == ':' and isVariableStart(source[end + 2])) {
-        end = identifierEnd(source, end + 2);
-    }
-    return end;
-}
-
-fn identifierEnd(source: []const u8, start: usize) usize {
-    var end = start + 1;
-    while (end < source.len and isIdentifierContinue(source[end])) end += 1;
-    return end;
-}
-
-fn isVariableStart(byte: u8) bool {
-    return std.ascii.isAlphabetic(byte) or byte == '_';
+    return scanner.qualifiedIdentifierEnd(source, start, "::", .ascii, .identifier);
 }
 
 fn isIdentifierContinue(byte: u8) bool {

@@ -92,7 +92,7 @@ const Parser = struct {
 
     fn scanWord(parser: *Parser) api.HighlightError!void {
         const start = parser.index;
-        parser.index = identifierEnd(parser.source, parser.index);
+        parser.index = scanner.identifierEnd(parser.source, parser.index, .apostrophe);
         const word = parser.source[start..parser.index];
         const first_on_line = parser.onlyIndentBefore(start);
 
@@ -164,10 +164,7 @@ const Parser = struct {
     }
 
     fn onlyIndentBefore(parser: Parser, position: usize) bool {
-        for (parser.source[parser.line_start..position]) |byte| {
-            if (byte != ' ' and byte != '\t') return false;
-        }
-        return true;
+        return scanner.onlyIndentBefore(parser.source, parser.line_start, position);
     }
 };
 
@@ -188,25 +185,7 @@ fn nextIsTypeSignature(source: []const u8, after: usize) bool {
 }
 
 fn qualifiedEnd(source: []const u8, start: usize) usize {
-    var end = identifierEnd(source, start);
-    while (end + 1 < source.len and source[end] == '.' and isIdentifierStart(source[end + 1])) {
-        end = identifierEnd(source, end + 1);
-    }
-    return end;
-}
-
-fn identifierEnd(source: []const u8, start: usize) usize {
-    var end = start + 1;
-    while (end < source.len and isIdentifierContinue(source[end])) end += 1;
-    return end;
-}
-
-fn isIdentifierStart(byte: u8) bool {
-    return std.ascii.isAlphabetic(byte) or byte == '_';
-}
-
-fn isIdentifierContinue(byte: u8) bool {
-    return std.ascii.isAlphanumeric(byte) or byte == '_' or byte == '\'';
+    return scanner.qualifiedIdentifierEnd(source, start, ".", .apostrophe, .identifier);
 }
 
 const wordIs = scanner.wordIs;
