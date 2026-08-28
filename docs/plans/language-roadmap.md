@@ -136,7 +136,7 @@ All 95 catalog backends now satisfy one of the two verified support levels.
 - [x] 88. Generic comment tags — **dedicated scanner** — *verified lexical*
 - [x] 89. MLIR — **dedicated scanner** — *verified lexical*
 - [x] 90. TableGen — **parser** (owned tolerant declaration parser) — *verified structural*
-- [x] 91. Fortran — **parser** (dedicated lexical scanner plus tolerant declaration pass) — *verified structural*
+- [x] 91. Fortran — **parser** (single-pass scanner with tolerant declaration state) — *verified structural*
 - [x] 92. PDLL — **parser** (owned tolerant declaration parser) — *verified structural*
 - [x] 93. Windows Batch — **dedicated scanner** — *verified lexical*
 - [x] 94. Starlark/Bazel — **parser** (owned tolerant declaration parser) — *verified structural*

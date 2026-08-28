@@ -83,7 +83,34 @@ test "Fortran scanner respects free and fixed form lexical rules" {
     try expect(source, sink.captures(), "&", .punctuation);
 }
 
+test "Fortran single pass separates declarations from initializers" {
+    const source =
+        \\real :: value = transform(input)
+        \\logical :: ok = .true.
+        \\integer :: mask = Z'FF'
+        \\module trailing_name
+    ;
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    try expect(source, sink.captures(), "value", .variable);
+    try expect(source, sink.captures(), "transform", .function);
+    try expect(source, sink.captures(), "input", .variable);
+    try expect(source, sink.captures(), ".true.", .boolean);
+    try expect(source, sink.captures(), "Z'FF'", .number);
+    try expect(source, sink.captures(), "trailing_name", .namespace);
+    try expectNot(source, sink.captures(), "true", .variable);
+    try expectNot(source, sink.captures(), "Z", .variable);
+}
+
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
     for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
     return error.TestExpectedEqual;
+}
+
+fn expectNot(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
+    for (captures) |capture| {
+        if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return error.TestUnexpectedResult;
+    }
 }

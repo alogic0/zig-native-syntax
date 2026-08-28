@@ -2,15 +2,14 @@ const std = @import("std");
 const api = @import("../backend.zig");
 const Scope = @import("../scope.zig").Scope;
 const scanner = @import("scanner_support.zig");
+const structure = @import("fortran_structure.zig");
 
 const keywords = &.{ "allocate", "allocatable", "associate", "asynchronous", "backspace", "bind", "block", "call", "case", "class", "close", "common", "contains", "continue", "critical", "cycle", "data", "deallocate", "dimension", "do", "else", "elseif", "elsewhere", "end", "endfile", "entry", "enum", "equivalence", "error", "exit", "extends", "external", "final", "flush", "forall", "format", "function", "generic", "go", "goto", "if", "implicit", "import", "in", "include", "inquire", "intent", "interface", "intrinsic", "module", "namelist", "none", "non_intrinsic", "only", "open", "operator", "optional", "parameter", "pause", "pointer", "print", "private", "procedure", "program", "protected", "public", "pure", "read", "recursive", "result", "return", "rewind", "save", "select", "sequence", "stop", "submodule", "subroutine", "sync", "target", "then", "type", "use", "value", "volatile", "wait", "where", "while", "write" };
 const types = &.{ "character", "complex", "double", "integer", "logical", "precision", "real" };
 const word_operators = &.{ "and", "eq", "eqv", "ge", "gt", "le", "lt", "ne", "neqv", "not", "or" };
 
-pub const Mode = enum { complete, syntax_only };
-
-pub fn highlight(source: []const u8, sink: *api.CaptureSink, mode: Mode) api.HighlightError!void {
-    var parser: Parser = .{ .source = source, .sink = sink, .mode = mode };
+pub fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void {
+    var parser: Parser = .{ .source = source, .sink = sink };
     try parser.run();
 }
 
@@ -19,7 +18,9 @@ const Parser = struct {
     sink: *api.CaptureSink,
     index: usize = 0,
     line_start: usize = 0,
-    mode: Mode,
+    tokens: [128]structure.Token = undefined,
+    token_count: usize = 0,
+    structural_state: structure.State = .{},
 
     fn run(parser: *Parser) api.HighlightError!void {
         while (parser.index < parser.source.len) {
@@ -34,6 +35,7 @@ const Parser = struct {
             }
 
             if (parser.source[parser.index] == '\n') {
+                try parser.finishLine();
                 parser.index += 1;
                 parser.line_start = parser.index;
                 continue;
@@ -60,11 +62,12 @@ const Parser = struct {
                 '0'...'9' => try parser.scanNumber(),
                 'a'...'z', 'A'...'Z', '_' => try parser.scanWord(),
                 '.' => if (!try parser.scanDotWord()) try parser.captureByte(.operator),
-                '(', ')', '[', ']', ',', ':', ';', '%' => try parser.captureByte(.punctuation),
+                '(', ')', '[', ']', ',', ':', ';', '%' => try parser.scanPunctuation(),
                 '+', '-', '*', '/', '=', '<', '>', '&' => try parser.scanOperator(),
                 else => parser.index += scanner.validUtf8Length(parser.source[parser.index..]),
             }
         }
+        try parser.finishLine();
     }
 
     fn fixedCommentEnd(parser: *const Parser) ?usize {
@@ -150,18 +153,13 @@ const Parser = struct {
             while (parser.index < parser.source.len and parser.source[parser.index] != quote and parser.source[parser.index] != '\n') parser.index += 1;
             if (parser.index < parser.source.len and parser.source[parser.index] == quote) parser.index += 1;
             try parser.sink.add(start, parser.index, .number);
-        } else if (scanner.wordIsIgnoreCase(word, keywords)) {
-            try parser.sink.add(start, parser.index, .keyword);
-        } else if (scanner.wordIsIgnoreCase(word, types)) {
-            try parser.sink.add(start, parser.index, .type);
-        } else if (parser.mode == .syntax_only) {
             return;
-        } else if (scanner.nextNonSpace(parser.source, parser.index) == '(') {
-            try parser.sink.add(start, parser.index, .function);
-        } else if (scanner.previousNonSpace(parser.source, start) == '%') {
-            try parser.sink.add(start, parser.index, .property);
-        } else {
-            try parser.sink.add(start, parser.index, .variable);
+        }
+
+        const lexical_scope: ?Scope = if (scanner.wordIsIgnoreCase(word, keywords)) .keyword else if (scanner.wordIsIgnoreCase(word, types)) .type else null;
+        parser.addToken(start, parser.index, .word, lexical_scope);
+        if (lexical_scope) |scope| {
+            try parser.sink.add(start, parser.index, scope);
         }
     }
 
@@ -195,6 +193,42 @@ const Parser = struct {
             parser.index += 1;
         }
         try parser.sink.add(start, parser.index, if (parser.source[start] == '&') .punctuation else .operator);
+        const operator = parser.source[start..parser.index];
+        if (std.mem.eql(u8, operator, "=>")) {
+            parser.addToken(start, parser.index, .arrow, null);
+        } else if (std.mem.eql(u8, operator, "=")) {
+            parser.addToken(start, parser.index, .equal, null);
+        }
+    }
+
+    fn scanPunctuation(parser: *Parser) api.HighlightError!void {
+        const start = parser.index;
+        const kind: ?structure.TokenKind = switch (parser.source[start]) {
+            '(' => .l_paren,
+            ')' => .r_paren,
+            ',' => .comma,
+            ':' => .colon,
+            '%' => .percent,
+            else => null,
+        };
+        if (parser.source[start] == ':' and start + 1 < parser.source.len and parser.source[start + 1] == ':') {
+            parser.index += 2;
+        } else {
+            parser.index += 1;
+        }
+        try parser.sink.add(start, parser.index, .punctuation);
+        if (kind) |token_kind| parser.addToken(start, parser.index, token_kind, null);
+    }
+
+    fn addToken(parser: *Parser, start: usize, end: usize, kind: structure.TokenKind, lexical_scope: ?Scope) void {
+        if (parser.token_count == parser.tokens.len) return;
+        parser.tokens[parser.token_count] = .{ .start = start, .end = end, .kind = kind, .lexical_scope = lexical_scope };
+        parser.token_count += 1;
+    }
+
+    fn finishLine(parser: *Parser) api.HighlightError!void {
+        try structure.classifyLine(parser.source, parser.sink, parser.tokens[0..parser.token_count], &parser.structural_state);
+        parser.token_count = 0;
     }
 
     fn captureByte(parser: *Parser, scope: Scope) api.HighlightError!void {
