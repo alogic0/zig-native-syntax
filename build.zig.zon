@@ -27,6 +27,7 @@
     },
     .paths = .{
         "AGENTS.md",
+        "LICENSE",
         "README.md",
         "build.sh",
         "build.zig",
