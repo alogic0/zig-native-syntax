@@ -29,15 +29,15 @@ The suffix on each entry records its implementation depth on `main`:
 These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
-input, and deterministic-output contract. There are currently 25 parser-backed
+input, and deterministic-output contract. There are currently 26 parser-backed
 languages, 6 partially parser-backed compositions, 4 tokenizer adapters, 14
-dedicated scanners, and 46 configured scanners. This classification describes
+dedicated scanners, and 45 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 38 backends as **verified structural**
+configured package registry exposes 39 backends as **verified structural**
 and 28 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -89,7 +89,7 @@ the backend actually understands.
 - [x] 43. KDL — **dedicated scanner** — *verified lexical*
 - [x] 44. Nix — **parser** (owned tolerant binding and expression parser) — *verified structural*
 - [x] 45. Fish — **parser** (owned tolerant command-position parser) — *verified structural*
-- [x] 46. Nushell — **configured scanner**
+- [x] 46. Nushell — **parser** (owned tolerant pipeline and signature parser) — *verified structural*
 - [x] 47. AWK — **configured scanner**
 - [x] 48. SSH config — **dedicated scanner** — *verified lexical*
 - [x] 49. Git commit — **dedicated scanner** — *verified lexical*
