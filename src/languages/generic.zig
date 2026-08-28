@@ -18,6 +18,7 @@ pub const Config = struct {
     strings_stop_at_newline: bool = true,
     angle_heredoc: bool = false,
     hash_bracket_attribute: bool = false,
+    triple_quoted_strings: bool = false,
     at_scope: ?Scope = .attribute,
 };
 
@@ -98,14 +99,27 @@ const Scanner = struct {
     }
     fn scanString(self: *Scanner, quote: u8) api.HighlightError!void {
         const start = self.index;
-        self.index += 1;
+        const triple = self.config.triple_quoted_strings and
+            self.index + 2 < self.source.len and
+            self.source[self.index + 1] == quote and
+            self.source[self.index + 2] == quote;
+        self.index += if (triple) 3 else 1;
         while (self.index < self.source.len) if (self.source[self.index] == '\\') {
             const at = self.index;
             self.index = escapeEnd(self.source, self.index);
             try self.sink.add(at, self.index, .escape);
         } else {
+            if (triple and self.index + 2 < self.source.len and
+                self.source[self.index] == quote and
+                self.source[self.index + 1] == quote and
+                self.source[self.index + 2] == quote)
+            {
+                self.index += 3;
+                break;
+            }
             self.index += 1;
-            if (self.source[self.index - 1] == quote or (self.config.strings_stop_at_newline and quote != '`' and self.source[self.index - 1] == '\n')) break;
+            if ((!triple and self.source[self.index - 1] == quote) or
+                (self.config.strings_stop_at_newline and !triple and quote != '`' and self.source[self.index - 1] == '\n')) break;
         };
         try self.sink.add(start, self.index, .string);
         self.after_dot = false;

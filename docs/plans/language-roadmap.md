@@ -29,15 +29,15 @@ The suffix on each entry records its implementation depth on `main`:
 These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
-input, and deterministic-output contract. There are currently 24 parser-backed
+input, and deterministic-output contract. There are currently 25 parser-backed
 languages, 6 partially parser-backed compositions, 4 tokenizer adapters, 14
-dedicated scanners, and 47 configured scanners. This classification describes
+dedicated scanners, and 46 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 37 backends as **verified structural**
+configured package registry exposes 38 backends as **verified structural**
 and 28 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -105,7 +105,7 @@ the backend actually understands.
 - [x] 59. Ninja — **dedicated scanner** — *verified lexical*
 - [x] 60. RPM spec — **composed** (spec scanner with parser-backed RPM Bash scriptlets) — *verified structural*
 - [x] 61. RPM Bash — **parser** (delegates to the Bash backend) — *verified structural*
-- [x] 62. GDScript — **configured scanner**
+- [x] 62. GDScript — **parser** (owned tolerant declaration parser) — *verified structural*
 - [x] 63. Perl — **configured scanner**
 - [x] 64. Elixir — **configured scanner**
 - [x] 65. F# — **configured scanner**

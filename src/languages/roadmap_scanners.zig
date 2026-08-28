@@ -1,7 +1,7 @@
 const api = @import("../backend.zig");
 const generic = @import("generic.zig");
 
-pub const Kind = enum { kdl, nu, awk, ssh_config, gitcommit, git_rebase, po, rst, latex, typst, org, dtd, mail, hurl, ninja, rpmspec, gdscript, perl, elixir, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
+pub const Kind = enum { kdl, nu, awk, ssh_config, gitcommit, git_rebase, po, rst, latex, typst, org, dtd, mail, hurl, ninja, rpmspec, perl, elixir, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, kind: Kind) api.HighlightError!void {
     try generic.highlight(source, sink, config(kind));
@@ -25,7 +25,6 @@ fn config(kind: Kind) generic.Config {
         .hurl => .{ .line_comments = &.{"#"}, .keywords = &.{ "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HTTP" }, .types = &.{ "jsonpath", "regex", "xpath", "status", "url", "body", "bytes", "duration", "header" } },
         .ninja => .{ .line_comments = &.{"#"}, .keywords = &.{ "build", "default", "include", "pool", "rule", "subninja" } },
         .rpmspec => .{ .line_comments = &.{"#"}, .keywords = &.{ "Name", "Version", "Release", "Summary", "License", "Source", "BuildRequires", "Requires", "description", "prep", "build", "install", "files", "changelog" }, .case_insensitive = true },
-        .gdscript => .{ .line_comments = &.{"#"}, .keywords = &.{ "and", "as", "await", "break", "class", "class_name", "const", "else", "enum", "extends", "for", "func", "if", "in", "is", "match", "not", "or", "return", "signal", "static", "var", "while" }, .types = &.{ "Array", "bool", "Dictionary", "float", "int", "Node", "Object", "String", "Vector2", "Vector3" } },
         .perl => .{ .line_comments = &.{"#"}, .keywords = &.{ "BEGIN", "END", "else", "elsif", "for", "foreach", "if", "last", "local", "my", "next", "our", "package", "return", "say", "state", "sub", "unless", "use", "while" }, .constants = &.{"undef"} },
         .elixir => .{ .line_comments = &.{"#"}, .keywords = &.{ "after", "alias", "case", "catch", "cond", "def", "defmodule", "defp", "do", "else", "end", "fn", "for", "if", "import", "in", "receive", "rescue", "try", "unless", "when" }, .constants = &.{"nil"} },
         .fsharp => .{ .line_comments = &.{"//"}, .block_comments = &.{.{ .open = "(*", .close = "*)" }}, .keywords = &.{ "and", "as", "class", "do", "else", "exception", "for", "fun", "function", "if", "in", "inherit", "interface", "let", "match", "member", "module", "namespace", "open", "rec", "return", "then", "try", "type", "while", "with", "yield" }, .types = &.{ "bool", "char", "float", "int", "list", "obj", "string", "unit" } },
