@@ -1,1 +1,23 @@
-sub run { my $value = "x\n<&>"; my $count = 42; my $enabled = true; } # comment
+=pod
+Worker documentation.
+=cut
+package Demo::Worker; # package comment
+
+use strict;
+use warnings;
+
+sub run ($input, %opts) {
+    my $enabled = true;
+    my $count = 42;
+    my $title = "worker\\n<&>";
+    my $pattern = qr/^[a-z]+$/i;
+    $input =~ s/foo/bar/g;
+    my $name = $opts{name};
+    my $object_name = $opts{worker}->{name};
+    my $worker = Demo::Worker->new();
+    my $message = <<'MESSAGE';
+hello\\n<&>
+MESSAGE
+    say $message if $input =~ /$pattern/;
+    return { name => $name, enabled => $enabled };
+}
