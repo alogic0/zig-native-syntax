@@ -1,7 +1,7 @@
 const api = @import("../backend.zig");
 const generic = @import("generic.zig");
 
-pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, typst, org, dtd, mail, hurl, ninja, rpmspec, perl, elixir, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
+pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, org, dtd, mail, hurl, ninja, rpmspec, perl, elixir, fsharp, ocaml, haskell, gleam, commonlisp, scheme, julia, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, kind: Kind) api.HighlightError!void {
     try generic.highlight(source, sink, config(kind));
@@ -16,7 +16,6 @@ fn config(kind: Kind) generic.Config {
         .po => .{ .line_comments = &.{"#"}, .keywords = &.{ "msgctxt", "msgid", "msgid_plural", "msgstr" } },
         .rst => .{ .line_comments = &.{".. "}, .keywords = &.{ "attention", "code-block", "contents", "image", "include", "note", "raw", "reference", "tip", "warning" } },
         .latex => .{ .line_comments = &.{"%"}, .keywords = &.{ "begin", "chapter", "cite", "documentclass", "emph", "end", "include", "input", "item", "label", "ref", "section", "subsection", "textbf", "usepackage" } },
-        .typst => .{ .line_comments = &.{"//"}, .block_comments = &.{.{ .open = "/*", .close = "*/" }}, .keywords = &.{ "and", "as", "break", "context", "else", "for", "if", "import", "in", "include", "let", "none", "not", "or", "return", "set", "show", "while" }, .types = &.{ "array", "bool", "content", "dictionary", "float", "function", "int", "str" } },
         .org => .{ .line_comments = &.{"# "}, .keywords = &.{ "BEGIN_SRC", "END_SRC", "TODO", "DONE", "PROPERTIES", "END" } },
         .dtd => .{ .line_comments = &.{"<!--"}, .keywords = &.{ "ATTLIST", "DOCTYPE", "ELEMENT", "ENTITY", "NOTATION", "PUBLIC", "SYSTEM" }, .types = &.{ "ANY", "CDATA", "EMPTY", "ID", "IDREF", "NMTOKEN", "PCDATA" } },
         .mail => .{ .line_comments = &.{">"}, .keywords = &.{ "From", "To", "Cc", "Date", "Subject", "Reply-To", "Message-ID", "Content-Type" }, .case_insensitive = true },
