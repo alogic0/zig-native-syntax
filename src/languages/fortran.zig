@@ -1,8 +1,10 @@
 const api = @import("../backend.zig");
 const scanner = @import("fortran_scanner.zig");
+const structure = @import("fortran_structure.zig");
 
-pub const backend: api.Backend = .init(.{ .canonical_name = "fortran", .display_name = "Fortran", .kind = .lexical, .support_level = .verified_lexical }, highlight);
+pub const backend: api.Backend = .init(.{ .canonical_name = "fortran", .display_name = "Fortran", .kind = .parser_backed, .support_level = .verified_structural }, highlight);
 
 fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void {
-    try scanner.highlight(source, sink);
+    try scanner.highlight(source, sink, .syntax_only);
+    try structure.highlight(source, sink);
 }

@@ -7,8 +7,10 @@ const keywords = &.{ "allocate", "allocatable", "associate", "asynchronous", "ba
 const types = &.{ "character", "complex", "double", "integer", "logical", "precision", "real" };
 const word_operators = &.{ "and", "eq", "eqv", "ge", "gt", "le", "lt", "ne", "neqv", "not", "or" };
 
-pub fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void {
-    var parser: Parser = .{ .source = source, .sink = sink };
+pub const Mode = enum { complete, syntax_only };
+
+pub fn highlight(source: []const u8, sink: *api.CaptureSink, mode: Mode) api.HighlightError!void {
+    var parser: Parser = .{ .source = source, .sink = sink, .mode = mode };
     try parser.run();
 }
 
@@ -17,6 +19,7 @@ const Parser = struct {
     sink: *api.CaptureSink,
     index: usize = 0,
     line_start: usize = 0,
+    mode: Mode,
 
     fn run(parser: *Parser) api.HighlightError!void {
         while (parser.index < parser.source.len) {
@@ -151,6 +154,8 @@ const Parser = struct {
             try parser.sink.add(start, parser.index, .keyword);
         } else if (scanner.wordIsIgnoreCase(word, types)) {
             try parser.sink.add(start, parser.index, .type);
+        } else if (parser.mode == .syntax_only) {
+            return;
         } else if (scanner.nextNonSpace(parser.source, parser.index) == '(') {
             try parser.sink.add(start, parser.index, .function);
         } else if (scanner.previousNonSpace(parser.source, start) == '%') {
@@ -197,3 +202,11 @@ const Parser = struct {
         parser.index += 1;
     }
 };
+
+pub fn isKeyword(word: []const u8) bool {
+    return scanner.wordIsIgnoreCase(word, keywords);
+}
+
+pub fn isType(word: []const u8) bool {
+    return scanner.wordIsIgnoreCase(word, types);
+}
