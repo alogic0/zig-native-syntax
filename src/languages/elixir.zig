@@ -163,19 +163,25 @@ const Parser = struct {
         const opening = parser.source[start + 2];
         if (std.mem.indexOfScalar(u8, "([{</|'\"", opening) == null) return false;
         const closing = scanner.matchingDelimiter(opening);
-        parser.index = start + 3;
-        var depth: usize = 1;
-        while (parser.index < parser.source.len) {
-            if (parser.source[parser.index] == '\\') {
-                parser.index = scanner.escapeEnd(parser.source, parser.index);
-            } else if (opening != closing and parser.source[parser.index] == opening) {
-                depth += 1;
-                parser.index += 1;
-            } else if (parser.source[parser.index] == closing) {
-                depth -= 1;
-                parser.index += 1;
-                if (depth == 0) break;
-            } else parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
+        const heredoc = (opening == '\'' or opening == '"') and start + 4 < parser.source.len and
+            parser.source[start + 3] == opening and parser.source[start + 4] == opening;
+        if (heredoc) {
+            parser.index = scanner.stringEnd(parser.source, start + 2, opening, true);
+        } else {
+            parser.index = start + 3;
+            var depth: usize = 1;
+            while (parser.index < parser.source.len) {
+                if (parser.source[parser.index] == '\\') {
+                    parser.index = scanner.escapeEnd(parser.source, parser.index);
+                } else if (opening != closing and parser.source[parser.index] == opening) {
+                    depth += 1;
+                    parser.index += 1;
+                } else if (parser.source[parser.index] == closing) {
+                    depth -= 1;
+                    parser.index += 1;
+                    if (depth == 0) break;
+                } else parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
+            }
         }
         while (parser.index < parser.source.len and std.ascii.isAlphabetic(parser.source[parser.index])) parser.index += 1;
         try parser.sink.add(start, start + 2, .special);

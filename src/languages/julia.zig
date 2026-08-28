@@ -80,14 +80,18 @@ const Parser = struct {
                     parser.index += 1;
                 },
                 'a'...'z', 'A'...'Z', '_' => try parser.scanWord(),
-                else => parser.index += scanner.validUtf8Length(parser.source[parser.index..]),
+                else => if (isJuliaIdentifierStart(parser.source[parser.index..])) {
+                    try parser.scanWord();
+                } else {
+                    parser.index += scanner.validUtf8Length(parser.source[parser.index..]);
+                },
             }
         }
     }
 
     fn scanWord(parser: *Parser) api.HighlightError!void {
         const start = parser.index;
-        parser.index = scanner.identifierEnd(parser.source, parser.index, .callable);
+        parser.index = juliaIdentifierEnd(parser.source, parser.index);
         const word = parser.source[start..parser.index];
 
         if (parser.expected) |scope| {
@@ -138,8 +142,8 @@ const Parser = struct {
     fn scanMacro(parser: *Parser) api.HighlightError!void {
         const start = parser.index;
         parser.index += 1;
-        if (parser.index < parser.source.len and scanner.isAsciiIdentifierStart(parser.source[parser.index])) {
-            parser.index = scanner.identifierEnd(parser.source, parser.index, .callable);
+        if (parser.index < parser.source.len and isJuliaIdentifierStart(parser.source[parser.index..])) {
+            parser.index = juliaIdentifierEnd(parser.source, parser.index);
             try parser.sink.add(start, parser.index, .macro);
         }
     }
@@ -147,8 +151,8 @@ const Parser = struct {
     fn scanSymbol(parser: *Parser) api.HighlightError!void {
         const start = parser.index;
         parser.index += 1;
-        if (parser.index < parser.source.len and scanner.isAsciiIdentifierStart(parser.source[parser.index])) {
-            parser.index = scanner.identifierEnd(parser.source, parser.index, .callable);
+        if (parser.index < parser.source.len and isJuliaIdentifierStart(parser.source[parser.index..])) {
+            parser.index = juliaIdentifierEnd(parser.source, parser.index);
             try parser.sink.add(start, parser.index, .constant);
         }
     }
@@ -176,7 +180,69 @@ fn looksLikeShortDeclaration(source: []const u8, open: usize) bool {
 }
 
 fn qualifiedEnd(source: []const u8, start: usize) usize {
-    return scanner.qualifiedIdentifierEnd(source, start, ".", .callable, .identifier);
+    var end = juliaIdentifierEnd(source, start);
+    while (end + 1 < source.len and source[end] == '.' and isJuliaIdentifierStart(source[end + 1 ..])) {
+        end = juliaIdentifierEnd(source, end + 1);
+    }
+    return end;
+}
+
+fn juliaIdentifierEnd(source: []const u8, start: usize) usize {
+    var end = start;
+    var first = true;
+    while (end < source.len) {
+        if (source[end] < 0x80) {
+            const byte = source[end];
+            if (!(std.ascii.isAlphanumeric(byte) or byte == '_')) break;
+            end += 1;
+        } else {
+            const decoded = decodeScalar(source[end..]) orelse break;
+            if (first) {
+                if (!isCommonUnicodeLetter(decoded.scalar)) break;
+            } else if (!isCommonUnicodeIdentifierContinue(decoded.scalar)) break;
+            end += decoded.len;
+        }
+        first = false;
+    }
+    if (end < source.len and (source[end] == '!' or source[end] == '?')) end += 1;
+    return end;
+}
+
+fn isJuliaIdentifierStart(source: []const u8) bool {
+    if (source.len == 0) return false;
+    if (source[0] < 0x80) return scanner.isAsciiIdentifierStart(source[0]);
+    const decoded = decodeScalar(source) orelse return false;
+    return isCommonUnicodeLetter(decoded.scalar);
+}
+
+const DecodedScalar = struct { scalar: u21, len: usize };
+
+fn decodeScalar(source: []const u8) ?DecodedScalar {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return null;
+    if (len > source.len) return null;
+    return .{ .scalar = std.unicode.utf8Decode(source[0..len]) catch return null, .len = len };
+}
+
+fn isCommonUnicodeLetter(scalar: u21) bool {
+    return (scalar >= 0x00c0 and scalar <= 0x00d6) or
+        (scalar >= 0x00d8 and scalar <= 0x00f6) or
+        (scalar >= 0x00f8 and scalar <= 0x02ff) or
+        (scalar >= 0x0370 and scalar <= 0x037d and scalar != 0x037e) or
+        scalar == 0x037f or scalar == 0x0386 or
+        (scalar >= 0x0388 and scalar <= 0x038a) or scalar == 0x038c or
+        (scalar >= 0x038e and scalar <= 0x03a1) or
+        (scalar >= 0x03a3 and scalar <= 0x03ff and scalar != 0x03f6) or
+        (scalar >= 0x0400 and scalar <= 0x0481) or
+        (scalar >= 0x048a and scalar <= 0x052f) or
+        (scalar >= 0x1e00 and scalar <= 0x1fff);
+}
+
+fn isCommonUnicodeIdentifierContinue(scalar: u21) bool {
+    return isCommonUnicodeLetter(scalar) or
+        scalar == 0x00b2 or scalar == 0x00b3 or scalar == 0x00b9 or
+        (scalar >= 0x0300 and scalar <= 0x036f) or
+        (scalar >= 0x1dc0 and scalar <= 0x1dff) or
+        (scalar >= 0x2070 and scalar <= 0x209f);
 }
 
 fn isParameterPosition(source: []const u8, start: usize) bool {

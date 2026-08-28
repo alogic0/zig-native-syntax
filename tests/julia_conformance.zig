@@ -28,9 +28,28 @@ test "Julia parser classifies declarations macros and symbols" {
     try expect(source, sink.captures(), "@assert", .macro);
     try expect(source, sink.captures(), "checked", .macro);
     try expect(source, sink.captures(), ":ok", .constant);
+    try expect(source, sink.captures(), "δ", .parameter);
+    try expect(source, sink.captures(), "σ²", .parameter);
+    try expect(source, sink.captures(), "π", .variable);
+}
+
+test "Julia common Unicode identifiers do not consume Unicode operators" {
+    const source = "δ = α × β\n";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+
+    try expect(source, sink.captures(), "δ", .variable);
+    try expect(source, sink.captures(), "α", .variable);
+    try expect(source, sink.captures(), "β", .variable);
+    try expectNo(source, sink.captures(), "×", .variable);
 }
 
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
     for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
     return error.TestExpectedEqual;
+}
+
+fn expectNo(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
+    for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return error.TestUnexpectedResult;
 }

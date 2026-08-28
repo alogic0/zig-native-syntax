@@ -15,9 +15,16 @@ sub run ($input, %opts) {
     my $name = $opts{name};
     my $object_name = $opts{worker}->{name};
     my $worker = Demo::Worker->new();
+    my $ratio = $count / 2;
+    return /missing/ if !defined $input;
     my $message = <<'MESSAGE';
 hello\\n<&>
 MESSAGE
+    my ($header, $footer) = (<<'HEADER', <<'FOOTER');
+header text
+HEADER
+footer text
+FOOTER
     say $message if $input =~ /$pattern/;
     return { name => $name, enabled => $enabled };
 }

@@ -3,8 +3,9 @@
 The verified structural Elixir backend recognizes module and protocol names,
 function and macro declarations, parenthesized and anonymous-function
 parameters, module aliases, calls, keyword keys, atoms, module attributes, and
-sigils. Its lexical foundation also classifies comments, quoted and heredoc
-strings, escapes, numbers, booleans, constants, operators, and punctuation.
+sigils, including triple-quoted sigil heredocs. Its lexical foundation also
+classifies comments, quoted and heredoc strings, escapes, numbers, booleans,
+constants, operators, and punctuation.
 
 The parser is deliberately tolerant and bounded. It does not expand macros,
 resolve aliases, validate guards or typespecs, interpret sigil contents, or

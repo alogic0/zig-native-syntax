@@ -14,6 +14,8 @@ end
 
 area(radius::Float64) = π * radius^2
 
+norm(δ::Float64, σ²::Float64) = sqrt(δ^2 + σ²)
+
 macro checked(expr)
     quote
         $(esc(expr))

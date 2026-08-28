@@ -17,5 +17,8 @@ scale factor shape = case shape of
   Circle radius -> Circle (factor * radius)
   Rectangle width height -> Rectangle (factor * width) (factor * height)
 
+summarize values = let total = sum values
+                   in total
+
 label shape = "shape\\n<&>"
 enabled = True -- retained flag

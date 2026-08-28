@@ -277,32 +277,36 @@ const Parser = struct {
 
     fn scanHeredoc(parser: *Parser) api.HighlightError!bool {
         const start = parser.index;
-        var index = start + 2;
-        if (index < parser.source.len and parser.source[index] == '~') index += 1;
-        while (index < parser.source.len and (parser.source[index] == ' ' or parser.source[index] == '\t')) index += 1;
-        const quote: ?u8 = if (index < parser.source.len and (parser.source[index] == '\'' or parser.source[index] == '"' or parser.source[index] == '`')) parser.source[index] else null;
-        if (quote != null) index += 1;
-        const label_start = index;
-        while (index < parser.source.len and (std.ascii.isAlphanumeric(parser.source[index]) or parser.source[index] == '_')) index += 1;
-        const label = parser.source[label_start..index];
-        if (label.len == 0) return false;
-        if (quote) |q| {
-            if (index < parser.source.len and parser.source[index] == q) index += 1;
+        const opener_end = scanner.lineEnd(parser.source, start, parser.source.len);
+        var specs: [16]HeredocSpec = undefined;
+        var spec_count: usize = 0;
+        var search = start;
+        while (search + 1 < opener_end and spec_count < specs.len) {
+            const operator = std.mem.indexOfPos(u8, parser.source, search, "<<") orelse break;
+            if (operator >= opener_end) break;
+            const spec = parseHeredocSpec(parser.source, operator, opener_end) orelse {
+                search = operator + 2;
+                continue;
+            };
+            specs[spec_count] = spec;
+            spec_count += 1;
+            search = spec.after;
         }
-        const opener_end = scanner.lineEnd(parser.source, index, parser.source.len);
-        index = if (opener_end < parser.source.len) opener_end + 1 else opener_end;
-        while (index < parser.source.len) {
-            const line_end = scanner.lineEnd(parser.source, index, parser.source.len);
-            var content = index;
-            while (content < line_end and (parser.source[content] == ' ' or parser.source[content] == '\t')) content += 1;
-            const content_end = if (line_end > content and parser.source[line_end - 1] == '\r') line_end - 1 else line_end;
-            if (std.mem.eql(u8, parser.source[content..content_end], label)) {
-                index = line_end;
-                break;
+        if (spec_count == 0 or specs[0].operator_start != start) return false;
+
+        var index = if (opener_end < parser.source.len) opener_end + 1 else opener_end;
+        for (specs[0..spec_count]) |spec| {
+            try parser.sink.add(spec.label_start, spec.label_end, .label);
+            const label = parser.source[spec.label_start..spec.label_end];
+            while (index < parser.source.len) {
+                const line_end = scanner.lineEnd(parser.source, index, parser.source.len);
+                var content = index;
+                while (content < line_end and (parser.source[content] == ' ' or parser.source[content] == '\t')) content += 1;
+                const content_end = if (line_end > content and parser.source[line_end - 1] == '\r') line_end - 1 else line_end;
+                index = if (line_end < parser.source.len) line_end + 1 else line_end;
+                if (std.mem.eql(u8, parser.source[content..content_end], label)) break;
             }
-            index = if (line_end < parser.source.len) line_end + 1 else line_end;
         }
-        try parser.sink.add(label_start, label_start + label.len, .label);
         try parser.sink.add(start, index, .string);
         parser.index = index;
         parser.expects_operand = false;
@@ -329,6 +333,35 @@ const Parser = struct {
         return scanner.onlyIndentBefore(parser.source, parser.line_start, position);
     }
 };
+
+const HeredocSpec = struct {
+    operator_start: usize,
+    label_start: usize,
+    label_end: usize,
+    after: usize,
+};
+
+fn parseHeredocSpec(source: []const u8, start: usize, limit: usize) ?HeredocSpec {
+    var index = start + 2;
+    if (index < limit and source[index] == '~') index += 1;
+    while (index < limit and (source[index] == ' ' or source[index] == '\t')) index += 1;
+    const quote: ?u8 = if (index < limit and
+        (source[index] == '\'' or source[index] == '"' or source[index] == '`')) source[index] else null;
+    if (quote != null) index += 1;
+    const label_start = index;
+    while (index < limit and (std.ascii.isAlphanumeric(source[index]) or source[index] == '_')) index += 1;
+    if (index == label_start) return null;
+    const label_end = index;
+    if (quote) |closing| {
+        if (index < limit and source[index] == closing) index += 1;
+    }
+    return .{
+        .operator_start = start,
+        .label_start = label_start,
+        .label_end = label_end,
+        .after = index,
+    };
+}
 
 fn qualifiedEnd(source: []const u8, start: usize) usize {
     return scanner.qualifiedIdentifierEnd(source, start, "::", .ascii, .identifier);

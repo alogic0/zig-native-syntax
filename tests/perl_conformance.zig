@@ -30,10 +30,18 @@ test "Perl parser classifies declarations regexes heredocs and POD" {
     try expect(source, sink.captures(), "name", .property);
     try expect(source, sink.captures(), "say", .builtin);
     try expect(source, sink.captures(), "MESSAGE", .label);
+    try expect(source, sink.captures(), "HEADER", .label);
+    try expect(source, sink.captures(), "FOOTER", .label);
+    try expect(source, sink.captures(), "/missing/", .string);
+    try expectNo(source, sink.captures(), "/", .string);
     try expect(source, sink.captures(), "=pod\nWorker documentation.\n=cut", .documentation);
 }
 
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
     for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
     return error.TestExpectedEqual;
+}
+
+fn expectNo(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
+    for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return error.TestUnexpectedResult;
 }

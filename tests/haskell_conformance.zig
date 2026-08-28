@@ -28,6 +28,7 @@ test "Haskell parser classifies declarations signatures and constructors" {
     try expect(source, sink.captures(), "area", .function);
     try expect(source, sink.captures(), "shape", .parameter);
     try expect(source, sink.captures(), "Double", .type);
+    try expect(source, sink.captures(), "total", .function);
 }
 
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {

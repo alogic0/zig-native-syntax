@@ -26,6 +26,8 @@ test "Elixir parser classifies modules declarations and sigils" {
     try expect(source, sink.captures(), "opts", .parameter);
     try expect(source, sink.captures(), "~r/^[a-z]+$/u", .string);
     try expect(source, sink.captures(), "~r", .special);
+    try expect(source, sink.captures(), "~S\"\"\"\n    literal #{input} and \\\\n\n    \"\"\"", .string);
+    try expect(source, sink.captures(), "~S", .special);
     try expect(source, sink.captures(), ":ok", .constant);
     try expect(source, sink.captures(), "Keyword", .type);
     try expect(source, sink.captures(), "fetch", .function);

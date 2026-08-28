@@ -39,6 +39,7 @@ const Parser = struct {
     equation_parameters: bool = false,
     data_declaration: bool = false,
     brace_depth: usize = 0,
+    inline_binding_pending: bool = false,
 
     fn run(parser: *Parser) api.HighlightError!void {
         while (parser.index < parser.source.len) {
@@ -83,6 +84,7 @@ const Parser = struct {
                     parser.type_signature = false;
                     parser.equation_parameters = false;
                     parser.data_declaration = false;
+                    parser.inline_binding_pending = false;
                 },
                 'a'...'z', 'A'...'Z', '_' => try parser.scanWord(),
                 else => parser.index += scanner.validUtf8Length(parser.source[parser.index..]),
@@ -116,16 +118,21 @@ const Parser = struct {
             parser.data_declaration = wordIs(word, &.{ "data", "newtype" });
             return;
         }
-        if (isKeyword(word) or isLiteral(word)) return;
+        if (isKeyword(word) or isLiteral(word)) {
+            parser.inline_binding_pending = std.mem.eql(u8, word, "let");
+            return;
+        }
 
-        if (first_on_line) {
+        if (first_on_line or parser.inline_binding_pending) {
             const declaration = lineDeclaration(parser.source, parser.index);
             if (declaration != .none) {
                 try parser.sink.add(start, parser.index, .function);
                 parser.equation_parameters = declaration == .equation;
+                parser.inline_binding_pending = false;
                 return;
             }
         }
+        parser.inline_binding_pending = false;
         if (parser.type_signature) {
             try parser.sink.add(start, parser.index, .type);
         } else if (parser.equation_parameters and std.ascii.isLower(word[0])) {
