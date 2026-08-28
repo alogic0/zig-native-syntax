@@ -15,6 +15,7 @@ pub const Config = struct {
     capitalized_types: bool = true,
     capitalized_calls_are_constructors: bool = false,
     function_receiver_before_name: bool = false,
+    type_body_declarations_are_properties: bool = false,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -29,11 +30,15 @@ const Parser = struct {
     config: Config,
     index: usize = 0,
     paren_depth: usize = 0,
+    brace_depth: usize = 0,
     parameter_depth: ?usize = null,
     receiver_depth: ?usize = null,
     expected: ?Scope = null,
     declaration: bool = false,
     pending_function: bool = false,
+    pending_type_body: bool = false,
+    type_body_depth: ?usize = null,
+    namespace_declaration: bool = false,
     known_types: std.ArrayList([]const u8) = .empty,
 
     fn deinit(parser: *Parser) void {
@@ -68,10 +73,32 @@ const Parser = struct {
                 parser.paren_depth -|= 1;
                 parser.index += 1;
             },
-            ';', '{', '}' => {
+            ';' => {
                 parser.expected = null;
                 parser.declaration = false;
                 parser.pending_function = false;
+                parser.namespace_declaration = false;
+                parser.index += 1;
+            },
+            '{' => {
+                parser.brace_depth += 1;
+                if (parser.pending_type_body) {
+                    parser.type_body_depth = parser.brace_depth;
+                    parser.pending_type_body = false;
+                }
+                parser.expected = null;
+                parser.declaration = false;
+                parser.pending_function = false;
+                parser.namespace_declaration = false;
+                parser.index += 1;
+            },
+            '}' => {
+                if (parser.type_body_depth == parser.brace_depth) parser.type_body_depth = null;
+                parser.brace_depth -|= 1;
+                parser.expected = null;
+                parser.declaration = false;
+                parser.pending_function = false;
+                parser.namespace_declaration = false;
                 parser.index += 1;
             },
             'a'...'z', 'A'...'Z', '_' => try parser.scanIdentifier(),
@@ -110,7 +137,10 @@ const Parser = struct {
         if (parser.expected != null and parser.receiver_depth == null) {
             const scope = parser.expected.?;
             try parser.sink.add(start, parser.index, scope);
-            if (scope == .type) try parser.rememberType(word);
+            if (scope == .type) {
+                try parser.rememberType(word);
+                parser.pending_type_body = true;
+            }
             parser.pending_function = scope == .function;
             parser.declaration = scope == .type or scope == .variable;
             parser.expected = null;
@@ -122,6 +152,7 @@ const Parser = struct {
         }
         if (contains(parser.config.namespace_declarations, word)) {
             parser.expected = .namespace;
+            parser.namespace_declaration = true;
             return;
         }
         if (contains(parser.config.function_declarations, word)) {
@@ -138,7 +169,9 @@ const Parser = struct {
         }
         if (contains(parser.config.keywords, word)) return;
 
-        if (previousMemberOperator(parser.source, start)) {
+        if (parser.namespace_declaration) {
+            try parser.sink.add(start, parser.index, .namespace);
+        } else if (previousMemberOperator(parser.source, start)) {
             try parser.sink.add(start, parser.index, .property);
         } else if (previousNamespaceOperator(parser.source, start)) {
             try parser.sink.add(start, parser.index, .type);
@@ -148,7 +181,7 @@ const Parser = struct {
         } else if (next == '(') {
             const constructor = parser.config.capitalized_calls_are_constructors and parser.isKnownType(word);
             try parser.sink.add(start, parser.index, if (constructor) .constructor else .function);
-            parser.pending_function = parser.declaration or constructor;
+            parser.pending_function = parser.declaration;
             parser.declaration = false;
         } else if (next == ':' and parser.paren_depth == 0) {
             try parser.sink.add(start, parser.index, .label);
@@ -160,7 +193,14 @@ const Parser = struct {
         } else if (parser.parameter_depth != null) {
             try parser.sink.add(start, parser.index, .parameter);
         } else if (parser.declaration) {
-            try parser.sink.add(start, parser.index, if (parser.parameter_depth != null) .parameter else .variable);
+            const scope: Scope = if (parser.parameter_depth != null)
+                .parameter
+            else if (parser.config.type_body_declarations_are_properties and
+                parser.type_body_depth == parser.brace_depth)
+                .property
+            else
+                .variable;
+            try parser.sink.add(start, parser.index, scope);
             parser.declaration = next == ',';
         } else {
             try parser.sink.add(start, parser.index, .variable);

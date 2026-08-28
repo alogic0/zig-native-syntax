@@ -1,6 +1,8 @@
 # Roadmap Languages 75–83 Compatibility
 
-D, V, Odin, C3, SystemVerilog, LLVM IR, OpenSCAD, Nickel, and Hare use
+D has a separate verified structural contract in `d.md`.
+
+V, Odin, C3, SystemVerilog, LLVM IR, OpenSCAD, Nickel, and Hare use
 dependency-free bounded lexical scanners. Each backend recognizes configured
 comments, quoted strings and escapes, numbers, booleans and constants,
 identifiers, calls, operators, punctuation, and a documented subset of
@@ -9,8 +11,7 @@ language keywords and primitive types.
 These backends classify representative source and recover around malformed or
 incomplete snippets, but they do not validate declarations, resolve names or
 types, expand macros, evaluate compile-time constructs, or select language
-versions. D's nested `/+ +/` comments are consumed to the first close marker;
-SystemVerilog preprocessing and compiler directives remain lexical; and LLVM
+versions. SystemVerilog preprocessing and compiler directives remain lexical; and LLVM
 IR sigils are classified as adjacent punctuation/attribute and identifier
 ranges rather than as a full SSA or global-name grammar.
 

@@ -1,7 +1,18 @@
-module demo;
+module demo.render;
+import std.algorithm;
+
 struct Item {
     string value = "x\\n";
     bool enabled = true;
     int count = 42;
+
+    int total(int delta) {
+        return count + delta;
+    }
+}
+
+Item make_item(string name) {
+    auto item = Item(name, true, 42);
+    return item;
 }
 // comment
