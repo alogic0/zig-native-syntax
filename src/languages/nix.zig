@@ -1,7 +1,8 @@
 const std = @import("std");
 const api = @import("../backend.zig");
-const composition = @import("../composition.zig");
 const g = @import("generic.zig");
+
+const max_interpolation_depth = 32;
 
 pub const backend: api.Backend = .init(.{
     .canonical_name = "nix",
@@ -10,17 +11,15 @@ pub const backend: api.Backend = .init(.{
     .support_level = .verified_structural,
 }, highlight);
 
-const expression_backend: api.Backend = .init(.{
-    .canonical_name = "nix-expression",
-    .display_name = "Nix expression",
-    .kind = .parser_backed,
-}, highlightExpression);
-
 fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void {
     try highlightExpression(source, sink);
 }
 
 fn highlightExpression(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void {
+    try highlightExpressionDepth(source, sink, 0);
+}
+
+fn highlightExpressionDepth(source: []const u8, sink: *api.CaptureSink, depth: usize) api.HighlightError!void {
     try g.highlight(source, sink, .{
         .line_comments = &.{"#"},
         .block_comments = &.{.{ .open = "/*", .close = "*/" }},
@@ -28,7 +27,7 @@ fn highlightExpression(source: []const u8, sink: *api.CaptureSink) api.Highlight
         .classify_identifiers = false,
         .strings_stop_at_newline = false,
     });
-    var parser: StructureParser = .{ .source = source, .sink = sink };
+    var parser: StructureParser = .{ .source = source, .sink = sink, .interpolation_depth = depth };
     try parser.run();
 }
 
@@ -42,6 +41,7 @@ const StructureParser = struct {
     brace_depth: usize = 0,
     inherit_mode: bool = false,
     inherit_expression_depth: usize = 0,
+    interpolation_depth: usize,
 
     fn run(parser: *StructureParser) api.HighlightError!void {
         while (parser.index < parser.source.len) switch (parser.source[parser.index]) {
@@ -191,7 +191,7 @@ const StructureParser = struct {
         const start = parser.index;
         const close = matchingBrace(parser.source, start + 2, parser.source.len) orelse parser.source.len;
         try parser.sink.add(start, start + 2, .special);
-        if (start + 2 < close) try composition.highlightEmbedded(parser.source, .{ .start = start + 2, .end = close }, expression_backend, parser.sink);
+        if (start + 2 < close) try parser.highlightEmbeddedExpression(start + 2, close);
         const end = if (close < parser.source.len) close + 1 else close;
         if (close < parser.source.len) try parser.sink.add(close, end, .special);
         if (nextNonSpace(parser.source, end) == '=' or previousNonSpace(parser.source, start) == '.' or nextNonSpace(parser.source, end) == '.') {
@@ -226,7 +226,7 @@ const StructureParser = struct {
             if (open >= end) break;
             const close = matchingBrace(parser.source, open + 2, end) orelse end;
             try parser.sink.add(open, open + 2, .special);
-            if (open + 2 < close) try composition.highlightEmbedded(parser.source, .{ .start = open + 2, .end = close }, expression_backend, parser.sink);
+            if (open + 2 < close) try parser.highlightEmbeddedExpression(open + 2, close);
             if (close < end) try parser.sink.add(close, close + 1, .special);
             cursor = if (close < end) close + 1 else end;
         }
@@ -243,7 +243,7 @@ const StructureParser = struct {
             }
             const close = matchingBrace(parser.source, open + 2, end) orelse end;
             try parser.sink.add(open, open + 2, .special);
-            if (open + 2 < close) try composition.highlightEmbedded(parser.source, .{ .start = open + 2, .end = close }, expression_backend, parser.sink);
+            if (open + 2 < close) try parser.highlightEmbeddedExpression(open + 2, close);
             if (close < end) try parser.sink.add(close, close + 1, .special);
             cursor = if (close < end) close + 1 else end;
         }
@@ -251,6 +251,19 @@ const StructureParser = struct {
 
     fn inLetBindingScope(parser: StructureParser) bool {
         return parser.let_depth > 0 and parser.brace_depth == parser.let_brace_depths[parser.let_depth - 1];
+    }
+
+    fn highlightEmbeddedExpression(parser: *StructureParser, start: usize, end: usize) api.HighlightError!void {
+        try parser.sink.add(start, end, .embedded);
+        if (parser.interpolation_depth >= max_interpolation_depth) return;
+
+        const nested_source = parser.source[start..end];
+        var nested_sink: api.CaptureSink = .init(parser.sink.allocator, nested_source.len);
+        defer nested_sink.deinit();
+        try highlightExpressionDepth(nested_source, &nested_sink, parser.interpolation_depth + 1);
+        for (nested_sink.captures()) |capture| {
+            try parser.sink.add(start + capture.span.start, start + capture.span.end, capture.scope);
+        }
     }
 
     fn startsWith(parser: StructureParser, text: []const u8) bool {
