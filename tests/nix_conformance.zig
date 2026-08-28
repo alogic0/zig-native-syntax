@@ -26,7 +26,32 @@ test "Nix parser distinguishes bindings parameters attributes and interpolation"
     try expect(source, sink.captures(), "${", .special);
 }
 
+test "Nix parser covers flakes modules paths and indented escapes" {
+    const source = @embedFile("corpus/nix/flake.nix");
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try syntax.languages.nix.backend.highlight(source, &sink);
+
+    try expect(source, sink.captures(), "system", .variable);
+    try expect(source, sink.captures(), "packages", .property);
+    try expect(source, sink.captures(), "${system}", .property);
+    try expect(source, sink.captures(), "./package.nix", .string);
+    try expect(source, sink.captures(), "${dynamicName}", .property);
+    try expect(source, sink.captures(), "inputs", .variable);
+    try expect(source, sink.captures(), "nixpkgs", .property);
+    try expect(source, sink.captures(), "<nixpkgs>", .string);
+    try expect(source, sink.captures(), "https://example.org/viewer", .string);
+    try expectMissing(source, sink.captures(), "notInterpolation", .variable);
+    try expectMissing(source, sink.captures(), "notInterpolation", .embedded);
+}
+
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
     for (captures) |capture| if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return;
     return error.TestExpectedEqual;
+}
+
+fn expectMissing(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
+    for (captures) |capture| {
+        if (capture.scope == scope and std.mem.eql(u8, try capture.span.slice(source), text)) return error.TestUnexpectedResult;
+    }
 }

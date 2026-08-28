@@ -37,13 +37,45 @@ const StructureParser = struct {
     sink: *api.CaptureSink,
     index: usize = 0,
     let_depth: usize = 0,
+    let_brace_depths: [64]usize = @splat(0),
+    let_overflow: usize = 0,
+    brace_depth: usize = 0,
     inherit_mode: bool = false,
+    inherit_expression_depth: usize = 0,
 
     fn run(parser: *StructureParser) api.HighlightError!void {
         while (parser.index < parser.source.len) switch (parser.source[parser.index]) {
             '#' => parser.skipLine(),
             '/' => {
-                if (parser.startsWith("/*")) parser.skipBlock() else parser.index += 1;
+                if (parser.startsWith("/*")) {
+                    parser.skipBlock();
+                } else if (isPathStart(parser.source, parser.index)) {
+                    try parser.scanPath();
+                } else {
+                    parser.index += 1;
+                }
+            },
+            '.' => {
+                if (parser.startsWith("./") or parser.startsWith("../")) {
+                    try parser.scanPath();
+                } else {
+                    parser.index += 1;
+                }
+            },
+            '<' => {
+                if (searchPathEnd(parser.source, parser.index)) |end| {
+                    try parser.sink.add(parser.index, end, .string);
+                    parser.index = end;
+                } else {
+                    parser.index += 1;
+                }
+            },
+            '$' => {
+                if (parser.startsWith("${")) {
+                    try parser.scanDynamicAttribute();
+                } else {
+                    parser.index += 1;
+                }
             },
             '"' => try parser.scanString(),
             '\'' => {
@@ -57,8 +89,21 @@ const StructureParser = struct {
                 if (parameterSetEnd(parser.source, parser.index)) |end| {
                     try parser.scanParameterSet(end);
                 } else {
+                    parser.brace_depth += 1;
                     parser.index += 1;
                 }
+            },
+            '}' => {
+                parser.brace_depth -|= 1;
+                parser.index += 1;
+            },
+            '(' => {
+                if (parser.inherit_mode) parser.inherit_expression_depth += 1;
+                parser.index += 1;
+            },
+            ')' => {
+                parser.inherit_expression_depth -|= 1;
+                parser.index += 1;
             },
             ';' => {
                 parser.inherit_mode = false;
@@ -75,23 +120,33 @@ const StructureParser = struct {
         while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
         const word = parser.source[start..parser.index];
         if (std.mem.eql(u8, word, "let")) {
-            parser.let_depth += 1;
-        } else if (std.mem.eql(u8, word, "in") and parser.let_depth > 0) {
-            parser.let_depth -= 1;
+            if (parser.let_depth < parser.let_brace_depths.len) {
+                parser.let_brace_depths[parser.let_depth] = parser.brace_depth;
+                parser.let_depth += 1;
+            } else {
+                parser.let_overflow += 1;
+            }
+        } else if (std.mem.eql(u8, word, "in")) {
+            if (parser.let_overflow > 0) parser.let_overflow -= 1 else if (parser.let_depth > 0) parser.let_depth -= 1;
         } else if (std.mem.eql(u8, word, "inherit")) {
             parser.inherit_mode = true;
         } else if (isKeyword(word) or std.mem.eql(u8, word, "true") or std.mem.eql(u8, word, "false") or std.mem.eql(u8, word, "null")) {
             return;
+        } else if (parser.index < parser.source.len and parser.source[parser.index] == '/') {
+            try parser.scanPathFrom(start);
+        } else if (std.mem.startsWith(u8, parser.source[parser.index..], "://")) {
+            parser.index = uriEnd(parser.source, parser.index + 3);
+            try parser.sink.add(start, parser.index, .string);
         } else if (previousNonSpace(parser.source, start) == '.') {
             try parser.sink.add(start, parser.index, .property);
         } else if (isBuiltin(word)) {
             try parser.sink.add(start, parser.index, .builtin);
         } else if (parser.inherit_mode) {
-            try parser.sink.add(start, parser.index, .property);
+            try parser.sink.add(start, parser.index, if (parser.inherit_expression_depth > 0) .variable else .property);
         } else if (nextNonSpace(parser.source, parser.index) == ':') {
             try parser.sink.add(start, parser.index, .parameter);
         } else if (nextNonSpace(parser.source, parser.index) == '=') {
-            try parser.sink.add(start, parser.index, if (parser.let_depth > 0) .variable else .property);
+            try parser.sink.add(start, parser.index, if (parser.inLetBindingScope()) .variable else .property);
         } else if (nextNonSpace(parser.source, parser.index) == '.') {
             try parser.sink.add(start, parser.index, .property);
         } else {
@@ -116,18 +171,52 @@ const StructureParser = struct {
     }
 
     fn scanString(parser: *StructureParser) api.HighlightError!void {
+        const start = parser.index;
         const end = stringEnd(parser.source, parser.index);
         try parser.highlightInterpolations(parser.index + 1, end);
+        if (nextNonSpace(parser.source, end) == '=') try parser.sink.add(start, end, .property);
         parser.index = end;
     }
 
     fn scanIndentedString(parser: *StructureParser) api.HighlightError!void {
         const start = parser.index;
-        const close = std.mem.indexOfPos(u8, parser.source, start + 2, "''") orelse parser.source.len;
+        const close = indentedStringClose(parser.source, start + 2) orelse parser.source.len;
         const end = if (close < parser.source.len) close + 2 else parser.source.len;
         try parser.sink.add(start, end, .string);
-        try parser.highlightInterpolations(start + 2, close);
+        try parser.highlightIndentedInterpolations(start + 2, close);
         parser.index = end;
+    }
+
+    fn scanDynamicAttribute(parser: *StructureParser) api.HighlightError!void {
+        const start = parser.index;
+        const close = matchingBrace(parser.source, start + 2, parser.source.len) orelse parser.source.len;
+        try parser.sink.add(start, start + 2, .special);
+        if (start + 2 < close) try composition.highlightEmbedded(parser.source, .{ .start = start + 2, .end = close }, expression_backend, parser.sink);
+        const end = if (close < parser.source.len) close + 1 else close;
+        if (close < parser.source.len) try parser.sink.add(close, end, .special);
+        if (nextNonSpace(parser.source, end) == '=' or previousNonSpace(parser.source, start) == '.' or nextNonSpace(parser.source, end) == '.') {
+            try parser.sink.add(start, end, .property);
+        }
+        parser.index = end;
+    }
+
+    fn scanPath(parser: *StructureParser) api.HighlightError!void {
+        try parser.scanPathFrom(parser.index);
+    }
+
+    fn scanPathFrom(parser: *StructureParser, start: usize) api.HighlightError!void {
+        while (parser.index < parser.source.len and !std.ascii.isWhitespace(parser.source[parser.index]) and
+            std.mem.indexOfScalar(u8, ";,()[]", parser.source[parser.index]) == null)
+        {
+            if (parser.source[parser.index] == '$' and parser.index + 1 < parser.source.len and parser.source[parser.index + 1] == '{') {
+                const close = matchingBrace(parser.source, parser.index + 2, parser.source.len) orelse parser.source.len;
+                parser.index = if (close < parser.source.len) close + 1 else close;
+                continue;
+            }
+            if (parser.source[parser.index] == '{' or parser.source[parser.index] == '}') break;
+            parser.index += validUtf8Length(parser.source[parser.index..]);
+        }
+        try parser.sink.add(start, parser.index, .string);
     }
 
     fn highlightInterpolations(parser: *StructureParser, start: usize, end: usize) api.HighlightError!void {
@@ -141,6 +230,27 @@ const StructureParser = struct {
             if (close < end) try parser.sink.add(close, close + 1, .special);
             cursor = if (close < end) close + 1 else end;
         }
+    }
+
+    fn highlightIndentedInterpolations(parser: *StructureParser, start: usize, end: usize) api.HighlightError!void {
+        var cursor = start;
+        while (cursor < end) {
+            const open = std.mem.indexOfPos(u8, parser.source, cursor, "${") orelse break;
+            if (open >= end) break;
+            if (open >= start + 2 and std.mem.eql(u8, parser.source[open - 2 .. open], "''")) {
+                cursor = open + 2;
+                continue;
+            }
+            const close = matchingBrace(parser.source, open + 2, end) orelse end;
+            try parser.sink.add(open, open + 2, .special);
+            if (open + 2 < close) try composition.highlightEmbedded(parser.source, .{ .start = open + 2, .end = close }, expression_backend, parser.sink);
+            if (close < end) try parser.sink.add(close, close + 1, .special);
+            cursor = if (close < end) close + 1 else end;
+        }
+    }
+
+    fn inLetBindingScope(parser: StructureParser) bool {
+        return parser.let_depth > 0 and parser.brace_depth == parser.let_brace_depths[parser.let_depth - 1];
     }
 
     fn startsWith(parser: StructureParser, text: []const u8) bool {
@@ -161,14 +271,25 @@ fn parameterSetEnd(source: []const u8, open: usize) ?usize {
     var depth: usize = 1;
     while (cursor < source.len) {
         switch (source[cursor]) {
+            '#' => cursor = lineEnd(source, cursor, source.len),
+            '/' => if (startsWithAt(source, cursor, "/*")) {
+                cursor = blockCommentEnd(source, cursor, source.len);
+            } else {
+                cursor += 1;
+            },
             '"' => cursor = stringEnd(source, cursor),
+            '\'' => if (startsWithAt(source, cursor, "''")) {
+                cursor = indentedStringEnd(source, cursor, source.len);
+            } else {
+                cursor += 1;
+            },
             '{' => {
                 depth += 1;
                 cursor += 1;
             },
             '}' => {
                 depth -= 1;
-                if (depth == 0) return if (nextNonSpace(source, cursor + 1) == ':') cursor else null;
+                if (depth == 0) return if (hasParameterSetSuffix(source, cursor + 1)) cursor else null;
                 cursor += 1;
             },
             else => cursor += validUtf8Length(source[cursor..]),
@@ -181,7 +302,18 @@ fn matchingBrace(source: []const u8, start: usize, limit: usize) ?usize {
     var cursor = start;
     var depth: usize = 1;
     while (cursor < limit) switch (source[cursor]) {
-        '"' => cursor = stringEnd(source, cursor),
+        '#' => cursor = lineEnd(source, cursor, limit),
+        '/' => if (startsWithAt(source, cursor, "/*")) {
+            cursor = blockCommentEnd(source, cursor, limit);
+        } else {
+            cursor += 1;
+        },
+        '"' => cursor = @min(stringEnd(source, cursor), limit),
+        '\'' => if (startsWithAt(source, cursor, "''")) {
+            cursor = indentedStringEnd(source, cursor, limit);
+        } else {
+            cursor += 1;
+        },
         '{' => {
             depth += 1;
             cursor += 1;
@@ -194,6 +326,89 @@ fn matchingBrace(source: []const u8, start: usize, limit: usize) ?usize {
         else => cursor += validUtf8Length(source[cursor..]),
     };
     return null;
+}
+
+fn isPathStart(source: []const u8, start: usize) bool {
+    if (start + 1 >= source.len or source[start] != '/') return false;
+    if (source[start + 1] == '/' or source[start + 1] == '*') return false;
+    const previous = previousNonSpace(source, start) orelse return true;
+    return std.mem.indexOfScalar(u8, "=([{,:;", previous) != null;
+}
+
+fn searchPathEnd(source: []const u8, start: usize) ?usize {
+    var cursor = start + 1;
+    if (cursor >= source.len) return null;
+    while (cursor < source.len) : (cursor += validUtf8Length(source[cursor..])) {
+        if (source[cursor] == '>') return if (cursor > start + 1) cursor + 1 else null;
+        if (std.ascii.isWhitespace(source[cursor]) or source[cursor] == '<') return null;
+    }
+    return null;
+}
+
+fn uriEnd(source: []const u8, start: usize) usize {
+    var cursor = start;
+    while (cursor < source.len and !std.ascii.isWhitespace(source[cursor]) and
+        std.mem.indexOfScalar(u8, ";,(){}[]", source[cursor]) == null)
+    {
+        cursor += validUtf8Length(source[cursor..]);
+    }
+    return cursor;
+}
+
+fn indentedStringClose(source: []const u8, start: usize) ?usize {
+    var cursor = start;
+    while (cursor + 1 < source.len) {
+        if (!startsWithAt(source, cursor, "''")) {
+            cursor += validUtf8Length(source[cursor..]);
+            continue;
+        }
+        if (cursor + 2 < source.len and source[cursor + 2] == '\'') {
+            cursor += 3;
+            continue;
+        }
+        if (cursor + 2 < source.len and source[cursor + 2] == '$') {
+            cursor += 3;
+            continue;
+        }
+        if (cursor + 2 < source.len and source[cursor + 2] == '\\') {
+            cursor += @min(@as(usize, 4), source.len - cursor);
+            continue;
+        }
+        return cursor;
+    }
+    return null;
+}
+
+fn indentedStringEnd(source: []const u8, start: usize, limit: usize) usize {
+    const close = indentedStringClose(source, start + 2) orelse return limit;
+    return @min(close + 2, limit);
+}
+
+fn lineEnd(source: []const u8, start: usize, limit: usize) usize {
+    return @min(std.mem.indexOfScalarPos(u8, source, start, '\n') orelse limit, limit);
+}
+
+fn blockCommentEnd(source: []const u8, start: usize, limit: usize) usize {
+    const close = std.mem.indexOfPos(u8, source, start + 2, "*/") orelse return limit;
+    return @min(close + 2, limit);
+}
+
+fn hasParameterSetSuffix(source: []const u8, after: usize) bool {
+    var cursor = after;
+    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
+    if (cursor < source.len and source[cursor] == '@') {
+        cursor += 1;
+        while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
+        if (cursor >= source.len or !isIdentifierStart(source[cursor])) return false;
+        cursor += 1;
+        while (cursor < source.len and isIdentifierContinue(source[cursor])) cursor += 1;
+        while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
+    }
+    return cursor < source.len and source[cursor] == ':';
+}
+
+fn startsWithAt(source: []const u8, start: usize, text: []const u8) bool {
+    return start <= source.len and std.mem.startsWith(u8, source[start..], text);
 }
 
 fn stringEnd(source: []const u8, start: usize) usize {
