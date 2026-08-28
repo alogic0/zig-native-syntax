@@ -1,2 +1,5 @@
+<main class="result">
 <?php // PHP corpus
-function run(string $name): bool { $n = 42; echo "x\n<&> $name"; return true; }
+class Runner { function run(string $name): bool { $n = 42; $ok = true; echo "x\n<&> $name"; return $this->formatter->format(new Result()); } }
+?>
+</main>

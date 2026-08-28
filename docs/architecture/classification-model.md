@@ -66,4 +66,5 @@ After a stable release:
 - adding a scope is documented in release notes because exhaustive consumer switches may require an
   update, even when the package's semantic-versioning policy treats the addition as compatible.
 
-Consumer-specific aliases and theme colors remain outside this model.
+The configured registry's common aliases and consumer-specific theme colors remain outside this
+classification model.

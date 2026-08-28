@@ -1,1 +1,5 @@
-section { "x\n<&>" 42 true } % comment
+\documentclass{article}
+\begin{document}
+\section{Rendering}
+Inline math $x_1 + 42$ and escaped \% text. % comment
+\end{document}

@@ -1,12 +1,15 @@
 const std = @import("std");
 const utf8 = @import("../utf8.zig");
 const api = @import("../backend.zig");
+const composition = @import("../composition.zig");
+const bash = @import("bash.zig");
 const Scope = @import("../scope.zig").Scope;
 
 pub const backend: api.Backend = .init(.{
     .canonical_name = "make",
     .display_name = "Make",
-    .kind = .lexical,
+    .kind = .composed,
+    .support_level = .verified_structural,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void {
@@ -20,8 +23,12 @@ fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void
 
 fn scanLine(source: []const u8, start: usize, end: usize, sink: *api.CaptureSink) api.HighlightError!void {
     if (start < end and source[start] == '\t') {
-        try sink.add(start, end, .embedded);
         var recipe_cursor = start + 1;
+        while (recipe_cursor < end and std.mem.indexOfScalar(u8, "@+-", source[recipe_cursor]) != null) {
+            try sink.add(recipe_cursor, recipe_cursor + 1, .special);
+            recipe_cursor += 1;
+        }
+        try composition.highlightEmbedded(source, .{ .start = recipe_cursor, .end = end }, bash.backend, sink);
         while (recipe_cursor < end) {
             if (source[recipe_cursor] == '$') {
                 recipe_cursor = try scanVariable(source, recipe_cursor, end, sink);

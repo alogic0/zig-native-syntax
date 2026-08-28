@@ -1,3 +1,13 @@
-Name = "x\n<&>"
-Version = 42
-true # comment
+Name: viewer
+Version: 1.2
+Release: 1%{?dist}
+Summary: Markdown viewer
+Source0: %{name}-%{version}.tar.gz
+# package comment
+
+%build
+name="viewer\n<&>"
+echo "$name" # shell comment
+
+%changelog
+* Thu Aug 27 2026 Viewer <viewer@example.test> - 1.2-1

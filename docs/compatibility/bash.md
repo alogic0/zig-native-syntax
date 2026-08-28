@@ -1,7 +1,7 @@
 # Bash Highlighting Compatibility
 
 The dependency-free `bash` backend is available as `native_syntax.languages.bash`. Its canonical
-name is `bash`; consumers own aliases such as `sh` and `shell`.
+name is `bash`; the configured registry resolves aliases such as `sh` and `shell`.
 
 The backend uses the shared Zig-style syntax core with a Bash-specific tokenizer and tolerant
 structural parser:

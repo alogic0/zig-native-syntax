@@ -1,0 +1,11 @@
+From: User <user@example.test>
+To: Viewer <viewer@example.test>
+Subject: Re: Markdown output
+
+The result is at https://example.test/output.
+
+> On Tuesday, Viewer wrote:
+>> Please review the generated page.
+
+-- 
+User

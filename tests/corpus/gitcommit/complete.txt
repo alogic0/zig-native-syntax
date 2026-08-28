@@ -1,2 +1,6 @@
-feat: render "x\n<&>" 42 true
-# comment
+feat(viewer): render native syntax
+
+Keep fenced code source-preserving.
+
+# Changes to be committed:
+#   modified: src/renderer.zig

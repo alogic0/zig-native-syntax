@@ -10,6 +10,7 @@ pub const backend: Backend = .init(.{
     .canonical_name = "hcl",
     .display_name = "HCL",
     .kind = .lexical,
+    .support_level = .verified_lexical,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {

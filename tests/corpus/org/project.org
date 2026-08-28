@@ -1,0 +1,10 @@
+#+TITLE: Markdown Viewer
+* TODO Release extension
+:PROPERTIES:
+:OWNER: viewer
+:END:
+- Run native tests
+- Build the extension
+#+BEGIN_SRC zig
+try renderer.render(input);
+#+END_SRC

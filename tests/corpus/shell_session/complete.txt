@@ -1,0 +1,6 @@
+$ printf '%s\n' "<&>"
+<&>
+$ docker build -t viewer .
+Successfully built 0123456789ab
+user@host:~/src$ zig build test
+Build Summary: all tests passed

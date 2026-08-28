@@ -1,2 +1,8 @@
-note "x\n<&>" 42 true
-.. comment
+Viewer
+======
+
+.. note::
+   :class: important
+
+See :doc:`guide` and ``render()``.
+.. ordinary comment

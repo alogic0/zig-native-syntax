@@ -4,6 +4,7 @@ const std = @import("std");
 
 const capture = @import("capture.zig");
 const backend = @import("backend.zig");
+const backend_registry = @import("backend_registry.zig");
 
 pub const html = @import("html.zig");
 pub const composition = @import("composition.zig");
@@ -20,11 +21,16 @@ pub const SupportLevel = backend.SupportLevel;
 pub const CaptureSink = backend.CaptureSink;
 pub const HighlightError = backend.HighlightError;
 pub const MetadataError = backend.MetadataError;
+pub const Alias = backend_registry.Alias;
+pub const aliases = backend_registry.aliases;
+pub const collectVerifiedBackends = backend_registry.collectVerified;
+pub const collectVerifiedBackendsExcept = backend_registry.collectVerifiedExcept;
 
 pub const languages = struct {
     pub const agda = @import("languages/agda.zig");
     pub const astro = @import("languages/astro.zig");
     pub const bash = @import("languages/bash.zig");
+    pub const batch = @import("languages/batch.zig");
     pub const assembly = @import("languages/assembly.zig");
     pub const c = @import("languages/c.zig");
     pub const cmake = @import("languages/cmake.zig");
@@ -65,6 +71,7 @@ pub const languages = struct {
     pub const elm = @import("languages/elm.zig");
     pub const fish = @import("languages/fish.zig");
     pub const fsharp = @import("languages/fsharp.zig");
+    pub const fortran = @import("languages/fortran.zig");
     pub const gdscript = @import("languages/gdscript.zig");
     pub const git_rebase = @import("languages/git_rebase.zig");
     pub const gitcommit = @import("languages/gitcommit.zig");
@@ -77,6 +84,7 @@ pub const languages = struct {
     pub const latex = @import("languages/latex.zig");
     pub const llvm = @import("languages/llvm.zig");
     pub const mail = @import("languages/mail.zig");
+    pub const mlir = @import("languages/mlir.zig");
     pub const nim = @import("languages/nim.zig");
     pub const nickel = @import("languages/nickel.zig");
     pub const ninja = @import("languages/ninja.zig");
@@ -87,6 +95,7 @@ pub const languages = struct {
     pub const odin = @import("languages/odin.zig");
     pub const openscad = @import("languages/openscad.zig");
     pub const perl = @import("languages/perl.zig");
+    pub const pdll = @import("languages/pdll.zig");
     pub const po = @import("languages/po.zig");
     pub const purescript = @import("languages/purescript.zig");
     pub const query = @import("languages/query.zig");
@@ -94,8 +103,11 @@ pub const languages = struct {
     pub const rpmspec = @import("languages/rpmspec.zig");
     pub const rst = @import("languages/rst.zig");
     pub const scheme = @import("languages/scheme.zig");
+    pub const shell_session = @import("languages/shell_session.zig");
     pub const ssh_config = @import("languages/ssh_config.zig");
+    pub const starlark = @import("languages/starlark.zig");
     pub const systemverilog = @import("languages/systemverilog.zig");
+    pub const tablegen = @import("languages/tablegen.zig");
     pub const typst = @import("languages/typst.zig");
     pub const uxntal = @import("languages/uxntal.zig");
     pub const v = @import("languages/v.zig");
@@ -104,9 +116,21 @@ pub const languages = struct {
     pub const zig = @import("languages/zig.zig");
 };
 
+pub fn canonicalLanguageName(name: []const u8) []const u8 {
+    return backend_registry.canonicalName(name);
+}
+
 test "span preserves source offsets" {
     const source = "const answer = 42;";
     const span: Span = try .init(0, 5);
 
     try std.testing.expectEqualStrings("const", try span.slice(source));
+}
+
+test "language aliases are package-owned" {
+    try std.testing.expectEqualStrings("bash", canonicalLanguageName("shell"));
+    try std.testing.expectEqualStrings("python", canonicalLanguageName("PY"));
+    try std.testing.expectEqualStrings("python", canonicalLanguageName("python3"));
+    try std.testing.expectEqualStrings("cpp", canonicalLanguageName("c++"));
+    try std.testing.expectEqualStrings("unknown", canonicalLanguageName("unknown"));
 }

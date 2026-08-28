@@ -1,3 +1,7 @@
-GET "x\n<&>"
-status = 42
-true # comment
+GET https://example.test/api/{{item_id}}
+Accept: application/json
+HTTP/1.1 200
+[Asserts]
+status == 200
+jsonpath "$.name\n" == "viewer"
+# comment

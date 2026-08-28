@@ -1,3 +1,7 @@
-msgid "x\n<&>"
-msgstr "value 42 true"
-# comment
+#: src/main.zig:42
+#, fuzzy
+msgid "file\n<&>"
+msgid_plural "files"
+msgstr[0] "Datei"
+msgstr[1] "Dateien"
+# translator comment

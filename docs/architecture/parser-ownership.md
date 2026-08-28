@@ -63,7 +63,8 @@ The boundaries are:
 | Language grammar and parser correctness | Language implementation or parser package |
 | Mapping language syntax to stable scopes | `zig-native-syntax` language adapter |
 | Span validation, source preservation, and HTML escaping | `zig-native-syntax` core |
-| Fence aliases, unsupported-language policy, and CSS theme | Consumer such as Zine |
+| Common fence aliases and verified-backend selection | `zig-native-syntax` configured registry |
+| Unsupported-language fallback and CSS theme | Consumer such as Zine |
 | Parser dependency versions used by a backend | `zig-native-syntax` package integration |
 
 The first expected adapters are:
@@ -125,7 +126,7 @@ Zine ────────────────→ zig-markdown-parser
 This avoids a dependency path from `zig-native-syntax` back into Zine. The parser owns Markdown
 syntax, immutable document traversal, and original-source byte spans. The highlighting adapter owns
 the mapping from parser nodes to language-neutral scopes. Zine retains SuperMD directives, page
-semantics, fence aliases, and fallback policy.
+semantics and fallback policy.
 
 The adapter consumes only the parser's public read-only traversal API. It does not copy parser
 storage, use Zine's compatibility AST, or add highlighting concerns to the parser package.

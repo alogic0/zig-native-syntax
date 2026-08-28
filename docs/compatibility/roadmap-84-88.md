@@ -1,14 +1,13 @@
 # Roadmap Languages 84–88 Compatibility
 
-Agda, Tree-sitter Query, Vimscript, and Uxntal use dependency-free bounded
-lexical scanners. Agda recognizes a practical declaration and type subset,
-Tree-sitter Query recognizes captures and common predicate names, Vimscript
+Agda, Vimscript, and Uxntal use dependency-free bounded lexical scanners. Agda
+recognizes a practical declaration and type subset, Vimscript
 recognizes command keywords and single-quoted strings, and Uxntal recognizes
 common opcodes, numbers, raw ASCII starts, and parenthesized comments.
 
-The scanners do not validate layout, grammar node names, query predicates,
-Vim command abbreviation or expression context, or Uxntal stack effects.
-Agda and query block nesting is not resolved. Vim double quotes are treated as
+The scanners do not validate layout, Vim command abbreviation or expression
+context, or Uxntal stack effects. Agda block nesting is not resolved. Vim
+double quotes are treated as
 line comments and single quotes as bounded strings. Uxntal raw ASCII is
 bounded by a newline rather than interpreted as an assembler token stream.
 
@@ -18,6 +17,9 @@ and error tag families; optional user suffixes; issue numbers; and HTTP(S)
 URLs. It does not own a surrounding source language's comment delimiters and
 leaves ordinary comment text unclassified. Consumers compose it only over a
 range already identified as comment content.
+
+Tree-sitter Query has a separate parser-backed compatibility contract in
+`query.md`.
 
 All five backends preserve source ranges and safely recover around malformed
 or incomplete input. Unsupported bytes remain unclassified and are escaped by

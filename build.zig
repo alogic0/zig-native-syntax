@@ -13,6 +13,11 @@ pub fn build(b: *std.Build) void {
         "external-backends",
         "Enable all external syntax backends unless individually overridden",
     ) orelse true;
+    const size_analysis_exclusions = b.option(
+        []const u8,
+        "size-analysis-exclude-backends",
+        "Comma-separated core backends omitted only for code-size analysis",
+    ) orelse "";
     const enable_ziggy_backend = b.option(
         bool,
         "backend-ziggy",
@@ -419,6 +424,13 @@ pub fn build(b: *std.Build) void {
     const c3_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "c3", .display_name = "C3", .sample_path = "source.c3" });
     const systemverilog_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "systemverilog", .display_name = "SystemVerilog", .sample_path = "source.sv" });
     const llvm_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "llvm", .display_name = "LLVM IR", .sample_path = "source.ll" });
+    const mlir_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "mlir", .display_name = "MLIR", .sample_path = "source.mlir" });
+    const tablegen_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "tablegen", .display_name = "TableGen", .sample_path = "source.td" });
+    const fortran_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "fortran", .display_name = "Fortran", .sample_path = "source.f90" });
+    const pdll_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "pdll", .display_name = "PDLL", .sample_path = "source.pdll" });
+    const batch_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "batch", .display_name = "Windows Batch", .sample_path = "source.bat" });
+    const starlark_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "starlark", .display_name = "Starlark", .sample_path = "source.bzl" });
+    const shell_session_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "shell-session", .file_stem = "shell_session", .display_name = "Shell session", .sample_path = "session.txt" });
     const openscad_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "openscad", .display_name = "OpenSCAD", .sample_path = "source.scad" });
     const nickel_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "nickel", .display_name = "Nickel", .sample_path = "source.ncl" });
     const hare_runs = addCoreLanguage(b, native_syntax, target, optimize, .{ .name = "hare", .display_name = "Hare", .sample_path = "source.ha" });
@@ -444,6 +456,16 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const run_public_api_tests = b.addRunArtifact(public_api_tests);
+
+    const adversarial_backend_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/adversarial_backends.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+        }),
+    });
+    const run_adversarial_backend_tests = b.addRunArtifact(adversarial_backend_tests);
 
     const html_property_tests = b.addTest(.{
         .root_module = b.createModule(.{
@@ -1019,9 +1041,51 @@ pub fn build(b: *std.Build) void {
         };
     } else null;
 
+    const registry_options = b.addOptions();
+    registry_options.addOption(bool, "ziggy", enable_ziggy_backend);
+    registry_options.addOption(bool, "ziggy_schema", enable_ziggy_schema_backend);
+    registry_options.addOption(bool, "scripty", enable_scripty_backend);
+    registry_options.addOption(bool, "html", enable_html_backend);
+    registry_options.addOption(bool, "xml", enable_xml_backend);
+    registry_options.addOption(bool, "css", enable_css_backend);
+    registry_options.addOption(bool, "superhtml", enable_superhtml_backend);
+    registry_options.addOption(bool, "markdown", enable_markdown_backend);
+    registry_options.addOption([]const u8, "size_analysis_exclusions", size_analysis_exclusions);
+
+    const configured_registry = b.addModule("native_syntax_registry", .{
+        .root_source_file = b.path("src/configured_registry.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "native_syntax", .module = native_syntax }},
+    });
+    configured_registry.addOptions("registry_options", registry_options);
+    if (enable_ziggy_backend) configured_registry.addImport("native_syntax_ziggy", b.modules.get("native_syntax_ziggy").?);
+    if (enable_ziggy_schema_backend) configured_registry.addImport("native_syntax_ziggy_schema", b.modules.get("native_syntax_ziggy_schema").?);
+    if (enable_scripty_backend) configured_registry.addImport("native_syntax_scripty", b.modules.get("native_syntax_scripty").?);
+    if (enable_html_backend) configured_registry.addImport("native_syntax_html", b.modules.get("native_syntax_html").?);
+    if (enable_xml_backend) configured_registry.addImport("native_syntax_xml", b.modules.get("native_syntax_xml").?);
+    if (enable_css_backend) configured_registry.addImport("native_syntax_css", b.modules.get("native_syntax_css").?);
+    if (enable_superhtml_backend) configured_registry.addImport("native_syntax_superhtml", b.modules.get("native_syntax_superhtml").?);
+    if (enable_markdown_backend) configured_registry.addImport("native_syntax_markdown", b.modules.get("native_syntax_markdown").?);
+
+    const configured_registry_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/configured_registry.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "native_syntax", .module = native_syntax },
+                .{ .name = "native_syntax_registry", .module = configured_registry },
+            },
+        }),
+    });
+    const run_configured_registry_tests = b.addRunArtifact(configured_registry_tests);
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
+    test_step.dependOn(&run_adversarial_backend_tests.step);
+    test_step.dependOn(&run_configured_registry_tests.step);
     test_step.dependOn(&run_html_property_tests.step);
     test_step.dependOn(&run_zig_corpus_tests.step);
     test_step.dependOn(&run_zig_conformance_tests.step);
@@ -1064,7 +1128,7 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }
-    inline for (.{ d_runs, v_runs, odin_runs, c3_runs, systemverilog_runs, llvm_runs, openscad_runs, nickel_runs, hare_runs }) |runs| {
+    inline for (.{ d_runs, v_runs, odin_runs, c3_runs, systemverilog_runs, llvm_runs, mlir_runs, tablegen_runs, fortran_runs, pdll_runs, batch_runs, starlark_runs, shell_session_runs, openscad_runs, nickel_runs, hare_runs }) |runs| {
         test_step.dependOn(&runs.backend_test_run.step);
         test_step.dependOn(&runs.preview_test_run.step);
     }

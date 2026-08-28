@@ -10,6 +10,7 @@ pub const backend: Backend = .init(.{
     .canonical_name = "yaml",
     .display_name = "YAML",
     .kind = .lexical,
+    .support_level = .verified_lexical,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {
@@ -100,6 +101,16 @@ fn scanLine(
             try sink.add(marker_start, cursor, .operator);
             block_scalar = true;
         },
+        '~' => {
+            try sink.add(cursor, cursor + 1, .constant);
+            cursor += 1;
+        },
+        '<' => if (cursor + 1 < line_end and source[cursor + 1] == '<' and nextIsColon(source, cursor + 2, line_end)) {
+            try sink.add(cursor, cursor + 2, .property);
+            cursor += 2;
+        } else {
+            cursor += 1;
+        },
         '+', '-', '0'...'9' => cursor = try scanNumberLike(source, cursor, line_end, sink),
         else => if (isPlainStart(source[cursor])) {
             const token_start = cursor;
@@ -149,12 +160,17 @@ fn scanNumberLike(source: []const u8, start: usize, line_end: usize, sink: *Capt
     var cursor = start + 1;
     while (cursor < line_end) {
         const byte = source[cursor];
+        if (byte == ':' and isMappingColon(source, cursor, line_end)) break;
         if (std.ascii.isAlphanumeric(byte) or byte == '_' or byte == '.' or byte == ':' or byte == '+' or byte == '-') {
             cursor += 1;
         } else break;
     }
-    try sink.add(start, cursor, .number);
+    try sink.add(start, cursor, if (nextIsColon(source, cursor, line_end)) .property else .number);
     return cursor;
+}
+
+fn isMappingColon(source: []const u8, cursor: usize, line_end: usize) bool {
+    return cursor + 1 == line_end or std.ascii.isWhitespace(source[cursor + 1]);
 }
 
 fn yamlEscapeEnd(source: []const u8, start: usize, line_end: usize) usize {

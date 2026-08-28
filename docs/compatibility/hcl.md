@@ -6,6 +6,10 @@ heredoc markers and bodies, common block and expression keywords, primitive
 types and values, object properties, traversal attributes, function calls,
 numbers, operators, and collection punctuation.
 
+The backend is verified for lexical highlighting across Terraform-style block,
+expression, traversal, template, and heredoc inputs, including malformed and
+UTF-8 source-preservation cases.
+
 The scanner is not an HCL parser or evaluator. It does not validate block
 schemas, expression precedence, traversal validity, heredoc indentation, or
 template directives and interpolation bodies. Template introducers in quoted

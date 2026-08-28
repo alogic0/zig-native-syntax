@@ -8,12 +8,15 @@ const HighlightError = backend_api.HighlightError;
 pub const backend: Backend = .init(.{
     .canonical_name = "c",
     .display_name = "C",
-    .kind = .lexical,
+    .kind = .parser_backed,
+    .support_level = .verified_structural,
 }, highlight);
 
 fn highlight(source: []const u8, sink: *CaptureSink) HighlightError!void {
     var scanner: Scanner = .{ .source = source, .sink = sink };
     try scanner.run();
+    var parser: StructureParser = .{ .source = source, .sink = sink };
+    try parser.run();
 }
 
 const Scanner = struct {
@@ -164,13 +167,168 @@ const Scanner = struct {
             try scanner.sink.add(start, scanner.index, .boolean);
         } else if (std.mem.eql(u8, word, "NULL") or std.mem.eql(u8, word, "nullptr")) {
             try scanner.sink.add(start, scanner.index, .constant);
-        } else {
-            var next = scanner.index;
-            while (next < scanner.source.len and std.ascii.isWhitespace(scanner.source[next])) next += 1;
-            try scanner.sink.add(start, scanner.index, if (next < scanner.source.len and scanner.source[next] == '(') .function else .variable);
         }
     }
 };
+
+/// Tolerant declaration pass. It recognizes C's declaration boundaries and
+/// derives roles that cannot be decided by spelling alone.
+const StructureParser = struct {
+    source: []const u8,
+    sink: *CaptureSink,
+    index: usize = 0,
+    paren_depth: usize = 0,
+    parameter_depth: ?usize = null,
+    declaration: bool = false,
+    typedef_declaration: bool = false,
+    expect_tag: bool = false,
+    pending_function: bool = false,
+
+    fn run(parser: *StructureParser) HighlightError!void {
+        while (parser.index < parser.source.len) switch (parser.source[parser.index]) {
+            ' ', '\t', '\r', '\n' => parser.index += 1,
+            '#' => parser.skipPreprocessor(),
+            '/' => {
+                if (parser.index + 1 < parser.source.len and parser.source[parser.index + 1] == '/') {
+                    parser.index = std.mem.indexOfScalarPos(u8, parser.source, parser.index, '\n') orelse parser.source.len;
+                } else if (parser.index + 1 < parser.source.len and parser.source[parser.index + 1] == '*') {
+                    parser.index = if (std.mem.indexOfPos(u8, parser.source, parser.index + 2, "*/")) |end| end + 2 else parser.source.len;
+                } else parser.index += 1;
+            },
+            '\'', '"' => parser.skipString(parser.source[parser.index]),
+            '(' => {
+                parser.paren_depth += 1;
+                if (parser.pending_function) {
+                    parser.parameter_depth = parser.paren_depth;
+                    parser.pending_function = false;
+                }
+                parser.index += 1;
+            },
+            ')' => {
+                if (parser.parameter_depth == parser.paren_depth) parser.parameter_depth = null;
+                parser.paren_depth -|= 1;
+                parser.index += 1;
+            },
+            ';', '{', '}' => {
+                parser.declaration = false;
+                parser.typedef_declaration = false;
+                parser.expect_tag = false;
+                parser.pending_function = false;
+                parser.index += 1;
+            },
+            'a'...'z', 'A'...'Z', '_' => try parser.scanIdentifier(),
+            else => parser.index += validUtf8Length(parser.source[parser.index..]),
+        };
+    }
+
+    fn skipPreprocessor(parser: *StructureParser) void {
+        while (parser.index < parser.source.len) {
+            const newline = std.mem.indexOfScalarPos(u8, parser.source, parser.index, '\n') orelse {
+                parser.index = parser.source.len;
+                return;
+            };
+            var before = newline;
+            while (before > parser.index and (parser.source[before - 1] == ' ' or parser.source[before - 1] == '\t')) before -= 1;
+            parser.index = newline + 1;
+            if (before == 0 or parser.source[before - 1] != '\\') return;
+        }
+    }
+
+    fn skipString(parser: *StructureParser, quote: u8) void {
+        parser.index += 1;
+        while (parser.index < parser.source.len) {
+            if (parser.source[parser.index] == '\\') {
+                parser.index += @min(@as(usize, 2), parser.source.len - parser.index);
+                continue;
+            }
+            const byte = parser.source[parser.index];
+            parser.index += 1;
+            if (byte == quote or byte == '\n') break;
+        }
+    }
+
+    fn scanIdentifier(parser: *StructureParser) HighlightError!void {
+        const start = parser.index;
+        parser.index += 1;
+        while (parser.index < parser.source.len and isIdentifierContinue(parser.source[parser.index])) parser.index += 1;
+        const word = parser.source[start..parser.index];
+        const next = nextNonSpace(parser.source, parser.index);
+
+        if (parser.expect_tag) {
+            try parser.sink.add(start, parser.index, .type);
+            parser.expect_tag = false;
+            parser.declaration = true;
+            return;
+        }
+        if (std.mem.eql(u8, word, "typedef")) {
+            parser.typedef_declaration = true;
+            parser.declaration = true;
+            return;
+        }
+        if (std.mem.eql(u8, word, "struct") or std.mem.eql(u8, word, "union") or std.mem.eql(u8, word, "enum")) {
+            parser.expect_tag = true;
+            parser.declaration = true;
+            return;
+        }
+        if (isType(word) or isTypeQualifier(word)) {
+            parser.declaration = true;
+            return;
+        }
+        if (isKeyword(word)) return;
+
+        if (previousMemberOperator(parser.source, start)) {
+            try parser.sink.add(start, parser.index, .property);
+        } else if (next == '(') {
+            try parser.sink.add(start, parser.index, .function);
+            if (parser.declaration) parser.pending_function = true;
+            parser.declaration = false;
+        } else if (next == ':' and parser.paren_depth == 0) {
+            try parser.sink.add(start, parser.index, .label);
+        } else if (parser.typedef_declaration and next == ';') {
+            try parser.sink.add(start, parser.index, .type);
+        } else if (parser.declaration or looksLikeType(word)) {
+            if (looksLikeType(word) and next != ';' and next != ',' and next != '=') {
+                try parser.sink.add(start, parser.index, .type);
+                parser.declaration = true;
+            } else {
+                try parser.sink.add(start, parser.index, if (parser.parameter_depth != null) .parameter else .variable);
+                if (next != ',') parser.declaration = false;
+            }
+        } else {
+            try parser.sink.add(start, parser.index, .variable);
+        }
+    }
+};
+
+fn nextNonSpace(source: []const u8, after: usize) ?u8 {
+    var cursor = after;
+    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
+    return if (cursor < source.len) source[cursor] else null;
+}
+
+fn previousMemberOperator(source: []const u8, before: usize) bool {
+    var cursor = before;
+    while (cursor > 0 and std.ascii.isWhitespace(source[cursor - 1])) cursor -= 1;
+    return cursor > 0 and (source[cursor - 1] == '.' or
+        (cursor > 1 and source[cursor - 2] == '-' and source[cursor - 1] == '>'));
+}
+
+fn looksLikeType(word: []const u8) bool {
+    return word.len > 0 and std.ascii.isUpper(word[0]);
+}
+
+fn isTypeQualifier(word: []const u8) bool {
+    const words = [_][]const u8{ "auto", "const", "extern", "inline", "register", "restrict", "static", "volatile", "_Atomic" };
+    for (words) |candidate| if (std.mem.eql(u8, word, candidate)) return true;
+    return false;
+}
+
+fn validUtf8Length(source: []const u8) usize {
+    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
+    if (len > source.len) return 1;
+    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
+    return len;
+}
 
 const LiteralPrefix = struct { length: usize };
 fn literalPrefix(source: []const u8, start: usize) ?LiteralPrefix {

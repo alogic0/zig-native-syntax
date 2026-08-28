@@ -1,1 +1,7 @@
-function run; set value "x\n<&>"; set count 42; set enabled true; end # comment
+function render --argument-names name
+    set message "x\n<&> $name"
+    set count 42
+    set enabled true
+    printf '%s' $message | string collect
+end # comment
+render demo

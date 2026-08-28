@@ -1,2 +1,7 @@
-rule run
-  command = "x\n<&>" 42 true # comment
+rule cc
+  command = cc $in -o $out
+  description = "compile <&>"
+
+build app: cc main.c
+default app
+# generated fixture

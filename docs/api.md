@@ -111,10 +111,10 @@ rules.
 ## Backend Rules
 
 - `Backend.init` validates constant metadata at compile time.
-- Canonical names describe package capabilities; consumers own aliases.
+- Canonical names describe package capabilities; the configured registry owns common aliases.
 - `BackendKind` records whether implementation is lexical, parser-backed, or composed.
 - `SupportLevel` separately records whether behavior is experimental, verified lexical, or verified
-  structural. Consumers can use it to build a quality-gated registry.
+  structural. The configured registry includes only verified backends.
 - A sink must be initialized for the exact source length used in `Backend.highlight`.
 - After classification, `Backend.highlight` validates the complete capture set, including UTF-8
   boundaries for valid UTF-8 source.
@@ -191,8 +191,8 @@ overlap lexical scopes intentionally and are normalized by the shared HTML rende
 ## External Parser Backends
 
 The Ziggy document and Ziggy Schema adapters are separate modules backed by the same pinned
-Ziggy package. External backends are available by default; consumers import only the modules they
-use:
+Ziggy package. External backends are available by default. Consumers that need lookup by language
+name import the configured registry rather than enumerating backend modules:
 
 ```zig
 const syntax_dependency = b.dependency("zig_native_syntax", .{
@@ -201,18 +201,16 @@ const syntax_dependency = b.dependency("zig_native_syntax", .{
 });
 
 consumer.root_module.addImport(
-    "native_syntax_ziggy",
-    syntax_dependency.module("native_syntax_ziggy"),
-);
-consumer.root_module.addImport(
-    "native_syntax_ziggy_schema",
-    syntax_dependency.module("native_syntax_ziggy_schema"),
+    "native_syntax_registry",
+    syntax_dependency.module("native_syntax_registry"),
 );
 ```
 
-Each imported module exposes `backend`. The document adapter uses tokenizer locations for resilient
-lexical classification. The schema adapter combines those resilient token captures with recovering
-AST context for declared types and fields. See the [Ziggy](compatibility/ziggy.md) and
+The registry exposes `backends` and `backendForName`; it includes every verified core backend and
+each verified external backend enabled by the dependency options. Individual external modules still
+expose `backend` for consumers that want explicit selection. The document adapter uses tokenizer
+locations for resilient lexical classification. The schema adapter combines those resilient token
+captures with recovering AST context for declared types and fields. See the [Ziggy](compatibility/ziggy.md) and
 [Ziggy Schema](compatibility/ziggy-schema.md) compatibility notes for their exact boundaries.
 
 Use `.@"external-backends" = false` for a dependency-free core configuration. Individual options
@@ -226,6 +224,6 @@ the [Scripty compatibility note](compatibility/scripty.md) for the tokenizer API
 
 Markdown is imported from the
 `native_syntax_markdown` module. It maps the standalone Markdown parser's immutable nodes and source
-spans to markup scopes. The package exposes only the canonical name `markdown`; filename and fence
-aliases remain consumer policy. See the
+spans to markup scopes. The configured registry resolves `md`, `smd`, `supermd`, and
+`markdown-inline` to its canonical `markdown` name. See the
 [Markdown compatibility note](compatibility/markdown.md) for the exact scope and composition limits.
