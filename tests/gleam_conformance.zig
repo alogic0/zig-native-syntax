@@ -12,6 +12,11 @@ test "Gleam backend conforms" {
         .malformed = .{ .source = "pub fn broken(value: String) { \"unterminated\\u12\n", .required_scopes = &.{ .keyword, .function, .parameter, .type, .string, .escape } },
         .multiline = .{ .source = "import gleam/list\npub fn first() { Person() }\npub fn second() { True }\n", .required_scopes = &.{ .namespace, .function, .constructor } },
         .escapable = .{ .source = "let value = \"<&>\\q'\" // comment", .required_scopes = &.{ .keyword, .variable, .string, .escape, .comment } },
+        .extra_cases = &.{
+            .{ .source = "import gleam/string as\nlet recovered = 1\n", .required_scopes = &.{ .keyword, .namespace, .variable, .number } },
+            .{ .source = "pub fn broken() {\n  use value <-\n  let recovered = <<1, value:size(\n  let after = recovered.field\n}\n", .required_scopes = &.{ .keyword, .function, .parameter, .variable, .attribute, .property } },
+            .{ .source = "pub fn broken(person: Person) {\n  let Person(name, = person\n  let recovered = person.name\n}\n", .required_scopes = &.{ .keyword, .function, .parameter, .type, .constructor, .variable, .property } },
+        },
     });
 }
 
@@ -44,6 +49,33 @@ test "Gleam parser classifies structural language forms" {
     try expectCount(source, sink.captures(), "text", .namespace, 3);
     try expectWithin(source, sink.captures(), "Person(..person", "person", .variable);
     try expectWithin(source, sink.captures(), "enabled: False", "enabled", .property);
+}
+
+test "Gleam structural rendering remains stable" {
+    const source =
+        "import gleam/string as text\n" ++
+        "import gleam/result\n" ++
+        "pub fn render(person: Person) -> String {\n" ++
+        "  use suffix <- result.try(Ok(\"!\"))\n" ++
+        "  let updated = Person(..person, enabled: False)\n" ++
+        "  <<suffix:utf8>> |> text.append(suffix)\n" ++
+        "}";
+    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+    var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
+    defer output.deinit();
+    try syntax.html.render(source, sink.captures(), std.testing.allocator, &output.writer);
+    try std.testing.expectEqualStrings(
+        "<span class=\"syntax-keyword\">import</span> <span class=\"syntax-namespace\">gleam/string</span> <span class=\"syntax-keyword\">as</span> <span class=\"syntax-namespace\">text</span>\n" ++
+            "<span class=\"syntax-keyword\">import</span> <span class=\"syntax-namespace\">gleam/result</span>\n" ++
+            "<span class=\"syntax-keyword\">pub</span> <span class=\"syntax-keyword\">fn</span> <span class=\"syntax-function\">render</span><span class=\"syntax-punctuation\">(</span><span class=\"syntax-parameter\">person</span><span class=\"syntax-operator\">:</span> <span class=\"syntax-type\">Person</span><span class=\"syntax-punctuation\">)</span> <span class=\"syntax-operator\">-&gt;</span> <span class=\"syntax-builtin syntax-type\">String</span> <span class=\"syntax-punctuation\">{</span>\n" ++
+            "  <span class=\"syntax-keyword\">use</span> <span class=\"syntax-parameter\">suffix</span> <span class=\"syntax-operator\">&lt;-</span> <span class=\"syntax-namespace\">result</span><span class=\"syntax-punctuation\">.</span><span class=\"syntax-function\">try</span><span class=\"syntax-punctuation\">(</span><span class=\"syntax-constructor\">Ok</span><span class=\"syntax-punctuation\">(</span><span class=\"syntax-string\">&quot;!&quot;</span><span class=\"syntax-punctuation\">)</span><span class=\"syntax-punctuation\">)</span>\n" ++
+            "  <span class=\"syntax-keyword\">let</span> <span class=\"syntax-variable\">updated</span> <span class=\"syntax-operator\">=</span> <span class=\"syntax-constructor\">Person</span><span class=\"syntax-punctuation\">(</span><span class=\"syntax-punctuation\">.</span><span class=\"syntax-punctuation\">.</span><span class=\"syntax-variable\">person</span><span class=\"syntax-punctuation\">,</span> <span class=\"syntax-property\">enabled</span><span class=\"syntax-operator\">:</span> <span class=\"syntax-boolean\">False</span><span class=\"syntax-punctuation\">)</span>\n" ++
+            "  <span class=\"syntax-operator\">&lt;&lt;</span><span class=\"syntax-variable\">suffix</span><span class=\"syntax-operator\">:</span><span class=\"syntax-attribute\">utf8</span><span class=\"syntax-operator\">&gt;&gt;</span> <span class=\"syntax-operator\">|&gt;</span> <span class=\"syntax-namespace\">text</span><span class=\"syntax-punctuation\">.</span><span class=\"syntax-function\">append</span><span class=\"syntax-punctuation\">(</span><span class=\"syntax-variable\">suffix</span><span class=\"syntax-punctuation\">)</span>\n" ++
+            "<span class=\"syntax-punctuation\">}</span>",
+        output.written(),
+    );
 }
 
 fn expect(source: []const u8, captures: []const syntax.Capture, text: []const u8, scope: syntax.Scope) !void {
