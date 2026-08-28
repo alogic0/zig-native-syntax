@@ -1,6 +1,28 @@
-module demo;
-    string value = "x\\n";
-    logic enabled = true;
-    int count = 42;
+`define DEFAULT_WIDTH 8
+
+package demo_pkg;
+    typedef enum logic [1:0] { IDLE, RUN } state_t;
+endpackage
+
+(* keep = "true" *)
+module demo #(
+    parameter int WIDTH = `DEFAULT_WIDTH
+) (
+    input logic clk,
+    input logic rst_n,
+    input logic [WIDTH-1:0] data,
+    output logic ready
+);
+    import demo_pkg::*;
+    logic [WIDTH-1:0] count;
+    state_t state;
+
+    function automatic int add(input int lhs, input int rhs);
+        return lhs + rhs;
+    endfunction
+
+    always_ff @(posedge clk) count <= count + 1'b1;
+    assign ready = state.valid;
+    initial $display("count=\\n%0d", count);
     // comment
 endmodule

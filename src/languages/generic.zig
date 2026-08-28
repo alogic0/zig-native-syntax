@@ -22,6 +22,7 @@ pub const Config = struct {
     nested_block_comments: bool = false,
     apostrophe_identifiers: bool = false,
     at_scope: ?Scope = .attribute,
+    dollar_variables: bool = true,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -49,7 +50,9 @@ const Scanner = struct {
                     self.after_dot = false;
                 },
                 '0'...'9' => try self.scanNumber(),
-                '$' => try self.scanVariable(),
+                '$' => {
+                    if (self.config.dollar_variables) try self.scanVariable() else self.index += 1;
+                },
                 '@' => try self.scanAttribute(),
                 '+', '-', '*', '/', '%', '=', '!', '<', '>', '&', '|', '^', '~', '?', ':' => try self.scanOperator(),
                 '(', ')', '[', ']', '{', '}', ',', ';' => try self.captureByte(.punctuation, false),
