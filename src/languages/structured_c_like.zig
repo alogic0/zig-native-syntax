@@ -54,6 +54,8 @@ const Parser = struct {
     predeclared_function: bool = false,
     pending_binding: bool = false,
     binding_depth: ?usize = null,
+    pending_constructor_body: bool = false,
+    constructor_body_depth: ?usize = null,
     known_types: std.ArrayList([]const u8) = .empty,
 
     fn deinit(parser: *Parser) void {
@@ -114,7 +116,10 @@ const Parser = struct {
             },
             '{' => {
                 parser.brace_depth += 1;
-                if (parser.pending_type_body) {
+                if (parser.pending_constructor_body) {
+                    parser.constructor_body_depth = parser.brace_depth;
+                    parser.pending_constructor_body = false;
+                } else if (parser.pending_type_body) {
                     parser.type_body_depth = parser.brace_depth;
                     parser.pending_type_body = false;
                 }
@@ -125,6 +130,7 @@ const Parser = struct {
                 parser.index += 1;
             },
             '}' => {
+                if (parser.constructor_body_depth == parser.brace_depth) parser.constructor_body_depth = null;
                 if (parser.type_body_depth == parser.brace_depth) parser.type_body_depth = null;
                 parser.brace_depth -|= 1;
                 parser.expected = null;
@@ -260,6 +266,7 @@ const Parser = struct {
             parser.declaration = false;
         } else if (next == '{' and parser.config.capitalized_braces_are_constructors and parser.isKnownType(word)) {
             try parser.sink.add(start, parser.index, .constructor);
+            parser.pending_constructor_body = true;
         } else if (next == ':' and (parser.paren_depth == 0 or parser.config.colon_properties_in_parentheses) and
             parser.parameter_depth == null and parser.receiver_depth == null and
             !nextIsColonAssignment(parser.source, parser.index))
@@ -270,6 +277,9 @@ const Parser = struct {
             (std.ascii.isUpper(word[0]) or contains(parser.config.builtin_types, word)))
         {
             try parser.sink.add(start, parser.index, .type);
+        } else if (parser.isKnownType(word)) {
+            try parser.sink.add(start, parser.index, .type);
+            parser.declaration = true;
         } else if (parser.config.capitalized_types and std.ascii.isUpper(word[0]) and next != '=' and next != ',' and next != ';') {
             try parser.sink.add(start, parser.index, .type);
             parser.declaration = true;
@@ -279,6 +289,8 @@ const Parser = struct {
             try parser.sink.add(start, parser.index, .parameter);
         } else if (next == '=' and parser.binding_depth != null) {
             try parser.sink.add(start, parser.index, .variable);
+        } else if (next == '=' and parser.constructor_body_depth != null) {
+            try parser.sink.add(start, parser.index, .property);
         } else if (next == '=' and parser.config.equals_properties_in_calls and parser.paren_depth > 0) {
             try parser.sink.add(start, parser.index, .property);
         } else if (parser.declaration) {

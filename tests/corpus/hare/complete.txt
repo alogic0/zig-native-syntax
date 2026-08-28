@@ -1,6 +1,25 @@
+use fmt;
+use io;
+
+type coords = struct {
+    x: int,
+    y: int,
+};
+
+def DEFAULT_LIMIT: size = 5;
+let global_count: int = 0;
+
+fn translate(point: coords, dx: int) coords = {
+    return coords {
+        x = point.x + dx,
+        y = point.y,
+    };
+};
+
 export fn main() void = {
-    let value: str = "x\\n";
+    const origin = coords { x = 1, y = 2 };
+    const moved = translate(origin, DEFAULT_LIMIT);
     let enabled: bool = true;
-    let count: int = 42;
+    fmt::printfln("x={}\\n", moved.x)!;
 };
 // comment
