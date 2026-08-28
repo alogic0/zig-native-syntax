@@ -165,7 +165,9 @@ const Parser = struct {
         };
 
         const next = scanner.nextNonSpace(parser.source, parser.index);
-        if (parser.brace_depth > 0 and next == ':') {
+        if (next == ':' and (parser.brace_depth > 0 or
+            (parser.dialect == .fsharp and !parser.parameter_mode)))
+        {
             try parser.sink.add(start, parser.index, .property);
         } else if (parser.constructor_pending and std.ascii.isUpper(word[0])) {
             try parser.sink.add(start, parser.index, .constructor);

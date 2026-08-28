@@ -1,1 +1,35 @@
-let run () = let value = "x\n<&>" in let count = 42 in let enabled = true // comment
+#r "nuget: Example, 1.0.0"
+namespace Demo.Geometry
+
+open System.Collections.Generic
+
+[<Struct>]
+type Shape =
+    | Circle of radius: float
+    | Rectangle of width: float * height: float
+
+type Metrics = {
+    Count: int
+    Label: string
+}
+
+module Geometry =
+    let area shape =
+        match shape with
+        | Circle radius -> System.Math.PI * radius * radius
+        | Rectangle (width, height) -> width * height
+
+    let inline scale factor shape =
+        let rec loop index current =
+            if index = 0 then current else loop (index - 1) current
+        loop 2 shape
+
+type Worker() =
+    [<Literal>]
+    static member DefaultCount = 3
+
+    member this.Run(input: string, ?limit: int) =
+        (* outer comment (* nested comment *) remains bounded *)
+        let enabled = true
+        let label = "worker\n<&>"
+        input, limit, enabled, label
