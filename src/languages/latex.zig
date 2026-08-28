@@ -1,5 +1,6 @@
 const std = @import("std");
 const api = @import("../backend.zig");
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 pub const backend: api.Backend = .init(.{
     .canonical_name = "latex",
     .display_name = "LaTeX",
@@ -63,12 +64,4 @@ fn nextGroup(source: []const u8, after: usize) ?Group {
     const start = cursor + 1;
     cursor = std.mem.indexOfScalarPos(u8, source, start, '}') orelse return null;
     return .{ .start = start, .end = cursor };
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    if (source.len == 0) return 0;
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

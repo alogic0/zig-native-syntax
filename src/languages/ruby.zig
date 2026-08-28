@@ -1,6 +1,7 @@
 const std = @import("std");
 const api = @import("../backend.zig");
 const g = @import("generic.zig");
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 pub const backend: api.Backend = .init(.{ .canonical_name = "ruby", .display_name = "Ruby", .kind = .parser_backed, .support_level = .verified_structural }, highlight);
 fn highlight(s: []const u8, k: *api.CaptureSink) api.HighlightError!void {
     try g.highlight(s, k, .{ .line_comments = &.{"#"}, .keywords = &.{ "alias", "and", "begin", "break", "case", "class", "def", "defined", "do", "else", "elsif", "end", "ensure", "for", "if", "in", "module", "next", "not", "or", "redo", "rescue", "retry", "return", "self", "super", "then", "undef", "unless", "until", "when", "while", "yield" }, .constants = &.{"nil"}, .at_scope = .variable });
@@ -62,10 +63,3 @@ const StructureParser = struct {
         }
     }
 };
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
-}

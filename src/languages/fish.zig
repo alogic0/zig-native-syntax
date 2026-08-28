@@ -249,10 +249,7 @@ const StructureParser = struct {
     }
 };
 
-fn wordIs(word: []const u8, candidates: []const []const u8) bool {
-    for (candidates) |candidate| if (std.mem.eql(u8, word, candidate)) return true;
-    return false;
-}
+const wordIs = scanner.wordIs;
 
 fn isBuiltin(word: []const u8) bool {
     return wordIs(word, &.{ "argparse", "builtin", "cd", "command", "commandline", "complete", "contains", "count", "echo", "emit", "eval", "exec", "functions", "math", "printf", "read", "set", "source", "status", "string", "test", "type" });

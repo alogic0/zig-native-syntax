@@ -1,6 +1,8 @@
 const std = @import("std");
 const api = @import("../backend.zig");
 const Scope = @import("../scope.zig").Scope;
+const nextNonSpace = @import("scanner_support.zig").nextNonSpace;
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 
 pub const Config = struct {
     keywords: []const []const u8,
@@ -180,12 +182,6 @@ fn contains(words: []const []const u8, word: []const u8) bool {
     return false;
 }
 
-fn nextNonSpace(source: []const u8, after: usize) ?u8 {
-    var cursor = after;
-    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
-    return if (cursor < source.len) source[cursor] else null;
-}
-
 fn previousMemberOperator(source: []const u8, before: usize) bool {
     var cursor = before;
     while (cursor > 0 and std.ascii.isWhitespace(source[cursor - 1])) cursor -= 1;
@@ -206,11 +202,4 @@ fn nextNamespaceOperator(source: []const u8, after: usize) bool {
 
 fn isIdentifierContinue(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or byte == '_';
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

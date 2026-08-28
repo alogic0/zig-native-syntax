@@ -1,5 +1,6 @@
 const std = @import("std");
 const api = @import("../backend.zig");
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 pub const backend: api.Backend = .init(.{
     .canonical_name = "hurl",
     .display_name = "Hurl",
@@ -104,10 +105,4 @@ fn digitEnd(line: []const u8, from: usize) usize {
     var cursor = from;
     while (cursor < line.len and std.ascii.isDigit(line[cursor])) cursor += 1;
     return cursor;
-}
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

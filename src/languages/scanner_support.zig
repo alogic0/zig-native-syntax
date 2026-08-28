@@ -3,6 +3,7 @@ const std = @import("std");
 /// Advances over one valid UTF-8 scalar and retains arbitrary-byte recovery
 /// for malformed or truncated input.
 pub fn validUtf8Length(source: []const u8) usize {
+    if (source.len == 0) return 0;
     const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
     if (len > source.len) return 1;
     _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
@@ -13,6 +14,22 @@ pub fn nextNonSpace(source: []const u8, after: usize) ?u8 {
     var cursor = after;
     while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
     return if (cursor < source.len) source[cursor] else null;
+}
+
+pub fn previousNonSpace(source: []const u8, before: usize) ?u8 {
+    var cursor = before;
+    while (cursor > 0 and std.ascii.isWhitespace(source[cursor - 1])) cursor -= 1;
+    return if (cursor > 0) source[cursor - 1] else null;
+}
+
+pub fn wordIs(word: []const u8, candidates: []const []const u8) bool {
+    for (candidates) |candidate| if (std.mem.eql(u8, word, candidate)) return true;
+    return false;
+}
+
+pub fn wordIsIgnoreCase(word: []const u8, candidates: []const []const u8) bool {
+    for (candidates) |candidate| if (std.ascii.eqlIgnoreCase(word, candidate)) return true;
+    return false;
 }
 
 pub fn lineEnd(source: []const u8, start: usize, limit: usize) usize {

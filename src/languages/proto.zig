@@ -1,6 +1,8 @@
 const std = @import("std");
 const api = @import("../backend.zig");
 const g = @import("generic.zig");
+const nextNonSpace = @import("scanner_support.zig").nextNonSpace;
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 pub const backend: api.Backend = .init(.{
     .canonical_name = "proto",
     .display_name = "Protocol Buffers",
@@ -110,12 +112,6 @@ const StructureParser = struct {
     }
 };
 
-fn nextNonSpace(source: []const u8, after: usize) ?u8 {
-    var cursor = after;
-    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
-    return if (cursor < source.len) source[cursor] else null;
-}
-
 fn previousWord(source: []const u8, before: usize, expected: []const u8) bool {
     var end = before;
     while (end > 0 and std.ascii.isWhitespace(source[end - 1])) end -= 1;
@@ -132,11 +128,4 @@ fn isScalarType(word: []const u8) bool {
     const words = [_][]const u8{ "bool", "bytes", "double", "fixed32", "fixed64", "float", "int32", "int64", "sfixed32", "sfixed64", "sint32", "sint64", "string", "uint32", "uint64" };
     for (words) |candidate| if (std.mem.eql(u8, word, candidate)) return true;
     return false;
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

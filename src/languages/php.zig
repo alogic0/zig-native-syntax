@@ -275,10 +275,7 @@ fn previousOperator(source: []const u8, before: usize, operator: []const u8) boo
     return cursor >= operator.len and std.mem.eql(u8, source[cursor - operator.len .. cursor], operator);
 }
 
-fn wordIs(word: []const u8, candidates: []const []const u8) bool {
-    for (candidates) |candidate| if (std.ascii.eqlIgnoreCase(word, candidate)) return true;
-    return false;
-}
+const wordIs = scanner.wordIsIgnoreCase;
 
 fn isIdentifierContinue(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or byte == '_';

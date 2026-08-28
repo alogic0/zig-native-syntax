@@ -223,20 +223,13 @@ fn isParameterPosition(source: []const u8, start: usize) bool {
     return previous == '[' or previous == ',' or (start >= 3 and std.mem.eql(u8, source[start - 3 .. start], "..."));
 }
 
-fn previousNonSpace(source: []const u8, before: usize) ?u8 {
-    var cursor = before;
-    while (cursor > 0 and std.ascii.isWhitespace(source[cursor - 1])) cursor -= 1;
-    return if (cursor > 0) source[cursor - 1] else null;
-}
+const previousNonSpace = scanner.previousNonSpace;
 
 fn isWordContinue(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or byte == '_' or byte == '-';
 }
 
-fn wordIs(word: []const u8, candidates: []const []const u8) bool {
-    for (candidates) |candidate| if (std.mem.eql(u8, word, candidate)) return true;
-    return false;
-}
+const wordIs = scanner.wordIs;
 
 fn isKeyword(word: []const u8) bool {
     return wordIs(word, keywords);

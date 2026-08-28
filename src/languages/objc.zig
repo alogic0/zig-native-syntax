@@ -306,10 +306,7 @@ const StructureParser = struct {
     }
 };
 
-fn wordIs(word: []const u8, candidates: []const []const u8) bool {
-    for (candidates) |candidate| if (std.mem.eql(u8, word, candidate)) return true;
-    return false;
-}
+const wordIs = scanner.wordIs;
 
 fn isQualifier(word: []const u8) bool {
     return wordIs(word, &.{ "atomic", "nonatomic", "assign", "copy", "getter", "nullable", "readonly", "readwrite", "retain", "setter", "strong", "weak" });

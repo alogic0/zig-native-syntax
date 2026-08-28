@@ -1,6 +1,7 @@
 const std = @import("std");
 const api = @import("../backend.zig");
 const Scope = @import("../scope.zig").Scope;
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 
 pub const backend: api.Backend = .init(.{ .canonical_name = "batch", .display_name = "Windows Batch", .kind = .lexical, .support_level = .verified_lexical }, highlight);
 
@@ -148,11 +149,4 @@ fn isKeyword(word: []const u8) bool {
     const words = [_][]const u8{ "call", "cd", "cls", "copy", "del", "do", "echo", "else", "endlocal", "exit", "for", "goto", "if", "in", "move", "not", "pause", "popd", "pushd", "set", "setlocal", "shift", "start" };
     for (words) |candidate| if (std.ascii.eqlIgnoreCase(candidate, word)) return true;
     return false;
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

@@ -1,6 +1,8 @@
 const std = @import("std");
 const utf8 = @import("../utf8.zig");
 const backend_api = @import("../backend.zig");
+const nextNonSpace = @import("scanner_support.zig").nextNonSpace;
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 const Backend = backend_api.Backend;
 const CaptureSink = backend_api.CaptureSink;
 const HighlightError = backend_api.HighlightError;
@@ -300,12 +302,6 @@ const StructureParser = struct {
     }
 };
 
-fn nextNonSpace(source: []const u8, after: usize) ?u8 {
-    var cursor = after;
-    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
-    return if (cursor < source.len) source[cursor] else null;
-}
-
 fn previousMemberOperator(source: []const u8, before: usize) bool {
     var cursor = before;
     while (cursor > 0 and std.ascii.isWhitespace(source[cursor - 1])) cursor -= 1;
@@ -321,13 +317,6 @@ fn isTypeQualifier(word: []const u8) bool {
     const words = [_][]const u8{ "auto", "const", "extern", "inline", "register", "restrict", "static", "volatile", "_Atomic" };
     for (words) |candidate| if (std.mem.eql(u8, word, candidate)) return true;
     return false;
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }
 
 const LiteralPrefix = struct { length: usize };

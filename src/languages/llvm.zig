@@ -1,6 +1,8 @@
 const std = @import("std");
 const api = @import("../backend.zig");
 const Scope = @import("../scope.zig").Scope;
+const nextNonSpace = @import("scanner_support.zig").nextNonSpace;
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 
 pub const backend: api.Backend = .init(.{ .canonical_name = "llvm", .display_name = "LLVM IR", .kind = .lexical, .support_level = .verified_lexical }, highlight);
 
@@ -139,17 +141,4 @@ fn isConstant(word: []const u8) bool {
 
 fn isNameContinue(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or byte == '_' or byte == '.' or byte == '-';
-}
-
-fn nextNonSpace(source: []const u8, after: usize) ?u8 {
-    var cursor = after;
-    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
-    return if (cursor < source.len) source[cursor] else null;
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

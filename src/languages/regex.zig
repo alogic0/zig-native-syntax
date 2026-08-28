@@ -1,6 +1,7 @@
 const std = @import("std");
 const api = @import("../backend.zig");
 const utf8 = @import("../utf8.zig");
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 pub const backend: api.Backend = .init(.{
     .canonical_name = "regex",
     .display_name = "Regular expression",
@@ -79,11 +80,4 @@ fn highlight(s: []const u8, k: *api.CaptureSink) api.HighlightError!void {
         },
         else => i += validUtf8Length(s[i..]),
     };
-}
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

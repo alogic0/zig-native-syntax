@@ -1,6 +1,7 @@
 const std = @import("std");
 const api = @import("../backend.zig");
 const g = @import("generic.zig");
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 pub const backend: api.Backend = .init(.{ .canonical_name = "powershell", .display_name = "PowerShell", .kind = .parser_backed, .support_level = .verified_structural }, highlight);
 fn highlight(s: []const u8, k: *api.CaptureSink) api.HighlightError!void {
     try g.highlight(s, k, .{ .line_comments = &.{"#"}, .block_comments = &.{.{ .open = "<#", .close = "#>" }}, .keywords = &.{ "begin", "break", "catch", "class", "continue", "data", "do", "dynamicparam", "else", "elseif", "end", "enum", "exit", "filter", "finally", "for", "foreach", "from", "function", "if", "in", "param", "process", "return", "switch", "throw", "trap", "try", "until", "using", "while", "workflow" }, .types = &.{ "bool", "byte", "char", "datetime", "decimal", "double", "float", "hashtable", "int", "long", "object", "string", "void" }, .case_insensitive = true });
@@ -49,10 +50,3 @@ const StructureParser = struct {
         }
     }
 };
-
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
-}

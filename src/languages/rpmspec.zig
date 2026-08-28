@@ -2,6 +2,7 @@ const std = @import("std");
 const api = @import("../backend.zig");
 const composition = @import("../composition.zig");
 const rpmbash = @import("rpmbash.zig");
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 
 pub const backend: api.Backend = .init(.{
     .canonical_name = "rpmspec",
@@ -114,10 +115,4 @@ fn skipSpaces(line: []const u8) usize {
     var cursor: usize = 0;
     while (cursor < line.len and (line[cursor] == ' ' or line[cursor] == '\t')) cursor += 1;
     return cursor;
-}
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }

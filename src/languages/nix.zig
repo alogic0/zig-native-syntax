@@ -429,11 +429,7 @@ fn stringEnd(source: []const u8, start: usize) usize {
     return cursor;
 }
 
-fn previousNonSpace(source: []const u8, before: usize) ?u8 {
-    var cursor = before;
-    while (cursor > 0 and std.ascii.isWhitespace(source[cursor - 1])) cursor -= 1;
-    return if (cursor > 0) source[cursor - 1] else null;
-}
+const previousNonSpace = scanner.previousNonSpace;
 
 fn isBuiltin(word: []const u8) bool {
     const builtins = [_][]const u8{ "abort", "baseNameOf", "builtins", "derivation", "dirOf", "fetchTarball", "import", "map", "removeAttrs", "throw", "toString" };

@@ -1,5 +1,6 @@
 const std = @import("std");
 const api = @import("../backend.zig");
+const validUtf8Length = @import("scanner_support.zig").validUtf8Length;
 pub const backend: api.Backend = .init(.{
     .canonical_name = "mail",
     .display_name = "E-mail",
@@ -74,10 +75,4 @@ fn scanLinks(source: []const u8, sink: *api.CaptureSink, start: usize, end: usiz
 
 fn isAddressByte(byte: u8) bool {
     return std.ascii.isAlphanumeric(byte) or std.mem.indexOfScalar(u8, ".!#$%&'*+/=?^_`{|}~-", byte) != null;
-}
-fn validUtf8Length(source: []const u8) usize {
-    const len = std.unicode.utf8ByteSequenceLength(source[0]) catch return 1;
-    if (len > source.len) return 1;
-    _ = std.unicode.utf8Decode(source[0..len]) catch return 1;
-    return len;
 }
