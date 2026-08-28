@@ -30,8 +30,8 @@ These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
 input, and deterministic-output contract. There are currently 54 parser-backed
-languages, 10 partially parser-backed compositions, 4 tokenizer adapters, 26
-dedicated scanners, and 1 configured scanner. This classification describes
+languages, 10 partially parser-backed compositions, 4 tokenizer adapters, 27
+dedicated scanners, and no configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
@@ -136,7 +136,7 @@ All 95 catalog backends now satisfy one of the two verified support levels.
 - [x] 88. Generic comment tags — **dedicated scanner** — *verified lexical*
 - [x] 89. MLIR — **dedicated scanner** — *verified lexical*
 - [x] 90. TableGen — **parser** (owned tolerant declaration parser) — *verified structural*
-- [x] 91. Fortran — **configured scanner** — *verified lexical*
+- [x] 91. Fortran — **dedicated scanner** — *verified lexical*
 - [x] 92. PDLL — **parser** (owned tolerant declaration parser) — *verified structural*
 - [x] 93. Windows Batch — **dedicated scanner** — *verified lexical*
 - [x] 94. Starlark/Bazel — **parser** (owned tolerant declaration parser) — *verified structural*
