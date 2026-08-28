@@ -1,1 +1,23 @@
-run = let value = "x\n<&>"; count = 42; enabled = true in value -- comment
+module Demo.Profile where
+
+import Data.Maybe as M
+
+type Profile =
+    { name :: String
+    , enabled :: Boolean
+    }
+
+data Status
+    = Ready
+    | Failed String
+
+newtype User = User { name :: String }
+
+render :: Profile -> String
+render profile =
+    let greeting = "hello\\n<&>"
+    in M.fromMaybe greeting (Just profile.name)
+
+sample = { name: "Ada", enabled: true }
+count = 42
+-- comment

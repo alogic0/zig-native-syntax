@@ -17,7 +17,8 @@ in `rst.md`, `latex.md`, and `org.md`.
 Hurl has a separate verified lexical contract in `hurl.md`.
 E-mail has a separate verified lexical contract in `mail.md`.
 RPM spec has a separate composed compatibility contract in `rpmspec.md`.
-Elm has a separate verified structural contract in `elm.md`.
+Elm and PureScript have separate verified structural contracts in `elm.md` and
+`purescript.md`.
 
 KDL, Nushell, AWK, GDScript,
 Common Lisp, Scheme, Elm, PureScript, and Nim use separate
