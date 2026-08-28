@@ -1,7 +1,7 @@
 const api = @import("../backend.zig");
 const generic = @import("generic.zig");
 
-pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, org, dtd, mail, hurl, ninja, rpmspec, fsharp, ocaml, gleam, commonlisp, scheme, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
+pub const Kind = enum { kdl, ssh_config, gitcommit, git_rebase, po, rst, latex, org, dtd, mail, hurl, ninja, rpmspec, gleam, commonlisp, scheme, elm, purescript, nim, d, v, odin, c3, systemverilog, llvm, openscad, nickel, hare, agda, query, vim, uxntal };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, kind: Kind) api.HighlightError!void {
     try generic.highlight(source, sink, config(kind));
@@ -22,8 +22,6 @@ fn config(kind: Kind) generic.Config {
         .hurl => .{ .line_comments = &.{"#"}, .keywords = &.{ "GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HTTP" }, .types = &.{ "jsonpath", "regex", "xpath", "status", "url", "body", "bytes", "duration", "header" } },
         .ninja => .{ .line_comments = &.{"#"}, .keywords = &.{ "build", "default", "include", "pool", "rule", "subninja" } },
         .rpmspec => .{ .line_comments = &.{"#"}, .keywords = &.{ "Name", "Version", "Release", "Summary", "License", "Source", "BuildRequires", "Requires", "description", "prep", "build", "install", "files", "changelog" }, .case_insensitive = true },
-        .fsharp => .{ .line_comments = &.{"//"}, .block_comments = &.{.{ .open = "(*", .close = "*)" }}, .keywords = &.{ "and", "as", "class", "do", "else", "exception", "for", "fun", "function", "if", "in", "inherit", "interface", "let", "match", "member", "module", "namespace", "open", "rec", "return", "then", "try", "type", "while", "with", "yield" }, .types = &.{ "bool", "char", "float", "int", "list", "obj", "string", "unit" } },
-        .ocaml => .{ .block_comments = &.{.{ .open = "(*", .close = "*)" }}, .keywords = &.{ "and", "as", "begin", "class", "do", "done", "else", "end", "exception", "for", "fun", "function", "if", "in", "include", "let", "match", "module", "of", "open", "rec", "sig", "struct", "then", "try", "type", "val", "when", "while", "with" }, .types = &.{ "bool", "bytes", "char", "float", "int", "list", "option", "string", "unit" } },
         .gleam => .{ .line_comments = &.{"//"}, .keywords = &.{ "as", "assert", "case", "const", "fn", "if", "import", "let", "opaque", "pub", "type", "use" }, .types = &.{ "BitArray", "Bool", "Float", "Int", "List", "Nil", "Result", "String" } },
         .commonlisp => .{ .line_comments = &.{";"}, .block_comments = &.{.{ .open = "#|", .close = "|#" }}, .keywords = &.{ "defclass", "defconstant", "defmacro", "defmethod", "defpackage", "defparameter", "defun", "defvar", "do", "dolist", "if", "lambda", "let", "loop", "progn", "quote", "return-from", "setq" } },
         .scheme => .{ .line_comments = &.{";"}, .block_comments = &.{.{ .open = "#|", .close = "|#" }}, .keywords = &.{ "and", "begin", "case", "cond", "define", "define-syntax", "do", "else", "if", "lambda", "let", "let*", "letrec", "or", "quote", "set!" } },

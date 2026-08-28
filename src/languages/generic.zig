@@ -19,6 +19,7 @@ pub const Config = struct {
     angle_heredoc: bool = false,
     hash_bracket_attribute: bool = false,
     triple_quoted_strings: bool = false,
+    nested_block_comments: bool = false,
     at_scope: ?Scope = .attribute,
 };
 
@@ -92,8 +93,23 @@ const Scanner = struct {
     fn scanBlock(self: *Scanner, block: BlockComment) api.HighlightError!void {
         const start = self.index;
         self.index += block.open.len;
-        const close = std.mem.indexOfPos(u8, self.source, self.index, block.close);
-        self.index = if (close) |at| at + block.close.len else self.source.len;
+        if (self.config.nested_block_comments) {
+            var depth: usize = 1;
+            while (self.index < self.source.len and depth > 0) {
+                if (std.mem.startsWith(u8, self.source[self.index..], block.open)) {
+                    depth += 1;
+                    self.index += block.open.len;
+                } else if (std.mem.startsWith(u8, self.source[self.index..], block.close)) {
+                    depth -= 1;
+                    self.index += block.close.len;
+                } else {
+                    self.index += 1;
+                }
+            }
+        } else {
+            const close = std.mem.indexOfPos(u8, self.source, self.index, block.close);
+            self.index = if (close) |at| at + block.close.len else self.source.len;
+        }
         try self.sink.add(start, self.index, .comment);
         if (std.mem.startsWith(u8, self.source[start..], "/**") or std.mem.startsWith(u8, self.source[start..], "/*!")) try self.sink.add(start, self.index, .documentation);
     }

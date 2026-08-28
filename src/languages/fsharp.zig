@@ -1,6 +1,6 @@
 const api = @import("../backend.zig");
-const scanners = @import("roadmap_scanners.zig");
-pub const backend: api.Backend = .init(.{ .canonical_name = "fsharp", .display_name = "F#", .kind = .lexical }, highlight);
+const ml = @import("ml_family.zig");
+pub const backend: api.Backend = .init(.{ .canonical_name = "fsharp", .display_name = "F#", .kind = .parser_backed }, highlight);
 fn highlight(source: []const u8, sink: *api.CaptureSink) api.HighlightError!void {
-    try scanners.highlight(source, sink, .fsharp);
+    try ml.highlight(source, sink, .fsharp);
 }
