@@ -16,6 +16,8 @@ pub const Config = struct {
     classify_identifiers: bool = true,
     identifier_dash: bool = true,
     strings_stop_at_newline: bool = true,
+    angle_heredoc: bool = false,
+    hash_bracket_attribute: bool = false,
     at_scope: ?Scope = .attribute,
 };
 
@@ -33,7 +35,11 @@ const Scanner = struct {
     after_dot: bool = false,
     fn run(self: *Scanner) api.HighlightError!void {
         while (self.index < self.source.len) {
-            if (self.config.preprocessor and self.source[self.index] == '#' and self.onlyIndentBefore()) try self.scanToLineEnd(.macro) else if (self.matchBlock()) |block| try self.scanBlock(block) else if (self.matchText(self.config.line_comments) != null) try self.scanToLineEnd(.comment) else switch (self.source[self.index]) {
+            if (self.config.angle_heredoc and self.startsWith("<<<")) {
+                try self.scanAngleHeredoc();
+                continue;
+            }
+            if (self.config.preprocessor and self.source[self.index] == '#' and self.onlyIndentBefore()) try self.scanToLineEnd(.macro) else if (self.matchBlock()) |block| try self.scanBlock(block) else if (self.matchLineComment()) try self.scanToLineEnd(.comment) else switch (self.source[self.index]) {
                 '\n' => {
                     self.index += 1;
                     self.line_start = self.index;
@@ -56,6 +62,13 @@ const Scanner = struct {
                 },
             }
         }
+    }
+    fn startsWith(self: Scanner, text: []const u8) bool {
+        return std.mem.startsWith(u8, self.source[self.index..], text);
+    }
+    fn matchLineComment(self: *const Scanner) bool {
+        if (self.config.hash_bracket_attribute and self.startsWith("#[")) return false;
+        return self.matchText(self.config.line_comments) != null;
     }
     fn matchText(self: *const Scanner, values: []const []const u8) ?[]const u8 {
         for (values) |value| if (std.mem.startsWith(u8, self.source[self.index..], value)) return value;
@@ -93,6 +106,36 @@ const Scanner = struct {
         } else {
             self.index += 1;
             if (self.source[self.index - 1] == quote or (self.config.strings_stop_at_newline and quote != '`' and self.source[self.index - 1] == '\n')) break;
+        };
+        try self.sink.add(start, self.index, .string);
+        self.after_dot = false;
+    }
+    fn scanAngleHeredoc(self: *Scanner) api.HighlightError!void {
+        const start = self.index;
+        const opener_end = std.mem.indexOfScalarPos(u8, self.source, start, '\n') orelse self.source.len;
+        var cursor = start + 3;
+        while (cursor < opener_end and (self.source[cursor] == ' ' or self.source[cursor] == '\t')) cursor += 1;
+        const quote: ?u8 = if (cursor < opener_end and (self.source[cursor] == '\'' or self.source[cursor] == '"')) self.source[cursor] else null;
+        if (quote != null) cursor += 1;
+        const label_start = cursor;
+        while (cursor < opener_end and (std.ascii.isAlphanumeric(self.source[cursor]) or self.source[cursor] == '_')) cursor += 1;
+        const label = self.source[label_start..cursor];
+
+        self.index = if (opener_end < self.source.len) opener_end + 1 else opener_end;
+        if (label.len != 0) while (self.index < self.source.len) {
+            const line_end = std.mem.indexOfScalarPos(u8, self.source, self.index, '\n') orelse self.source.len;
+            var content = self.index;
+            while (content < line_end and (self.source[content] == ' ' or self.source[content] == '\t')) content += 1;
+            if (std.mem.startsWith(u8, self.source[content..line_end], label)) {
+                var after = content + label.len;
+                if (after < line_end and self.source[after] == ';') after += 1;
+                while (after < line_end and (self.source[after] == ' ' or self.source[after] == '\t' or self.source[after] == '\r')) after += 1;
+                if (after == line_end) {
+                    self.index = line_end;
+                    break;
+                }
+            }
+            self.index = if (line_end < self.source.len) line_end + 1 else line_end;
         };
         try self.sink.add(start, self.index, .string);
         self.after_dot = false;
