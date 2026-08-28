@@ -29,15 +29,15 @@ The suffix on each entry records its implementation depth on `main`:
 These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
-input, and deterministic-output contract. There are currently 41 parser-backed
+input, and deterministic-output contract. There are currently 42 parser-backed
 languages, 7 partially parser-backed compositions, 4 tokenizer adapters, 16
-dedicated scanners, and 27 configured scanners. This classification describes
+dedicated scanners, and 26 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 62 backends as **verified structural**
+configured package registry exposes 63 backends as **verified structural**
 and 29 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -129,7 +129,7 @@ the backend actually understands.
 - [x] 83. Hare — **parser** (shared tolerant declaration parser) — *verified structural*
 - [x] 84. Agda — **parser** (owned layout-aware structural scanner) — *verified structural*
 - [x] 85. Tree-sitter Query — **parser** (owned tolerant S-expression parser) — *verified structural*
-- [x] 86. Vimscript — **configured scanner**
+- [x] 86. Vimscript — **parser** (owned tolerant command and expression parser) — *verified structural*
 - [x] 87. Uxntal — **configured scanner**
 - [x] 88. Generic comment tags — **dedicated scanner**
 - [x] 89. MLIR — **dedicated scanner** — *verified lexical*

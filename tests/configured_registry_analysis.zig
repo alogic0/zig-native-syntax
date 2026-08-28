@@ -8,6 +8,6 @@ test "analysis registry links only requested experimental backends" {
     try std.testing.expectEqual(syntax.SupportLevel.experimental, dtd_backend.info.support_level);
     try std.testing.expectEqualStrings("dtd", dtd_backend.info.canonical_name);
 
-    try std.testing.expectEqual(null, registry.backendForName("vim"));
+    try std.testing.expectEqual(null, registry.backendForName("uxntal"));
     try std.testing.expectEqualStrings("zig", registry.backendForName("zig").?.info.canonical_name);
 }

@@ -1,7 +1,17 @@
-function Demo()
-  let value = 'x\\n'
+vim9script
+import autoload './util.vim' as util
+
+def Render(name: string): string
+  const message = util.Format(name)
+  return message
+enddef
+
+function! s:Legacy(value, count)
+  let l:item = a:value
   let enabled = v:true
   let count = 42
-  return value
+  return s:Render(l:item)
 endfunction
+command! -nargs=1 Show call s:Render(<args>)
 " comment
+# Vim9 comment
