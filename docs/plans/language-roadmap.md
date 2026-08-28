@@ -29,9 +29,9 @@ The suffix on each entry records its implementation depth on `main`:
 These labels describe implementation structure, not a claim of complete
 grammar coverage or a strict quality ranking. Every checked backend is still
 required to satisfy the shared source-preservation, range-safety, malformed
-input, and deterministic-output contract. There are currently 42 parser-backed
-languages, 7 partially parser-backed compositions, 4 tokenizer adapters, 17
-dedicated scanners, and 25 configured scanners. This classification describes
+input, and deterministic-output contract. There are currently 53 parser-backed
+languages, 10 partially parser-backed compositions, 4 tokenizer adapters, 25
+dedicated scanners, and 3 configured scanners. This classification describes
 the code that runs, not only backend metadata: Ziggy currently declares itself
 `parser_backed`, but its adapter consumes only `ziggy.Tokenizer`, so it is
 listed as a tokenizer here.
