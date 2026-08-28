@@ -9,6 +9,7 @@ pub const backend: api.Backend = .init(.{
     .canonical_name = "gleam",
     .display_name = "Gleam",
     .kind = .parser_backed,
+    .support_level = .verified_structural,
 }, highlight);
 
 const keywords = &.{
@@ -44,9 +45,8 @@ const Parser = struct {
     source_cursor: usize = 0,
     expected: ?Scope = null,
     paren_depth: usize = 0,
-    parameter_depth: ?usize = null,
+    parameter_depth: usize = 0,
     awaiting_parameters: bool = false,
-    awaiting_return_type: bool = false,
     type_context: bool = false,
     import_active: bool = false,
     binding_mode: BindingMode = .none,
@@ -62,7 +62,7 @@ const Parser = struct {
             const capture = parser.sink.captures()[capture_index];
             if (capture.span.start >= parser.source_cursor) {
                 if (std.mem.indexOfScalar(u8, parser.source[parser.source_cursor..capture.span.start], '\n') != null and
-                    parser.parameter_depth == null)
+                    parser.parameter_depth == 0)
                 {
                     parser.expected = null;
                     parser.type_context = false;
@@ -93,25 +93,30 @@ const Parser = struct {
 
     fn observeKeyword(parser: *Parser, capture: Capture) void {
         const word = parser.source[capture.span.start..capture.span.end];
-        if (std.mem.eql(u8, word, "import")) {
-            parser.expected = .namespace;
-            parser.import_active = true;
-        } else if (std.mem.eql(u8, word, "as") and parser.import_active) {
-            parser.expected = .namespace;
-        } else if (std.mem.eql(u8, word, "type")) {
-            parser.expected = .type;
-        } else if (std.mem.eql(u8, word, "fn")) {
-            if (scanner.nextNonSpace(parser.source, capture.span.end) == '(') {
-                parser.awaiting_parameters = true;
-            } else {
-                parser.expected = .function;
-            }
-        } else if (std.mem.eql(u8, word, "const")) {
-            parser.expected = .constant;
-        } else if (std.mem.eql(u8, word, "let")) {
-            parser.binding_mode = .variable;
-        } else if (std.mem.eql(u8, word, "use")) {
-            parser.binding_mode = .parameter;
+        switch (word[0]) {
+            'a' => if (word.len == 2 and parser.import_active) {
+                parser.expected = .namespace;
+            },
+            'c' => if (word.len == 5) {
+                parser.expected = .constant;
+            },
+            'f' => if (word.len == 2) {
+                if (scanner.nextNonSpace(parser.source, capture.span.end) == '(') {
+                    parser.awaiting_parameters = true;
+                } else {
+                    parser.expected = .function;
+                }
+            },
+            'i' => if (word.len == 6) {
+                parser.expected = .namespace;
+                parser.import_active = true;
+            },
+            'l' => parser.binding_mode = .variable,
+            't' => if (word.len == 4 and word[1] == 'y') {
+                parser.expected = .type;
+            },
+            'u' => parser.binding_mode = .parameter,
+            else => {},
         }
     }
 
@@ -151,10 +156,10 @@ const Parser = struct {
             .variable
         else if (previous == '.' and start >= 2 and parser.source[start - 2] == '.')
             .variable
-        else if (parser.parameter_depth != null and
+        else if (parser.parameter_depth != 0 and
             (next == ':' or previous == '(' or previous == ','))
             .parameter
-        else if (next == ':' and parser.parameter_depth == null)
+        else if (next == ':' and parser.parameter_depth == 0)
             .property
         else if (parser.isImportName(word))
             .namespace
@@ -172,17 +177,16 @@ const Parser = struct {
 
     fn observeOperator(parser: *Parser, capture: Capture) void {
         const operator = parser.source[capture.span.start..capture.span.end];
-        if (std.mem.eql(u8, operator, "<<")) {
+        if (operator.len == 2 and operator[0] == '<' and operator[1] == '<') {
             parser.bit_array_depth += 1;
-        } else if (std.mem.eql(u8, operator, ">>")) {
+        } else if (operator.len == 2 and operator[0] == '>' and operator[1] == '>') {
             parser.bit_array_depth -|= 1;
             parser.bit_array_modifier = false;
         } else if (operator[0] == ':' and parser.bit_array_depth != 0) {
             parser.bit_array_modifier = true;
-        } else if (operator[0] == ':' or (std.mem.eql(u8, operator, "->") and parser.awaiting_return_type)) {
+        } else if (operator[0] == ':') {
             parser.type_context = true;
-            parser.awaiting_return_type = false;
-        } else if (operator[0] == '=' or std.mem.eql(u8, operator, "<-")) {
+        } else if (operator[0] == '=' or (operator.len == 2 and operator[0] == '<' and operator[1] == '-')) {
             parser.type_context = false;
             parser.binding_mode = .none;
         }
@@ -198,17 +202,15 @@ const Parser = struct {
                 }
             },
             ')' => {
-                if (parser.parameter_depth == parser.paren_depth) {
-                    parser.parameter_depth = null;
-                    parser.awaiting_return_type = true;
+                if (parser.parameter_depth != 0 and parser.parameter_depth == parser.paren_depth) {
+                    parser.parameter_depth = 0;
+                    parser.type_context = true;
+                } else {
+                    parser.type_context = false;
                 }
                 parser.paren_depth -|= 1;
-                parser.type_context = false;
             },
-            '{' => {
-                parser.awaiting_return_type = false;
-                parser.type_context = false;
-            },
+            '{' => parser.type_context = false,
             ',' => parser.type_context = false,
             ';' => {
                 parser.expected = null;
@@ -231,11 +233,11 @@ const Parser = struct {
 
     fn rememberImportName(parser: *Parser, path: []const u8) void {
         if (parser.import_name_count == parser.import_names.len) return;
-        const slash = std.mem.lastIndexOfScalar(u8, path, '/') orelse 0;
-        const dot = std.mem.lastIndexOfScalar(u8, path, '.') orelse 0;
-        const separator = @max(slash, dot);
-        const name = if (separator == 0) path else path[separator + 1 ..];
-        parser.import_names[parser.import_name_count] = name;
+        var name_start: usize = 0;
+        for (path, 0..) |byte, index| {
+            if (byte == '/' or byte == '.') name_start = index + 1;
+        }
+        parser.import_names[parser.import_name_count] = path[name_start..];
         parser.import_name_count += 1;
     }
 

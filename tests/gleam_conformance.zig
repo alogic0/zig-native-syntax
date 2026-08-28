@@ -6,7 +6,7 @@ const backend = syntax.languages.gleam.backend;
 
 test "Gleam backend conforms" {
     try std.testing.expectEqual(syntax.BackendKind.parser_backed, backend.info.kind);
-    try std.testing.expectEqual(syntax.SupportLevel.experimental, backend.info.support_level);
+    try std.testing.expectEqual(syntax.SupportLevel.verified_structural, backend.info.support_level);
     try conformance.expectConforms(backend, .{
         .valid = .{ .source = @embedFile("corpus/gleam/complete.txt"), .required_scopes = &.{ .keyword, .string, .escape, .number, .boolean, .comment, .documentation, .attribute, .namespace, .type, .constructor, .function, .parameter, .property, .constant } },
         .malformed = .{ .source = "pub fn broken(value: String) { \"unterminated\\u12\n", .required_scopes = &.{ .keyword, .function, .parameter, .type, .string, .escape } },

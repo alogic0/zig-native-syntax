@@ -32,7 +32,7 @@ Haskell has a separate verified structural contract in `haskell.md`.
 Perl has a separate verified structural contract in `perl.md`.
 OCaml has a separate verified structural contract in `ocaml.md`.
 F# has a separate verified structural contract in `fsharp.md`.
-Gleam has a separate experimental structural contract in `gleam.md`.
+Gleam has a separate verified structural contract in `gleam.md`.
 
 Quoted strings stop at a newline. Unterminated configured block comments
 extend to end of input, while subsequent lines recover after unterminated
