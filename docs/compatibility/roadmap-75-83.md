@@ -1,8 +1,8 @@
 # Roadmap Languages 75–83 Compatibility
 
-D has a separate verified structural contract in `d.md`.
+D and V have separate verified structural contracts in `d.md` and `v.md`.
 
-V, Odin, C3, SystemVerilog, LLVM IR, OpenSCAD, Nickel, and Hare use
+Odin, C3, SystemVerilog, LLVM IR, OpenSCAD, Nickel, and Hare use
 dependency-free bounded lexical scanners. Each backend recognizes configured
 comments, quoted strings and escapes, numbers, booleans and constants,
 identifiers, calls, operators, punctuation, and a documented subset of

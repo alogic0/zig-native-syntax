@@ -16,6 +16,10 @@ pub const Config = struct {
     capitalized_calls_are_constructors: bool = false,
     function_receiver_before_name: bool = false,
     type_body_declarations_are_properties: bool = false,
+    type_body_fields_before_type: bool = false,
+    capitalized_braces_are_constructors: bool = false,
+    colon_names_are_properties: bool = false,
+    namespace_declarations_end_at_newline: bool = false,
 };
 
 pub fn highlight(source: []const u8, sink: *api.CaptureSink, config: Config) api.HighlightError!void {
@@ -47,7 +51,11 @@ const Parser = struct {
 
     fn run(parser: *Parser) api.HighlightError!void {
         while (parser.index < parser.source.len) switch (parser.source[parser.index]) {
-            ' ', '\t', '\r', '\n' => parser.index += 1,
+            ' ', '\t', '\r' => parser.index += 1,
+            '\n' => {
+                if (parser.config.namespace_declarations_end_at_newline) parser.namespace_declaration = false;
+                parser.index += 1;
+            },
             '#' => parser.skipLine(),
             '/' => {
                 if (parser.startsWith("//")) {
@@ -178,13 +186,21 @@ const Parser = struct {
             parser.declaration = true;
         } else if (nextNamespaceOperator(parser.source, parser.index)) {
             try parser.sink.add(start, parser.index, .namespace);
+        } else if (parser.config.type_body_fields_before_type and
+            parser.type_body_depth == parser.brace_depth and
+            parser.parameter_depth == null and parser.receiver_depth == null and
+            nextIdentifierIsType(parser.source, parser.index, parser.config.builtin_types))
+        {
+            try parser.sink.add(start, parser.index, .property);
         } else if (next == '(') {
             const constructor = parser.config.capitalized_calls_are_constructors and parser.isKnownType(word);
             try parser.sink.add(start, parser.index, if (constructor) .constructor else .function);
             parser.pending_function = parser.declaration;
             parser.declaration = false;
-        } else if (next == ':' and parser.paren_depth == 0) {
-            try parser.sink.add(start, parser.index, .label);
+        } else if (next == '{' and parser.config.capitalized_braces_are_constructors and parser.isKnownType(word)) {
+            try parser.sink.add(start, parser.index, .constructor);
+        } else if (next == ':' and parser.paren_depth == 0 and !nextIsColonAssignment(parser.source, parser.index)) {
+            try parser.sink.add(start, parser.index, if (parser.config.colon_names_are_properties) .property else .label);
         } else if (parser.config.capitalized_types and std.ascii.isUpper(word[0]) and next != '=' and next != ',' and next != ';') {
             try parser.sink.add(start, parser.index, .type);
             parser.declaration = true;
@@ -238,6 +254,23 @@ fn nextNamespaceOperator(source: []const u8, after: usize) bool {
     var cursor = after;
     while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
     return cursor + 1 < source.len and source[cursor] == ':' and source[cursor + 1] == ':';
+}
+
+fn nextIsColonAssignment(source: []const u8, after: usize) bool {
+    var cursor = after;
+    while (cursor < source.len and std.ascii.isWhitespace(source[cursor])) cursor += 1;
+    return cursor + 1 < source.len and source[cursor] == ':' and source[cursor + 1] == '=';
+}
+
+fn nextIdentifierIsType(source: []const u8, after: usize, builtin_types: []const []const u8) bool {
+    var cursor = after;
+    while (cursor < source.len and (std.ascii.isWhitespace(source[cursor]) or
+        std.mem.indexOfScalar(u8, "[]?&*", source[cursor]) != null)) cursor += 1;
+    if (cursor >= source.len or !std.ascii.isAlphabetic(source[cursor])) return false;
+    const start = cursor;
+    cursor += 1;
+    while (cursor < source.len and isIdentifierContinue(source[cursor])) cursor += 1;
+    return std.ascii.isUpper(source[start]) or contains(builtin_types, source[start..cursor]);
 }
 
 fn isIdentifierContinue(byte: u8) bool {

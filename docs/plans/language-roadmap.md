@@ -37,7 +37,7 @@ the code that runs, not only backend metadata: Ziggy currently declares itself
 listed as a tokenizer here.
 
 Quality promotion is tracked separately through `SupportLevel`. The current
-configured package registry exposes 49 backends as **verified structural**
+configured package registry exposes 50 backends as **verified structural**
 and 28 as **verified lexical**. Every entry without a verification marker
 remains **experimental** even though its backend and conformance suite exist.
 Promotion requires exact classification tests, representative corpus evidence,
@@ -119,7 +119,7 @@ the backend actually understands.
 - [x] 73. PureScript — **configured scanner**
 - [x] 74. Nim — **configured scanner**
 - [x] 75. D — **parser** (shared tolerant C-like declaration parser) — *verified structural*
-- [x] 76. V — **configured scanner**
+- [x] 76. V — **parser** (shared tolerant C-like declaration parser) — *verified structural*
 - [x] 77. Odin — **configured scanner**
 - [x] 78. C3 — **configured scanner**
 - [x] 79. SystemVerilog — **configured scanner**
