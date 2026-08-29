@@ -19,6 +19,7 @@ compatibility-sensitive and pre-1.0 while release hardening is completed.
 - [API guide](docs/api.md)
 - [Supported languages and subsets](docs/supported-languages.md)
 - [Optional backend selection](docs/architecture/backend-selection.md)
+- [Versioning policy](docs/versioning.md)
 - [MIT license](LICENSE)
 
 ## Design constraints

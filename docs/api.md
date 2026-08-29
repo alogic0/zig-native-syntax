@@ -248,10 +248,10 @@ Parent and nested scopes remain composable. See
 
 ## Stability
 
-The package is pre-1.0. Before the first stable release, public names and
-signatures can change when consumer integration exposes a poor boundary. Such
-changes must update this guide, the architecture documents, and consumer tests
-in the same slice.
+The package is pre-1.0 and follows the documented
+[versioning policy](versioning.md). A breaking public change increments the
+minor version before 1.0 and must update this guide, the architecture documents,
+the changelog, and consumer tests in the same slice.
 
 The following contracts are already treated as compatibility-sensitive:
 
@@ -260,14 +260,12 @@ The following contracts are already treated as compatibility-sensitive:
 - `Scope` names and their `syntax-*` CSS classes are package-controlled;
 - removing or renaming a scope, CSS class, canonical language name, or alias is
   a breaking API change after 1.0;
-- adding a scope requires release notes because exhaustive consumer switches
-  may need updating;
+- adding a scope is source-breaking because exhaustive Zig switches require an
+  update;
 - verified backend classifications may become more precise in compatible
   releases, but source preservation and the documented subset remain required;
 - `experimental` backends are excluded from the normal registry and carry no
   behavioral stability promise.
-
-The semantic-versioning and release-note policy will be finalized before 1.0.
 
 ## Errors And Allocation
 

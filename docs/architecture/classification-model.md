@@ -56,15 +56,13 @@ gaps without wrapping them in a scope element.
 
 ## Compatibility
 
-The taxonomy is experimental until the first package release. Before that release, real backends and
-the Zine integration may demonstrate that a scope should be added, renamed, combined, or removed.
-
-After a stable release:
+The taxonomy follows the package [versioning policy](../versioning.md). In
+particular:
 
 - changing an existing CSS class or its meaning is a breaking change;
 - removing or renaming a scope is a breaking change;
-- adding a scope is documented in release notes because exhaustive consumer switches may require an
-  update, even when the package's semantic-versioning policy treats the addition as compatible.
+- adding a scope is source-breaking because exhaustive consumer switches must
+  be updated.
 
 The configured registry's common aliases and consumer-specific theme colors remain outside this
 classification model.
