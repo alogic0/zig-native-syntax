@@ -1170,12 +1170,52 @@ pub fn build(b: *std.Build) void {
     );
     fuzz_registry_step.dependOn(&run_registry_fuzz_tests.step);
 
+    const optional_test_step = b.step(
+        "test-optional",
+        "Run tests for the enabled optional syntax backends",
+    );
+    optional_test_step.dependOn(&run_configured_registry_tests.step);
+    if (support_matrix_check) |check| optional_test_step.dependOn(&check.step);
+    if (run_superhtml_api_tests) |run| optional_test_step.dependOn(&run.step);
+    if (run_dummy_backend_tests) |run| optional_test_step.dependOn(&run.step);
+    if (ziggy_backend_runs) |runs| {
+        optional_test_step.dependOn(&runs.backend_test_run.step);
+        optional_test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (ziggy_schema_backend_runs) |runs| {
+        optional_test_step.dependOn(&runs.backend_test_run.step);
+        optional_test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (scripty_backend_runs) |runs| {
+        optional_test_step.dependOn(&runs.backend_test_run.step);
+        optional_test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (html_backend_runs) |runs| {
+        optional_test_step.dependOn(&runs.backend_test_run.step);
+        optional_test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (xml_backend_runs) |runs| {
+        optional_test_step.dependOn(&runs.backend_test_run.step);
+        optional_test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (css_backend_runs) |runs| {
+        optional_test_step.dependOn(&runs.backend_test_run.step);
+        optional_test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (superhtml_backend_runs) |runs| {
+        optional_test_step.dependOn(&runs.backend_test_run.step);
+        optional_test_step.dependOn(&runs.preview_test_run.step);
+    }
+    if (markdown_backend_runs) |runs| {
+        optional_test_step.dependOn(&runs.backend_test_run.step);
+        optional_test_step.dependOn(&runs.preview_test_run.step);
+    }
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
     test_step.dependOn(&run_adversarial_backend_tests.step);
-    test_step.dependOn(&run_configured_registry_tests.step);
-    if (support_matrix_check) |check| test_step.dependOn(&check.step);
+    test_step.dependOn(optional_test_step);
     test_step.dependOn(&run_configured_registry_analysis_tests.step);
     test_step.dependOn(&run_registry_fuzz_tests.step);
     test_step.dependOn(&run_html_property_tests.step);
@@ -1229,40 +1269,6 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&runs.preview_test_run.step);
     }
     test_step.dependOn(&run_core_only_tests.step);
-    if (run_superhtml_api_tests) |run| test_step.dependOn(&run.step);
-    if (run_dummy_backend_tests) |run| test_step.dependOn(&run.step);
-    if (ziggy_backend_runs) |runs| {
-        test_step.dependOn(&runs.backend_test_run.step);
-        test_step.dependOn(&runs.preview_test_run.step);
-    }
-    if (ziggy_schema_backend_runs) |runs| {
-        test_step.dependOn(&runs.backend_test_run.step);
-        test_step.dependOn(&runs.preview_test_run.step);
-    }
-    if (scripty_backend_runs) |runs| {
-        test_step.dependOn(&runs.backend_test_run.step);
-        test_step.dependOn(&runs.preview_test_run.step);
-    }
-    if (html_backend_runs) |runs| {
-        test_step.dependOn(&runs.backend_test_run.step);
-        test_step.dependOn(&runs.preview_test_run.step);
-    }
-    if (xml_backend_runs) |runs| {
-        test_step.dependOn(&runs.backend_test_run.step);
-        test_step.dependOn(&runs.preview_test_run.step);
-    }
-    if (css_backend_runs) |runs| {
-        test_step.dependOn(&runs.backend_test_run.step);
-        test_step.dependOn(&runs.preview_test_run.step);
-    }
-    if (superhtml_backend_runs) |runs| {
-        test_step.dependOn(&runs.backend_test_run.step);
-        test_step.dependOn(&runs.preview_test_run.step);
-    }
-    if (markdown_backend_runs) |runs| {
-        test_step.dependOn(&runs.backend_test_run.step);
-        test_step.dependOn(&runs.preview_test_run.step);
-    }
 }
 
 const OptionalBackendRuns = struct {

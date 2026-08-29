@@ -51,3 +51,40 @@ jobs:
         run: test "$(zig version)" = "${ZIG_VERSION}"
       - name: Run core test suite
         run: zig build test -Dexternal-backends=false -Doptimize=${{ matrix.optimize }}
+
+  optional-backends:
+    name: Optional backend (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: all
+            options: -Dexternal-backends=true
+          - name: ziggy
+            options: -Dexternal-backends=false -Dbackend-ziggy=true
+          - name: ziggy-schema
+            options: -Dexternal-backends=false -Dbackend-ziggy-schema=true
+          - name: scripty
+            options: -Dexternal-backends=false -Dbackend-scripty=true
+          - name: html
+            options: -Dexternal-backends=false -Dbackend-html=true
+          - name: xml
+            options: -Dexternal-backends=false -Dbackend-xml=true
+          - name: css
+            options: -Dexternal-backends=false -Dbackend-css=true
+          - name: superhtml
+            options: -Dexternal-backends=false -Dbackend-superhtml=true
+          - name: markdown
+            options: -Dexternal-backends=false -Dbackend-markdown=true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          cache-key: optional-${{ matrix.name }}
+      - name: Verify Zig version
+        run: test "$(zig version)" = "${ZIG_VERSION}"
+      - name: Run optional backend tests
+        run: zig build test-optional -Doptimize=safe ${{ matrix.options }}
