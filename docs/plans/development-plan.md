@@ -659,6 +659,14 @@ update steps.
 
 ### Slice 13.4: Zine dependency pin
 
+Status: implementation complete. Release `v0.1.0` points to revision
+`20b1d9c6ac6ad4799bdfe5393889d87449004bf3`; zig-markdown-viewer and Zine pin that
+immutable revision with the published `0.1.0` package hash. The viewer tests,
+Wasm integration tests, Wasm size gate, Zine native-highlighting tests, Zine
+workflow tests, and Zine's full rendering snapshot suite pass locally. Zine's
+GitHub CI remains a pre-merge gate because the integration commit has not been
+pushed or merged.
+
 - Publish the repository at its intended remote.
 - Replace Zine's experimental local path with a pinned Git revision and Zig package hash.
 - Run Zine's accepted local verification gates and GitHub CI before merging the experiment branch.
