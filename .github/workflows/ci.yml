@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ZIG_VERSION: 0.17.0-dev.1756+613c03321
+
+jobs:
+  test:
+    name: Pinned Zig smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+      - name: Verify Zig version
+        run: test "$(zig version)" = "${ZIG_VERSION}"
+      - name: Run core test suite
+        run: zig build test -Dexternal-backends=false -Doptimize=debug
