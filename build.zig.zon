@@ -1,6 +1,6 @@
 .{
     .name = .zig_native_syntax,
-    .version = "0.0.0",
+    .version = "0.1.0",
     .fingerprint = 0xea643d45b12ed0ac, // Changing this has security and trust implications.
     .minimum_zig_version = "0.17.0-dev.1756+613c03321",
     .dependencies = .{
