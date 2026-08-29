@@ -17,8 +17,11 @@ fn highlight(source: []const u8, sink: *core.CaptureSink) core.HighlightError!vo
 
     try classifyTokens(terminated, sink);
 
-    var ast = try ziggy.schema.Ast.init(sink.allocator, terminated);
-    defer ast.deinit(sink.allocator);
+    var arena = std.heap.ArenaAllocator.init(sink.allocator);
+    defer arena.deinit();
+    const ast_allocator = arena.allocator();
+    var ast = try ziggy.schema.Ast.init(ast_allocator, terminated);
+    defer ast.deinit(ast_allocator);
     try classifyAstContext(&ast, terminated, sink);
 }
 

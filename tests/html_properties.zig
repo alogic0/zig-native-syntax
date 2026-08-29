@@ -150,3 +150,42 @@ test "random invalid ranges fail before rendering" {
         }
     }
 }
+
+test "random UTF-8 ranges enforce scalar boundaries after range validation" {
+    const source = "a├β🙂z";
+    var random_state: u64 = 0xa668_891f_fa93_25c4;
+
+    for (0..512) |_| {
+        const start: usize = @intCast(nextRandom(&random_state) % (source.len + 4));
+        const end: usize = @intCast(nextRandom(&random_state) % (source.len + 4));
+        const captures = [_]syntax.Capture{.{
+            .span = .{ .start = start, .end = end },
+            .scope = .special,
+        }};
+        var discard_buffer: [32]u8 = undefined;
+        var discarding: std.Io.Writer.Discarding = .init(&discard_buffer);
+
+        if (start > end) {
+            try std.testing.expectError(
+                error.ReversedRange,
+                syntax.html.render(source, &captures, std.testing.allocator, &discarding.writer),
+            );
+        } else if (end > source.len) {
+            try std.testing.expectError(
+                error.RangeOutOfBounds,
+                syntax.html.render(source, &captures, std.testing.allocator, &discarding.writer),
+            );
+        } else if (!isUtf8Boundary(source, start) or !isUtf8Boundary(source, end)) {
+            try std.testing.expectError(
+                error.MisalignedUtf8Boundary,
+                syntax.html.render(source, &captures, std.testing.allocator, &discarding.writer),
+            );
+        } else {
+            try syntax.html.render(source, &captures, std.testing.allocator, &discarding.writer);
+        }
+    }
+}
+
+fn isUtf8Boundary(source: []const u8, index: usize) bool {
+    return index == 0 or index == source.len or source[index] & 0xc0 != 0x80;
+}

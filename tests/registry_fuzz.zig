@@ -1,6 +1,7 @@
 const std = @import("std");
 const syntax = @import("native_syntax");
 const registry = @import("native_syntax_registry");
+const html_recovery = @import("support/html_recovery.zig");
 
 const iterations_per_backend = 8;
 var active_case: ?FuzzCase = null;
@@ -75,21 +76,70 @@ test "backend fuzz seeds are stable and name-specific" {
 }
 
 fn expectSafe(backend: syntax.Backend, source: []const u8) !void {
-    var sink: syntax.CaptureSink = .init(std.testing.allocator, source.len);
-    defer sink.deinit();
-    try backend.highlight(source, &sink);
+    var first: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer first.deinit();
+    try backend.highlight(source, &first);
 
-    for (sink.captures()) |capture| try capture.validate(source.len);
+    var second: syntax.CaptureSink = .init(std.testing.allocator, source.len);
+    defer second.deinit();
+    try backend.highlight(source, &second);
+
+    try expectEqualCaptures(first.captures(), second.captures());
+
+    for (first.captures()) |capture| try capture.validate(source.len);
 
     var output: std.Io.Writer.Allocating = .init(std.testing.allocator);
     defer output.deinit();
     try syntax.html.render(
         source,
-        sink.captures(),
+        first.captures(),
         std.testing.allocator,
         &output.writer,
     );
     if (std.unicode.utf8ValidateSlice(source)) {
         try std.testing.expect(std.unicode.utf8ValidateSlice(output.written()));
+    }
+
+    const recovered = try html_recovery.recoverSource(std.testing.allocator, output.written());
+    defer std.testing.allocator.free(recovered);
+    try std.testing.expectEqualSlices(u8, source, recovered);
+}
+
+fn expectEqualCaptures(expected: []const syntax.Capture, actual: []const syntax.Capture) !void {
+    try std.testing.expectEqual(expected.len, actual.len);
+    for (expected, actual) |expected_capture, actual_capture| {
+        try std.testing.expectEqual(expected_capture.span.start, actual_capture.span.start);
+        try std.testing.expectEqual(expected_capture.span.end, actual_capture.span.end);
+        try std.testing.expectEqual(expected_capture.scope, actual_capture.scope);
+    }
+}
+
+fn allocationCase(allocator: std.mem.Allocator, backend: syntax.Backend) !void {
+    const source = "const value = \"<&>\";\n";
+    var sink: syntax.CaptureSink = .init(allocator, source.len);
+    defer sink.deinit();
+    try backend.highlight(source, &sink);
+}
+
+test "every configured backend handles every allocation failure" {
+    for (registry.backends) |backend| {
+        active_case = .{
+            .backend_name = backend.info.canonical_name,
+            .seed = 0,
+            .iteration = 0,
+            .source = "const value = \"<&>\";\n",
+        };
+        std.testing.checkAllAllocationFailures(
+            std.testing.allocator,
+            allocationCase,
+            .{backend},
+        ) catch |err| {
+            std.log.err(
+                "allocation failure contract failed: backend={s} error={s}",
+                .{ backend.info.canonical_name, @errorName(err) },
+            );
+            return err;
+        };
+        active_case = null;
     }
 }
