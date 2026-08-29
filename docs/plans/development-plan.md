@@ -619,6 +619,13 @@ Goal: turn the experiment into a versioned dependency suitable for Zine and othe
 
 ### Slice 13.1: Public documentation
 
+Status: complete. The API guide now covers default, core-only, and selected
+backend configurations; registry lookup and safe fallback; custom rendering;
+stability; errors; allocations; and dependency selection. A checked-in support
+matrix is generated from the complete configured registry and links every
+backend to its compatibility boundary. The default test graph rejects matrix
+drift.
+
 - Add API examples for core-only, selected backends, custom rendering, and plain-text fallback.
 - Publish the supported-language and supported-subset matrix.
 - Document scope class stability, error behavior, allocation behavior, and dependency selection.

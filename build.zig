@@ -1090,6 +1090,42 @@ pub fn build(b: *std.Build) void {
     });
     const run_configured_registry_tests = b.addRunArtifact(configured_registry_tests);
 
+    const complete_registry_enabled = enable_ziggy_backend and
+        enable_ziggy_schema_backend and enable_scripty_backend and
+        enable_html_backend and enable_xml_backend and enable_css_backend and
+        enable_superhtml_backend and enable_markdown_backend and
+        size_analysis_exclusions.len == 0 and size_analysis_inclusions.len == 0;
+    const support_matrix_check: ?*std.Build.Step.Run = if (complete_registry_enabled) enabled: {
+        const generator = b.addExecutable(.{
+            .name = "generate-support-matrix",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("tools/support_matrix.zig"),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "native_syntax", .module = native_syntax },
+                    .{ .name = "native_syntax_registry", .module = configured_registry },
+                },
+            }),
+        });
+
+        const generate = b.addRunArtifact(generator);
+        const generated = generate.captureStdOut(.{});
+        const update = b.addUpdateSourceFiles();
+        update.addCopyFileToSource(generated, "docs/supported-languages.md");
+        update.step.dependOn(&generate.step);
+        const update_step = b.step(
+            "update-support-matrix",
+            "Regenerate the supported-language matrix from the configured registry",
+        );
+        update_step.dependOn(&update.step);
+
+        const check = b.addRunArtifact(generator);
+        check.addArg("--check");
+        check.addFileArg(b.path("docs/supported-languages.md"));
+        break :enabled check;
+    } else null;
+
     const analysis_registry_options = b.addOptions();
     inline for (.{ "ziggy", "ziggy_schema", "scripty", "html", "xml", "css", "superhtml", "markdown" }) |name| {
         analysis_registry_options.addOption(bool, name, false);
@@ -1139,6 +1175,7 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_public_api_tests.step);
     test_step.dependOn(&run_adversarial_backend_tests.step);
     test_step.dependOn(&run_configured_registry_tests.step);
+    if (support_matrix_check) |check| test_step.dependOn(&check.step);
     test_step.dependOn(&run_configured_registry_analysis_tests.step);
     test_step.dependOn(&run_registry_fuzz_tests.step);
     test_step.dependOn(&run_html_property_tests.step);

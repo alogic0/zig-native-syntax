@@ -1,6 +1,6 @@
 # zig-native-syntax
 
-`zig-native-syntax` is an experimental, source-preserving syntax-highlighting library written
+`zig-native-syntax` is a pre-1.0, source-preserving syntax-highlighting library written
 in Zig. It is intended to classify source code with native Zig tokenizers and parsers, then
 render those classifications safely without depending on Tree-sitter.
 
@@ -10,11 +10,16 @@ other Zig projects.
 
 ## Status
 
-The project contains the initial classification API, shared syntax storage, source-preserving HTML
-renderer, parser-backed Zig, Bash, Rust, JavaScript, and TypeScript backends, the complete bounded native
-language roadmap, and optional Ziggy document, Ziggy Schema, Scripty, HTML, XML, CSS, composed
-SuperHTML, and parser-backed Markdown backends. Additional parser migrations and Zine integration
-remain experimental work.
+The complete catalog contains 95 quality-verified backends: 65 with structural
+highlighting and 30 with lexical highlighting. The core API, shared syntax
+storage, source-preserving HTML renderer, package-owned aliases, and generated
+configured registry are usable without Tree-sitter. The API remains
+compatibility-sensitive and pre-1.0 while release hardening is completed.
+
+- [API guide](docs/api.md)
+- [Supported languages and subsets](docs/supported-languages.md)
+- [Optional backend selection](docs/architecture/backend-selection.md)
+- [MIT license](LICENSE)
 
 ## Design constraints
 
@@ -174,4 +179,18 @@ page mode wraps the same rendering in a preview document suitable for opening in
 shared development theme is maintained in `tools/render_zig.css` and embedded into each generated
 page. Optional-language preview commands enable only their matching backend automatically.
 
-The [experimental API guide](docs/api.md) shows the current public classification interface.
+The [API guide](docs/api.md) shows dependency configuration, language lookup,
+plain-text fallback, custom rendering, ownership, errors, and stability rules.
+
+Regenerate the checked-in language matrix after registry metadata or aliases
+change:
+
+```sh
+./build.sh update-support-matrix
+```
+
+The default test graph rejects a stale matrix.
+
+## License
+
+`zig-native-syntax` is available under the [MIT License](LICENSE).

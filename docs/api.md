@@ -1,10 +1,98 @@
-# Experimental API Guide
+# API Guide
 
 The public API currently covers language-neutral scopes, byte ranges, captures, backend metadata,
 caller-owned capture storage, source-preserving HTML rendering, and embedded-language composition.
 
 The API remains experimental until the first stable package release. See the
 [development plan](plans/development-plan.md) for sequencing and compatibility gates.
+
+The generated [supported-language matrix](supported-languages.md) is the source
+of truth for canonical names, aliases, implementation kinds, quality levels,
+dependency switches, and each backend's documented subset.
+
+## Configure The Dependency
+
+The default dependency exposes the dependency-free core, every enabled external
+backend, and the configured registry:
+
+```zig
+const syntax_dependency = b.dependency("zig_native_syntax", .{
+    .target = target,
+    .optimize = optimize,
+});
+app.root_module.addImport(
+    "native_syntax",
+    syntax_dependency.module("native_syntax"),
+);
+app.root_module.addImport(
+    "native_syntax_registry",
+    syntax_dependency.module("native_syntax_registry"),
+);
+```
+
+A dependency-free consumer disables the external group. Core backends and the
+configured registry remain available; external parser packages are not
+configured, compiled, or linked:
+
+```zig
+const syntax_dependency = b.dependency("zig_native_syntax", .{
+    .target = target,
+    .optimize = optimize,
+    .@"external-backends" = false,
+});
+```
+
+To select only particular external backends, disable the group and enable their
+individual switches:
+
+```zig
+const syntax_dependency = b.dependency("zig_native_syntax", .{
+    .target = target,
+    .optimize = optimize,
+    .@"external-backends" = false,
+    .@"backend-markdown" = true,
+    .@"backend-ziggy" = true,
+});
+```
+
+The complete option and dependency relationships are documented in
+[optional backend selection](architecture/backend-selection.md).
+
+## Highlight By Language Name
+
+The configured registry owns aliases and contains only verified, enabled
+backends. Unknown and disabled names should use escaped plain text:
+
+```zig
+const std = @import("std");
+const syntax = @import("native_syntax");
+const registry = @import("native_syntax_registry");
+
+fn renderByName(
+    allocator: std.mem.Allocator,
+    language: []const u8,
+    source: []const u8,
+    writer: *std.Io.Writer,
+) !bool {
+    const backend = registry.backendForName(language) orelse {
+        try syntax.html.renderPlain(source, writer);
+        return false;
+    };
+
+    var sink: syntax.CaptureSink = .init(allocator, source.len);
+    defer sink.deinit();
+    backend.highlight(source, &sink) catch {
+        try syntax.html.renderPlain(source, writer);
+        return false;
+    };
+    try syntax.html.render(source, sink.captures(), allocator, writer);
+    return true;
+}
+```
+
+This fallback is safe because highlighting finishes before rendering begins.
+Do not retry with plain text after a writer failure from `html.render`, because
+the writer may already contain part of the classified result.
 
 ## Render Escaped Plain Text
 
@@ -160,12 +248,56 @@ Parent and nested scopes remain composable. See
 
 ## Stability
 
-Before the first stable release, names and signatures can change when real backends or the Zine
-integration expose a poor boundary. Such changes must update the API guide, architecture documents,
-and external-consumer tests in the same slice.
+The package is pre-1.0. Before the first stable release, public names and
+signatures can change when consumer integration exposes a poor boundary. Such
+changes must update this guide, the architecture documents, and consumer tests
+in the same slice.
 
-After the first stable release, scope names, CSS classes, range semantics, and public ownership rules
-follow the package's documented semantic-versioning policy.
+The following contracts are already treated as compatibility-sensitive:
+
+- source recovery, HTML escaping, half-open byte ranges, and UTF-8 boundary
+  validation cannot be weakened by an ordinary backend change;
+- `Scope` names and their `syntax-*` CSS classes are package-controlled;
+- removing or renaming a scope, CSS class, canonical language name, or alias is
+  a breaking API change after 1.0;
+- adding a scope requires release notes because exhaustive consumer switches
+  may need updating;
+- verified backend classifications may become more precise in compatible
+  releases, but source preservation and the documented subset remain required;
+- `experimental` backends are excluded from the normal registry and carry no
+  behavioral stability promise.
+
+The semantic-versioning and release-note policy will be finalized before 1.0.
+
+## Errors And Allocation
+
+`Backend.highlight` reports allocator failures, invalid capture ranges,
+misaligned UTF-8 boundaries, a sink/source length mismatch, or a parser offset
+limit through `HighlightError`. Malformed language syntax is not a shared API
+error: tolerant backends return partial trusted captures and leave uncertain
+bytes unclassified.
+
+`html.render` validates every capture before allocating or writing. Range and
+UTF-8 errors therefore cannot leave partial HTML. Allocation or writer failure
+is propagated, and temporary renderer storage is released. Once writing has
+begun, a writer failure may leave a prefix in the caller-owned destination.
+
+Allocation ownership is explicit:
+
+- `CaptureSink` grows caller-allocated capture storage and releases it from
+  `deinit`, unless `toOwnedSlice` transfers that allocation to the caller;
+- individual backends may use temporary allocations as documented by their
+  compatibility contracts;
+- `html.render` temporarily allocates at most two normalization events per
+  non-empty capture;
+- `html.renderPlain` performs no allocation and is the lowest-cost fallback;
+- source bytes, backend metadata, and slices returned by `captures()` remain
+  borrowed rather than copied by the core API.
+
+Consumers that require a custom renderer can use `Capture.span`,
+`Capture.scope`, and `Scope.cssClass` directly. Captures may overlap or cross,
+so a renderer must either normalize those ranges as `html.render` does or use
+them as annotations without assuming they form a flat ordered token stream.
 
 ## Zig Backend
 
