@@ -16,16 +16,38 @@ env:
   ZIG_VERSION: 0.17.0-dev.1756+613c03321
 
 jobs:
-  test:
-    name: Pinned Zig smoke test
+  formatting:
+    name: Formatting
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: mlugg/setup-zig@v2
         with:
           version: ${{ env.ZIG_VERSION }}
+          cache-key: formatting
+      - name: Verify Zig version
+        run: test "$(zig version)" = "${ZIG_VERSION}"
+      - name: Check formatting
+        run: zig fmt --check build.zig src tests tools
+
+  core-tests:
+    name: Core tests (${{ matrix.optimize }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        optimize:
+          - debug
+          - safe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          cache-key: core-${{ matrix.optimize }}
       - name: Verify Zig version
         run: test "$(zig version)" = "${ZIG_VERSION}"
       - name: Run core test suite
-        run: zig build test -Dexternal-backends=false -Doptimize=debug
+        run: zig build test -Dexternal-backends=false -Doptimize=${{ matrix.optimize }}
