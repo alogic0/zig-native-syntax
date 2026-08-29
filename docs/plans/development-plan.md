@@ -632,6 +632,14 @@ drift.
 
 ### Slice 13.2: Quality gates
 
+Status: complete. GitHub Actions installs and verifies the declared Zig version, checks formatting,
+runs the core suite in Debug and ReleaseSafe, and exercises all eight optional backends both together
+and in isolation. Seeded registry properties cover valid ranges, UTF-8 boundary precedence, escaped
+source recovery, deterministic captures, and allocation-failure cleanup. Representative syntax-core
+and ML-family measurements are recorded in
+[Benchmark Baselines](../architecture/benchmark-baselines.md) as review evidence without CI
+performance thresholds.
+
 - Add formatting, Debug, and ReleaseSafe tests to CI using the declared Zig version.
 - Run corpus, randomized range, escaping, allocation, and integration tests.
 - Add representative benchmarks and record baselines without imposing arbitrary thresholds.

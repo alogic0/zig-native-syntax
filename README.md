@@ -118,6 +118,12 @@ The default test graph includes every external backend. Use
 `./build.sh test -Dexternal-backends=false` to verify the dependency-free core, or set an individual
 `-Dbackend-*=false` option to exclude one adapter from the default set.
 
+Representative performance harnesses are available through
+`./build.sh benchmark-syntax-core`, `./build.sh benchmark-ml`, and
+`./build.sh benchmark-ml-small`. The checked-in
+[benchmark baselines](docs/architecture/benchmark-baselines.md) are review
+evidence, not pass/fail thresholds.
+
 Render source files as HTML fragments for manual inspection:
 
 ```sh
