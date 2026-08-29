@@ -20,6 +20,8 @@ compatibility-sensitive and pre-1.0 while release hardening is completed.
 - [Supported languages and subsets](docs/supported-languages.md)
 - [Optional backend selection](docs/architecture/backend-selection.md)
 - [Versioning policy](docs/versioning.md)
+- [Changelog](CHANGELOG.md)
+- [Release checklist](docs/releasing.md)
 - [MIT license](LICENSE)
 
 ## Design constraints

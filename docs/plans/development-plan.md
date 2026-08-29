@@ -646,6 +646,12 @@ performance thresholds.
 
 ### Slice 13.3: Package policy
 
+Status: complete. The package is MIT licensed and declares an initial `0.1.0` version. The
+[Versioning Policy](../versioning.md) classifies API, scope, backend, alias, toolchain, and parser
+dependency changes. `CHANGELOG.md` records notable release changes, and the
+[Release Checklist](../releasing.md) defines verification, tagging, package hashing, and consumer
+update steps.
+
 - Choose and document the project license before publication.
 - Define semantic-versioning expectations for scope names, backend behavior, and parser dependency
   upgrades.
