@@ -1175,6 +1175,7 @@ pub fn build(b: *std.Build) void {
         "Run tests for the enabled optional syntax backends",
     );
     optional_test_step.dependOn(&run_configured_registry_tests.step);
+    optional_test_step.dependOn(&run_registry_fuzz_tests.step);
     if (support_matrix_check) |check| optional_test_step.dependOn(&check.step);
     if (run_superhtml_api_tests) |run| optional_test_step.dependOn(&run.step);
     if (run_dummy_backend_tests) |run| optional_test_step.dependOn(&run.step);
