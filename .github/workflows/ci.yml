@@ -32,25 +32,34 @@ jobs:
         run: zig fmt --check build.zig src tests tools
 
   core-tests:
-    name: Core tests (${{ matrix.optimize }})
+    name: Core tests (debug)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        optimize:
-          - debug
-          - safe
     steps:
       - uses: actions/checkout@v4
       - uses: mlugg/setup-zig@v2
         with:
           version: ${{ env.ZIG_VERSION }}
-          cache-key: core-${{ matrix.optimize }}
+          cache-key: core-debug
       - name: Verify Zig version
         run: test "$(zig version)" = "${ZIG_VERSION}"
       - name: Run core test suite
-        run: zig build test -Dexternal-backends=false -Doptimize=${{ matrix.optimize }}
+        run: zig build test -Dexternal-backends=false -Doptimize=debug
+
+  release-safe:
+    name: Shared tests (safe)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          cache-key: shared-safe
+      - name: Verify Zig version
+        run: test "$(zig version)" = "${ZIG_VERSION}"
+      - name: Run consolidated ReleaseSafe tests
+        run: zig build test-shared -Dexternal-backends=false -Doptimize=safe
 
   optional-backends:
     name: Optional backend (${{ matrix.name }})

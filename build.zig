@@ -1212,6 +1212,19 @@ pub fn build(b: *std.Build) void {
         optional_test_step.dependOn(&runs.preview_test_run.step);
     }
 
+    const shared_test_step = b.step(
+        "test-shared",
+        "Run consolidated shared API and registry tests",
+    );
+    shared_test_step.dependOn(&run_unit_tests.step);
+    shared_test_step.dependOn(&run_public_api_tests.step);
+    shared_test_step.dependOn(&run_adversarial_backend_tests.step);
+    shared_test_step.dependOn(&run_configured_registry_tests.step);
+    shared_test_step.dependOn(&run_configured_registry_analysis_tests.step);
+    shared_test_step.dependOn(&run_registry_fuzz_tests.step);
+    shared_test_step.dependOn(&run_html_property_tests.step);
+    shared_test_step.dependOn(&run_core_only_tests.step);
+
     const test_step = b.step("test", "Run the native syntax highlighting tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_public_api_tests.step);
