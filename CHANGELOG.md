@@ -7,6 +7,11 @@ and follow the package [versioning policy](docs/versioning.md).
 
 ## [Unreleased]
 
+### Changed
+
+- Aligned the Markdown backend with `zig-markdown-parser` 0.2.0 so consumers
+  can use one parser package identity throughout their dependency graph.
+
 ## [0.1.0] - 2026-08-29
 
 ### Added

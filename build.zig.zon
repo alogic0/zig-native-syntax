@@ -17,8 +17,8 @@
             .hash = "ziggy-0.2.0-kTg8v53yBwCAN_CrgG3Y_ngWnkUb971-w-0LdZlE8hYJ",
         },
         .markdown_parser = .{
-            .url = "git+https://github.com/alogic0/zig-markdown-parser#0842913426dde83d2527650bce238cd03b3b4103",
-            .hash = "zig_markdown_parser-0.1.1-Hjn7-LWAAgBbOyNf5p_kYUKkgBYpN4U0MpHfSzt42BTk",
+            .url = "git+https://github.com/alogic0/zig-markdown-parser#f1c34b5348d080a577d4e3317afcce95a97b805d",
+            .hash = "zig_markdown_parser-0.2.0-Hjn7-EaYAgAspbYQFbOgofwSB1ECRmqFj2E5hn3PHXEQ",
         },
         .phase4_dummy_syntax = .{
             .path = "tests/fixtures/phase4_dummy_syntax",
